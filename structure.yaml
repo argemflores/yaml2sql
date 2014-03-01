@@ -61,8 +61,10 @@ database: &database_name
                         - &index_name
                             name:
                             comment:
-                            attributes:
                             column:
+                            using:
+                            unique:
+                            concurrent:
                     rule:
                         - &rule_name
                             name:
