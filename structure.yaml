@@ -30,8 +30,8 @@ database: &database_name
                             comment:
                             type:
                             length:
-                            default_value:
                             not_null:
+                            default_value:
                             primary_key:
                             indexed:
                     relation:
