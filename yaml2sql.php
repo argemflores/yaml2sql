@@ -138,8 +138,17 @@ EOD
                             
                             foreach ($constraintArr as $cstIdx => $constraint) {
                                 if (!empty($constraint->name) and !empty($constraint->type) and !empty($constraint->column)) {
-                                    $cstName = pg_escape_string($constraint->name);
-
+                                    if (strpos($constraint->name, '{table}') >= 0
+                                        or strpos($constraint->name, '{column}') >=0) {
+                                        $cstName = strtr($constraint->name, [
+                                            '{table}' => $tblName,
+                                            '{column}' => $constraint->column,
+                                        ]);
+                                    }
+                                    else {
+                                        $cstName = pg_escape_string($constraint->name);
+                                    }
+                                    
                                     $cstAttributes = '';
 
                                     switch ($constraint->type) {
