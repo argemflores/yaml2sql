@@ -42,6 +42,31 @@ EOD
 
         foreach ($schemas as $schema) {
             if (!empty($schema->name)) {
+                if (!empty($schema->table)) {
+                    $tables = $schema->table;
+                    $tblSqlArr = [];
+                    
+                    foreach ($tables as $table) {
+                        $tblSqlArr[] = strtr(
+<<<EOD
+create table "{schName}"."{tblName}" (
+    
+)
+;
+EOD
+                            , [
+                                '{schName}' => pg_escape_string($schema->name),
+                                '{tblName}' => pg_escape_string($table->name),
+                            ]
+                        );
+                    }
+                }
+                
+                if (!empty($tblSqlArr)) {
+                    array_walk($tblSqlArr, 'trim');
+                    $tblSql = implode("\n\n", $tblSqlArr);
+                }
+                
                 $schSqlArr[] = strtr(
 <<<EOD
 create schema "{schName}";
@@ -62,4 +87,4 @@ EOD
     }
 }
 
-var_dump($schSql);
+var_dump($tblSql);
