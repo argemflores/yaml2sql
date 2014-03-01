@@ -69,7 +69,7 @@ database:
                             name: commit_committer_id_fkey
                             comment: Commiter foreign key constraint
                             type: foreign_key
-                            column: commiter_id
+                            column: committer_id
                             attributes:
-                                foreign_table: user
+                                foreign_table: develop.user
                                 foreign_column: id
