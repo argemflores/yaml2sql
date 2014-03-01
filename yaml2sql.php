@@ -31,8 +31,7 @@ if (!empty($input->database)) {
 create database "{dbName}"
     encoding = '{dbEncoding}'
     lc_collate = '{dbLcCollate}'
-    lc_ctype = '{dbLcCtype}'
-;
+    lc_ctype = '{dbLcCtype}';
 EOD
         , [
             '{dbName}' => pg_escape_string($database->name),
@@ -131,33 +130,25 @@ EOD
                             ]
                         );
                         
+                        $cstSql = '';
+                        
                         if (!empty($table->constraint)) {
                             $constraintArr = $table->constraint;
                             $cstSqlArr = [];
-                            $cstSql = '';
                             
                             foreach ($constraintArr as $cstIdx => $constraint) {
-                                if (!empty($constraint->name) and !empty($constraint->type) and !empty($constraint->column)) {
-                                    if (strpos($constraint->name, '{table}') >= 0
-                                        or strpos($constraint->name, '{column}') >=0) {
-                                        $cstName = strtr($constraint->name, [
-                                            '{table}' => $tblName,
-                                            '{column}' => $constraint->column,
-                                        ]);
-                                    }
-                                    else {
-                                        $cstName = pg_escape_string($constraint->name);
-                                    }
-                                    
+                                if (!empty($constraint->type) and !empty($constraint->column)) {
                                     $cstAttributes = '';
 
                                     switch ($constraint->type) {
                                         case 'primary_key':
                                             $cstType = 'primary key';
+                                            $cstSuffix = 'pkey';
                                             break;
                                         
                                         case 'foreign_key':
                                             $cstType = 'foreign key';
+                                            $cstSuffix = 'fkey';
                                             
                                             if (!empty($constraint->attributes)) {
                                                 $attributes = $constraint->attributes;
@@ -201,9 +192,25 @@ EOD
                                     
                                     if (is_array($constraint->column)) {
                                         $cstColumn = '"' . implode('", "', $constraint->column) . '"';
+                                        $cstColumnName = implode('_', $constraint->column);
                                     }
                                     else {
                                         $cstColumn = '"' . $constraint->column . '"';
+                                        $cstColumnName = $constraint->column;
+                                    }
+                                    
+                                    if (empty($constraint->name)) {
+                                        $cstName = pg_escape_string(strtr('{table}_{column}_{suffix}', [
+                                            '{table}' => $tblName,
+                                            '{column}' => $constraint->column,
+                                            '{suffix}' => $cstSuffix,
+                                        ]));
+                                    }
+                                    else {
+                                        $cstName = pg_escape_string(strtr($constraint->name, [
+                                            '{table}' => $tblName,
+                                            '{column}' => $constraint->column,
+                                        ]));
                                     }
                                     
                                     $cstSqlArr[] = strtr(
@@ -233,7 +240,63 @@ EOD
                             }
                         }
                         
-                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql;
+                        $idxSql = '';
+                        if (!empty($table->index)) {
+                            $indexArr = $table->index;
+                            $idxSqlArr = [];
+                            
+                            foreach ($indexArr as $idxIdx => $index) {
+                                if (!empty($index->column)) {
+                                    if (is_array($index->column)) {
+                                        $idxColumn = '"' . implode('", "', $index->column) . '"';
+                                        $idxColumnName = implode('_', $index->column);
+                                    }
+                                    else {
+                                        $idxColumn = '"' . $index->column . '"';
+                                        $idxColumnName = $index->column;
+                                    }
+                                    
+                                    if (empty($index->name)) {
+                                        $idxName = strtr('{table}_{column}_idx', [
+                                            '{table}' => $tblName,
+                                            '{column}' => $idxColumnName,
+                                        ]);
+                                    }
+                                    else {
+                                        $idxName = strtr($index->name, [
+                                            '{table}' => $tblName,
+                                            '{column}' => $idxColumnName,
+                                        ]);
+                                    }
+                                    
+                                    $idxSqlArr[] = strtr(
+<<<EOD
+create {idxUnique} index {idxConcurrent} "{idxName}"
+    on "{schName}"."{tblName}"
+    using {idxUsing} ({idxColumn})
+EOD
+                                        , [
+                                            '{idxUnique}' => !empty($index->unique) ? 'unique' : '',
+                                            '{idxConcurrent}' => !empty($idxConcurrent) ? 'concurrently' : '',
+                                            '{idxName}' => $idxName,
+                                            '{schName}' => $schName,
+                                            '{tblName}' => $tblName,
+                                            '{idxUsing}' => !empty($index->using) ? $index->using : 'btree',
+                                            '{idxColumn}' => $idxColumn,
+                                        ]
+                                    );
+                                }
+                            }
+                            
+                            if (!empty($idxSqlArr)) {
+                                $idxSqlArr = array_map(function(&$val) {
+                                    return str_replace('  ', ' ', trim($val));
+                                }, $idxSqlArr);
+                                $idxSql = implode(";\n", $idxSqlArr) . ';';
+                            }
+                        }
+                        
+                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql;
                     }
                 }
                 
@@ -246,8 +309,7 @@ EOD
 <<<EOD
 create schema "{schName}";
 comment on schema "{schName}"
-    is '{schComment}'
-;
+    is '{schComment}';
 EOD
                     , [
                         '{schName}' => $schName,
