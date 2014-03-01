@@ -1,46 +1,42 @@
 dictionary:
     database:
-        class:
+        - &database_class
+            attribute: null
     schema:
-        class:
     table:
-        class:
     column:
-        class:
     relation:
-        class:
     index:
-        class:
     check:
-        class:
     rule:
-        class:
     trigger:
-        class:
-name:
+database: &database_name
+    name:
     comment:
     encoding:
     lc_collate:
     lc_ctype:
-    owner:
     schema:
-        name:
+        - &schema_name
+            name:
             comment:
-            owner:
             table:
-                name:
+                - &table_name
+                    name:
                     comment:
-                    owner:
                     column:
-                        name:
+                        - &column_name
+                            name:
                             comment:
                             type:
                             length:
                             default_value:
                             not_null:
                             primary_key:
+                            indexed:
                     relation:
-                        name:
+                        - &relation_name
+                            name:
                             comment:
                             column:
                             foreign_table:
@@ -49,23 +45,27 @@ name:
                             on_update:
                             match_type:
                     index:
-                        name:
+                        - &index_name
+                            name:
                             comment:
                             type:
                             column:
                     check:
-                        name:
+                        - &check_name
+                            name:
                             comment:
                             condition:
                     rule:
-                        name:
+                        - &rule_name
+                            name:
                             comment:
                             event:
                             instead:
                             condition:
                             definition:
                     trigger:
-                        name:
+                        - &trigger_name
+                            name:
                             comment:
                             enabled:
                             type:
