@@ -7,20 +7,21 @@ database:
     lc_ctype: C
     schema:
         - &master_schema
-            name: master_schema
+            name: master
             comment: Master schema
         - &develop_schema
-            name: develop_schema
+            name: develop
             comment: Develop schema
             table:
                 - &commit
-                    name: commit_table
+                    name: commit
                     comment: Commit table
                     column:
                         - &id_column
                             name: id
                             comment: Primary key
                             type: serial
+                            primary_key: true
                         - &stage_column
                             name: stage
                             comment: Stage area
