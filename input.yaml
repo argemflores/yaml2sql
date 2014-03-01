@@ -1,4 +1,24 @@
 dictionary:
+    column:
+        - &id_column_class
+            name: id
+            comment: Primary key
+            type: serial
+            primary_key: true
+    constraint:
+        - &id_constraint_class
+            name: '{table}_id_pkey'
+            comment: Primary key constraint
+            type: primary_key
+            column: id
+        - &foreign_id_constraint_class
+            name: '{table}_{column}_fkey'
+            comment: Foreign key constraint
+            type: foreign_key
+            column: '{column}'
+            attributes:
+                foreign_table:
+                foreign_column:
 database:
     name: yaml2sql
     comment: YAML to SQL Database
@@ -17,11 +37,7 @@ database:
                     name: user
                     comment: Users
                     column:
-                        - &id_column
-                            name: id
-                            comment: Primary key
-                            type: serial
-                            primary_key: true
+                        - *id_column_class
                         - &username_column
                             name: username
                             type: varchar
@@ -31,16 +47,12 @@ database:
                             type: varchar
                             not_null: true
                     constraint:
-                        - &id_constraint
-                            name: user_id_pkey
-                            comment: Primary key constraint
-                            type: primary_key
-                            column: id
+                        - *id_constraint_class
                 - &commit_table
                     name: commit
                     comment: Commit table
                     column:
-                        - *id_column
+                        - *id_column_class
                         - &stage_column
                             name: stage
                             comment: Stage area
@@ -62,13 +74,9 @@ database:
                             type: integer
                             not_null: true
                     constraint:
+                        - *id_constraint_class
                         -
-                            <<: *id_constraint
-                            name: commit_id_pkey
-                        - &commit_committer_id_fkey
-                            name: commit_committer_id_fkey
-                            comment: Commiter foreign key constraint
-                            type: foreign_key
+                            <<: *foreign_id_constraint_class
                             column: committer_id
                             attributes:
                                 foreign_table: develop.user
