@@ -5,9 +5,8 @@ dictionary:
     schema:
     table:
     column:
-    relation:
+    constraint:
     index:
-    check:
     rule:
     trigger:
 database: &database_name
@@ -83,8 +82,3 @@ database: &database_name
                             function:
                             argument:
                             condition:
-                    relation:
-                        - &relation_name
-                            name:
-                            comment:
-                            column:
