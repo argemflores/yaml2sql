@@ -10,7 +10,12 @@
 require_once 'Spyc.php';
 
 # input yaml file
-$inputFile = 'input.yaml';
+$inputFile = $argv[1];
+
+if (!file_exists($inputFile)) {
+    echo 'File not exists: ', $inputFile;
+    return 1;
+}
 
 # load input file and convert yaml contents to array, then to object
 $input = json_decode(json_encode(Spyc::YAMLLoad($inputFile)));
@@ -149,6 +154,14 @@ EOD
                                                 $attributes = $constraint->attributes;
                                                 
                                                 if (!empty($attributes->foreign_table) and !empty($attributes->foreign_column)) {
+                                                    if (strpos($attributes->foreign_table, '.')) {
+                                                        list($foreignTable, $foreignColumn) = explode('.', $attributes->foreign_table);
+                                                        $cstForeignTable = '"' . pg_escape_string($foreignTable) . '"."' . pg_escape_string($foreignColumn) . '"';
+                                                    }
+                                                    else {
+                                                        $cstForeignTable = '"' . $attributes->foreign_table . '"';
+                                                    }
+                                                    
                                                     if (is_array($attributes->foreign_column)) {
                                                         $cstForeignColumn = '"' . implode('", "', $attributes->foreign_column) . '"';
                                                     }
@@ -165,10 +178,10 @@ EOD
                                                     
                                                     $cstAttributes = strtr(
 <<<EOD
-references "{cstForeignTable}" ({cstForeignColumn}) {cstMatchType}
+references {cstForeignTable} ({cstForeignColumn}) {cstMatchType}
 EOD
                                                         , [
-                                                            '{cstForeignTable}' => pg_escape_string($attributes->foreign_table),
+                                                            '{cstForeignTable}' => $cstForeignTable,
                                                             '{cstForeignColumn}' => $cstForeignColumn,
                                                             '{cstMatchType}' => $cstMatchType,
                                                         ]
@@ -220,9 +233,7 @@ EOD
                     $tblSql = implode("\n\n", $tblSqlArr);
                 }
                 
-                var_dump($tblSql);
-                
-                $schSqlArr[] = strtr(
+                $schSqlArr[$schIdx] = strtr(
 <<<EOD
 create schema "{schName}";
 comment on schema "{schName}"
@@ -241,3 +252,5 @@ EOD
         $schSql = implode("\n\n", $schSqlArr);
     }
 }
+
+echo $dbSql, "\n\n", $schSql, "\n\n", $tblSql, "\n";
