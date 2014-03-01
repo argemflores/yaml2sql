@@ -32,33 +32,25 @@ database: &database_name
                             length:
                             not_null:
                             default_value:
-                    relation:
-                        - &relation_name
+                            primary_key:
+                    constraint:
+                        - &constraint_name
                             name:
                             comment:
+                            type: # primary_key, foreign_key, check, unique, exclude
                             column:
-                            foreign_table:
-                            foreign_column:
-                            on_delete:
-                            on_update:
-                            match_type:
                     index:
                         - &index_name
                             name:
                             comment:
-                            type:
+                            options:
                             column:
-                    check:
-                        - &check_name
-                            name:
-                            comment:
-                            condition:
                     rule:
                         - &rule_name
                             name:
                             comment:
                             event:
-                            instead:
+                            execution:
                             condition:
                             definition:
                     trigger:
@@ -72,3 +64,13 @@ database: &database_name
                             function:
                             argument:
                             condition:
+                    relation:
+                        - &relation_name
+                            name:
+                            comment:
+                            column:
+                            foreign_table:
+                            foreign_column:
+                            on_delete:
+                            on_update:
+                            match_type:
