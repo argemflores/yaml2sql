@@ -16,3 +16,29 @@ database:
                 - &commit
                     name: commit_table
                     comment: Commit table
+                    column:
+                        - &id_column
+                            name: id
+                            comment: Primary key
+                            type: serial
+                            primary_key: true
+                        - &stage_column
+                            name: stage
+                            comment: Stage area
+                            type: varchar
+                            default_value: *
+                            not_null: true
+                        - &message_column
+                            name: message
+                            comment: Message area
+                            type: text
+                            not_null: true
+                        - &commit_timestamp_column
+                            name: commit_timestamp
+                            type: timestamp
+                            not_null: true
+                            default_value: now()
+                        - &commiter_id_column
+                            name: commiter_id
+                            type: integer
+                            not_null: true
