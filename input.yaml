@@ -48,6 +48,13 @@ database:
                             not_null: true
                     constraint:
                         - *id_constraint_class
+                    index:
+                        - &user_email_index
+                            name: user_email_idx
+                            comment: User email unique index
+                            column: email
+                            using: btree
+                            unique: true
                 - &commit_table
                     name: commit
                     comment: Commit table
