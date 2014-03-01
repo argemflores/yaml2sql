@@ -44,10 +44,11 @@ EOD
 
         foreach ($schemas as $schema) {
             if (!empty($schema->name)) {
+                $tblSqlArr = [];
+                $tblSql = '';
+                
                 if (!empty($schema->table)) {
                     $tables = $schema->table;
-                    $tblSqlArr = [];
-                    $tblSql = '';
                     
                     foreach ($tables as $table) {
                         if (!empty($table->column)) {
@@ -59,25 +60,54 @@ EOD
                                 if (!empty($column->name) and !empty($column->type)) {
                                     $colName = pg_escape_string($column->name);
                                     $colType = $column->type;
+                                    $colLength = '';
+                                    $colNotNull = '';
+                                    $colDefaultValue = '';
+                                    $colPrimaryKey = '';
+                                    $colIndexed = '';
+                                    
+                                    if (!empty($column->length)) {
+                                        $colType = $colType . '(' . $column->length . ')';
+                                    }
+                                    
+                                    if (!empty($column->not_null)) {
+                                        $colNotNull = 'not null';
+                                    }
+                                    
+                                    if (!empty($column->default_value)) {
+                                        if (strpos($column->default_value, '()') > 0
+                                            || in_array($column->default_value, ['true', 'false'])) {
+                                            $colDefaultValue = $column->default_value;
+                                        }
+                                        else {
+                                            $colDefaultValue = "'" . pg_escape_string($column->default_value) . "'";
+                                        }
+                                        
+                                        $colDefaultValue = 'default ' . $colDefaultValue;
+                                    }
+                                    
+                                    
                                     
                                     $colSqlArr[] = strtr(
 <<<EOD
-"{colName}" {colType}
+"{colName}" {colType} {colNotNull} {colDefaultValue}
 EOD
                                         , [
                                             '{colName}' => $colName,
                                             '{colType}' => $colType,
+                                            '{colNotNull}' => $colNotNull,
+                                            '{colDefaultValue}' => $colDefaultValue,
                                         ]
                                     );
                                 }
                             }
                             
                             if (!empty($colSqlArr)) {
-                                array_walk($colSqlArr, 'trim');
-                                $colSql = implode(",\n", $colSqlArr);
+                                $colSqlArr = array_map('trim', $colSqlArr);
+                                $colSql = implode(",\n    ", $colSqlArr);
                             }
                             
-                            var_dump($colSql);
+                            // var_dump($colSql);
                         }
                         
                         $tblSqlArr[] = strtr(
@@ -97,9 +127,11 @@ EOD
                 }
                 
                 if (!empty($tblSqlArr)) {
-                    array_walk($tblSqlArr, 'trim');
+                    $tblSqlArr = array_map('trim', $tblSqlArr);
                     $tblSql = implode("\n\n", $tblSqlArr);
                 }
+                
+                var_dump($tblSql);
                 
                 $schSqlArr[] = strtr(
 <<<EOD
@@ -116,7 +148,7 @@ EOD
             }
         }
         
-        array_walk($schSqlArr, 'trim');
+        $schSqlArr = array_map('trim', $schSqlArr);
         $schSql = implode("\n\n", $schSqlArr);
     }
 }
