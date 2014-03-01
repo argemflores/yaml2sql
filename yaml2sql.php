@@ -22,10 +22,14 @@ $input = json_decode(json_encode(Spyc::YAMLLoad($inputFile)));
 
 $sql = '';
 
+$cmtSqlArr = [];
+
 if (!empty($input->database)) {
     $database = $input->database;
     $dbSql = '';
-
+    
+    $dbName = pg_escape_string($database->name);
+    
     $dbSql = strtr(
 <<<EOD
 create database "{dbName}"
@@ -34,12 +38,26 @@ create database "{dbName}"
     lc_ctype = '{dbLcCtype}';
 EOD
         , [
-            '{dbName}' => pg_escape_string($database->name),
+            '{dbName}' => $dbName,
             '{dbEncoding}' => pg_escape_string($database->encoding),
             '{dbLcCollate}' => pg_escape_string($database->lc_collate),
             '{dbLcCtype}' => pg_escape_string($database->lc_ctype),
         ]
     );
+    
+    if (!empty($database->comment)) {
+        $cmtSqlArr[] = strtr(
+<<<EOD
+comment on {objType} {objName}
+    is '{cmtVal}';
+EOD
+            , [
+                '{objType}' => 'database',
+                '{objName}' => '"' . $dbName . '"',
+                '{cmtVal}' => pg_escape_string($database->comment),
+            ]
+        );
+    }
 
     if (!empty($database->schema)) {
         $schemas = $database->schema;
@@ -50,6 +68,20 @@ EOD
             if (!empty($schema->name)) {
                 $schName = pg_escape_string($schema->name);
                 
+                if (!empty($schema->comment)) {
+                    $cmtSqlArr[] = strtr(
+<<<EOD
+comment on {objType} {objName}
+    is '{cmtVal}';
+EOD
+                        , [
+                            '{objType}' => 'schema',
+                            '{objName}' => '"' . $schName . '"',
+                            '{cmtVal}' => pg_escape_string($schema->comment),
+                        ]
+                    );
+                }
+                
                 $tblSqlArr = [];
                 $tblSql = '';
                 
@@ -59,8 +91,23 @@ EOD
                     foreach ($tables as $tblIdx => $table) {
                         $tblName = pg_escape_string($table->name);
                         
+                        if (!empty($table->comment)) {
+                            $cmtSqlArr[] = strtr(
+<<<EOD
+comment on {objType} {objName}
+    is '{cmtVal}';
+EOD
+                                , [
+                                    '{objType}' => 'table',
+                                    '{objName}' => '"' . $schName . '"."' . $tblName . '"',
+                                    '{cmtVal}' => pg_escape_string($table->comment),
+                                ]
+                            );
+                        }
+                        
                         if (!empty($table->column)) {
                             $columns = $table->column;
+                            
                             $colSqlArr = [];
                             $colSql = '';
                             
@@ -88,6 +135,20 @@ EOD
                                         }
                                         
                                         $colAttributes .= ' default ' . $colDefaultValue . ' ';
+                                    }
+                                    
+                                    if (!empty($column->comment)) {
+                                        $cmtSqlArr[] = strtr(
+<<<EOD
+comment on {objType} {objName}
+    is '{cmtVal}';
+EOD
+                                            , [
+                                                '{objType}' => 'column',
+                                                '{objName}' => '"' . $schName . '"."' . $tblName . '"."' . $colName . '"',
+                                                '{cmtVal}' => pg_escape_string($column->comment),
+                                            ]
+                                        );
                                     }
                                     
                                     // if (!empty($column->primary_key)) {
@@ -213,6 +274,21 @@ EOD
                                         ]));
                                     }
                                     
+                                    if (!empty($constraint->comment)) {
+                                        $cmtSqlArr[] = strtr(
+<<<EOD
+comment on {objType} {objName} on {objTable}
+    is '{cmtVal}';
+EOD
+                                            , [
+                                                '{objType}' => 'constraint',
+                                                '{objName}' => '"' . $cstName . '"',
+                                                '{objTable}' => '"' . $schName . '"."' . $tblName . '"',
+                                                '{cmtVal}' => pg_escape_string($constraint->comment),
+                                            ]
+                                        );
+                                    }
+                                    
                                     $cstSqlArr[] = strtr(
 <<<EOD
 alter table "{schName}"."{tblName}"
@@ -257,16 +333,32 @@ EOD
                                     }
                                     
                                     if (empty($index->name)) {
-                                        $idxName = strtr('{table}_{column}_idx', [
+                                        $idxName = strtr('{schema}_{table}_{column}_idx', [
+                                            '{schema}' => $schName,
                                             '{table}' => $tblName,
                                             '{column}' => $idxColumnName,
                                         ]);
                                     }
                                     else {
                                         $idxName = strtr($index->name, [
+                                            '{schema}' => $schName,
                                             '{table}' => $tblName,
                                             '{column}' => $idxColumnName,
                                         ]);
+                                    }
+                                    
+                                    if (!empty($index->comment)) {
+                                        $cmtSqlArr[] = strtr(
+<<<EOD
+comment on {objType} {objName}
+    is '{cmtVal}';
+EOD
+                                            , [
+                                                '{objType}' => 'index',
+                                                '{objName}' => '"' . $idxName . '"',
+                                                '{cmtVal}' => pg_escape_string($index->comment),
+                                            ]
+                                        );
                                     }
                                     
                                     $idxSqlArr[] = strtr(
@@ -324,4 +416,11 @@ EOD
     }
 }
 
-echo $dbSql, "\n\n", $schSql, "\n\n", $tblSql, "\n";
+if (!empty($cmtSqlArr)) {
+    $cmtSqlArr = array_map(function(&$val) {
+        return str_replace('  ', ' ', trim($val));
+    }, $cmtSqlArr);
+    $cmtSql = implode("\n\n", $cmtSqlArr);
+}
+
+echo $dbSql, "\n\n", $schSql, "\n\n", $tblSql, "\n\n", $cmtSql, "\n";
