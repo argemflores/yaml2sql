@@ -19,6 +19,7 @@ $sql = '';
 
 if (!empty($input->database)) {
     $database = $input->database;
+    $dbSql = '';
 
     $dbSql = strtr(
 <<<EOD
@@ -39,24 +40,57 @@ EOD
     if (!empty($database->schema)) {
         $schemas = $database->schema;
         $schSqlArr = [];
+        $schSql = '';
 
         foreach ($schemas as $schema) {
             if (!empty($schema->name)) {
                 if (!empty($schema->table)) {
                     $tables = $schema->table;
                     $tblSqlArr = [];
+                    $tblSql = '';
                     
                     foreach ($tables as $table) {
+                        if (!empty($table->column)) {
+                            $columns = $table->column;
+                            $colSqlArr = [];
+                            $colSql = '';
+                            
+                            foreach ($columns as $column) {
+                                if (!empty($column->name) and !empty($column->type)) {
+                                    $colName = pg_escape_string($column->name);
+                                    $colType = $column->type;
+                                    
+                                    $colSqlArr[] = strtr(
+<<<EOD
+"{colName}" {colType}
+EOD
+                                        , [
+                                            '{colName}' => $colName,
+                                            '{colType}' => $colType,
+                                        ]
+                                    );
+                                }
+                            }
+                            
+                            if (!empty($colSqlArr)) {
+                                array_walk($colSqlArr, 'trim');
+                                $colSql = implode(",\n", $colSqlArr);
+                            }
+                            
+                            var_dump($colSql);
+                        }
+                        
                         $tblSqlArr[] = strtr(
 <<<EOD
 create table "{schName}"."{tblName}" (
-    
+    {tblColumn}
 )
 ;
 EOD
                             , [
                                 '{schName}' => pg_escape_string($schema->name),
                                 '{tblName}' => pg_escape_string($table->name),
+                                '{tblColumn}' => $colSql,
                             ]
                         );
                     }
@@ -86,5 +120,3 @@ EOD
         $schSql = implode("\n\n", $schSqlArr);
     }
 }
-
-var_dump($tblSql);
