@@ -13,15 +13,34 @@ database:
             name: develop
             comment: Develop schema
             table:
-                - &commit
-                    name: commit
-                    comment: Commit table
+                - &user_table
+                    name: user
+                    comment: Users
                     column:
                         - &id_column
                             name: id
                             comment: Primary key
                             type: serial
                             primary_key: true
+                        - &username_column
+                            name: username
+                            type: varchar
+                            not_null: true
+                        - &email_column
+                            name: email
+                            type: varchar
+                            not_null: true
+                    constraint:
+                        - &id_constraint
+                            name: user_id_pkey
+                            comment: Primary key constraint
+                            type: primary_key
+                            column: id
+                - &commit_table
+                    name: commit
+                    comment: Commit table
+                    column:
+                        - *id_column
                         - &stage_column
                             name: stage
                             comment: Stage area
@@ -38,7 +57,19 @@ database:
                             type: timestamp
                             not_null: true
                             default_value: now()
-                        - &commiter_id_column
-                            name: commiter_id
+                        - &committer_id_column
+                            name: committer_id
                             type: integer
                             not_null: true
+                    constraint:
+                        -
+                            <<: *id_constraint
+                            name: commit_id_pkey
+                        - &commit_committer_id_fkey
+                            name: commit_committer_id_fkey
+                            comment: Commiter foreign key constraint
+                            type: foreign_key
+                            column: commiter_id
+                            attributes:
+                                foreign_table: user
+                                foreign_column: id
