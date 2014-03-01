@@ -34,16 +34,35 @@ database: &database_name
                             default_value:
                             primary_key:
                     constraint:
-                        - &constraint_name
+                        - &constraint_primary_key
                             name:
                             comment:
-                            type: # primary_key, foreign_key, check, unique, exclude
+                            type: # primary_key, unique
                             column:
+                        - &constraint_foreign_key
+                            name:
+                            comment:
+                            type: # foreign_key
+                            column:
+                            attributes:
+                                foreign_table:
+                                foreign_column:
+                                on_delete:
+                                on_update:
+                                match_type:
+                        - &constraint_check
+                            name:
+                            comment:
+                            type: # check
+                            column:
+                            attributes:
+                                no_inherit:
+                                expression:
                     index:
                         - &index_name
                             name:
                             comment:
-                            options:
+                            attributes:
                             column:
                     rule:
                         - &rule_name
@@ -69,8 +88,3 @@ database: &database_name
                             name:
                             comment:
                             column:
-                            foreign_table:
-                            foreign_column:
-                            on_delete:
-                            on_update:
-                            match_type:
