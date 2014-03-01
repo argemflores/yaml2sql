@@ -1,10 +1,10 @@
 dictionary:
 database:
-    name: 'yaml2sql'
-    comment: 'YAML to SQL Database'
-    encoding: 'UTF8'
-    lc_collate: 'C'
-    lc_ctype: 'C'
+    name: yaml2sql
+    comment: YAML to SQL Database
+    encoding: UTF8
+    lc_collate: C
+    lc_ctype: C
     schema:
         - &master_schema
             name: master_schema
@@ -21,7 +21,6 @@ database:
                             name: id
                             comment: Primary key
                             type: serial
-                            primary_key: true
                         - &stage_column
                             name: stage
                             comment: Stage area
