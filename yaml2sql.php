@@ -41,37 +41,37 @@ EOD
         $schemas = $database->schema;
         $schSqlArr = [];
         $schSql = '';
-
-        foreach ($schemas as $schema) {
+        
+        foreach ($schemas as $schIdx => $schema) {
             if (!empty($schema->name)) {
+                $schName = pg_escape_string($schema->name);
+                
                 $tblSqlArr = [];
                 $tblSql = '';
                 
                 if (!empty($schema->table)) {
                     $tables = $schema->table;
                     
-                    foreach ($tables as $table) {
+                    foreach ($tables as $tblIdx => $table) {
+                        $tblName = pg_escape_string($table->name);
+                        
                         if (!empty($table->column)) {
                             $columns = $table->column;
                             $colSqlArr = [];
                             $colSql = '';
                             
-                            foreach ($columns as $column) {
+                            foreach ($columns as $colIdx => $column) {
                                 if (!empty($column->name) and !empty($column->type)) {
                                     $colName = pg_escape_string($column->name);
                                     $colType = $column->type;
-                                    $colLength = '';
-                                    $colNotNull = '';
-                                    $colDefaultValue = '';
-                                    $colPrimaryKey = '';
-                                    $colIndexed = '';
+                                    $colAttributes = '';
                                     
                                     if (!empty($column->length)) {
                                         $colType = $colType . '(' . $column->length . ')';
                                     }
                                     
-                                    if (!empty($column->not_null)) {
-                                        $colNotNull = 'not null';
+                                    if (!empty($column->not_null) or !empty($column->primary_key)) {
+                                        $colAttributes .= ' not null ';
                                     }
                                     
                                     if (!empty($column->default_value)) {
@@ -83,46 +83,135 @@ EOD
                                             $colDefaultValue = "'" . pg_escape_string($column->default_value) . "'";
                                         }
                                         
-                                        $colDefaultValue = 'default ' . $colDefaultValue;
+                                        $colAttributes .= ' default ' . $colDefaultValue . ' ';
                                     }
                                     
-                                    
+                                    // if (!empty($column->primary_key)) {
+                                    //     $colAttributes .= ' primary key ';
+                                    // }
                                     
                                     $colSqlArr[] = strtr(
 <<<EOD
-"{colName}" {colType} {colNotNull} {colDefaultValue}
+"{colName}" {colType} {colAttributes}
 EOD
                                         , [
                                             '{colName}' => $colName,
                                             '{colType}' => $colType,
-                                            '{colNotNull}' => $colNotNull,
-                                            '{colDefaultValue}' => $colDefaultValue,
+                                            '{colAttributes}' => $colAttributes,
                                         ]
                                     );
                                 }
                             }
                             
                             if (!empty($colSqlArr)) {
-                                $colSqlArr = array_map('trim', $colSqlArr);
+                                $colSqlArr = array_map(function(&$val) {
+                                    return str_replace('  ', ' ', trim($val));
+                                }, $colSqlArr);
                                 $colSql = implode(",\n    ", $colSqlArr);
                             }
-                            
-                            // var_dump($colSql);
                         }
                         
-                        $tblSqlArr[] = strtr(
+                        $tblSqlArr[$tblIdx] = strtr(
 <<<EOD
 create table "{schName}"."{tblName}" (
     {tblColumn}
-)
-;
+) with (
+    oids = false
+);
 EOD
                             , [
-                                '{schName}' => pg_escape_string($schema->name),
-                                '{tblName}' => pg_escape_string($table->name),
+                                '{schName}' => $schName,
+                                '{tblName}' => $tblName,
                                 '{tblColumn}' => $colSql,
                             ]
                         );
+                        
+                        if (!empty($table->constraint)) {
+                            $constraintArr = $table->constraint;
+                            $cstSqlArr = [];
+                            $cstSql = '';
+                            
+                            foreach ($constraintArr as $cstIdx => $constraint) {
+                                if (!empty($constraint->name) and !empty($constraint->type) and !empty($constraint->column)) {
+                                    $cstName = pg_escape_string($constraint->name);
+
+                                    $cstAttributes = '';
+
+                                    switch ($constraint->type) {
+                                        case 'primary_key':
+                                            $cstType = 'primary key';
+                                            break;
+                                        
+                                        case 'foreign_key':
+                                            $cstType = 'foreign key';
+                                            
+                                            if (!empty($constraint->attributes)) {
+                                                $attributes = $constraint->attributes;
+                                                
+                                                if (!empty($attributes->foreign_table) and !empty($attributes->foreign_column)) {
+                                                    if (is_array($attributes->foreign_column)) {
+                                                        $cstForeignColumn = '"' . implode('", "', $attributes->foreign_column) . '"';
+                                                    }
+                                                    else {
+                                                        $cstForeignColumn = '"' . $attributes->foreign_column . '"';
+                                                    }
+                                                    
+                                                    if (!empty($attributes->match_type)) {
+                                                        $cstMatchType = 'match ' . $attributes->match_type;
+                                                    }
+                                                    else {
+                                                        $cstMatchType = 'match simple';
+                                                    }
+                                                    
+                                                    $cstAttributes = strtr(
+<<<EOD
+references "{cstForeignTable}" ({cstForeignColumn}) {cstMatchType}
+EOD
+                                                        , [
+                                                            '{cstForeignTable}' => pg_escape_string($attributes->foreign_table),
+                                                            '{cstForeignColumn}' => $cstForeignColumn,
+                                                            '{cstMatchType}' => $cstMatchType,
+                                                        ]
+                                                    );
+                                                }
+                                            }
+                                    }
+                                    
+                                    if (is_array($constraint->column)) {
+                                        $cstColumn = '"' . implode('", "', $constraint->column) . '"';
+                                    }
+                                    else {
+                                        $cstColumn = '"' . $constraint->column . '"';
+                                    }
+                                    
+                                    $cstSqlArr[] = strtr(
+<<<EOD
+alter table "{schName}"."{tblName}"
+    add constraint "{cstName}"
+    {cstType} ({cstColumn})
+    {cstAttributes}
+EOD
+                                        , [
+                                            '{schName}' => $schName,
+                                            '{tblName}' => $tblName,
+                                            '{cstName}' => $cstName,
+                                            '{cstType}' => $cstType,
+                                            '{cstColumn}' => $cstColumn,
+                                            '{cstAttributes}' => $cstAttributes,
+                                        ]
+                                    );
+                                }
+                            }
+                            
+                            if (!empty($cstSqlArr)) {
+                                $cstSqlArr = array_map(function(&$val) {
+                                    return str_replace('  ', ' ', trim($val));
+                                }, $cstSqlArr);
+                                $cstSql = implode(";\n", $cstSqlArr) . ';';
+                            }
+                        }
+                        
+                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql;
                     }
                 }
                 
@@ -141,7 +230,7 @@ comment on schema "{schName}"
 ;
 EOD
                     , [
-                        '{schName}' => pg_escape_string($schema->name),
+                        '{schName}' => $schName,
                         '{schComment}' => pg_escape_string($schema->comment),
                     ]
                 );
