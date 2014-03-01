@@ -35,6 +35,31 @@ EOD
             '{dbLcCtype}' => pg_escape_string($database->lc_ctype),
         ]
     );
+
+    if (!empty($database->schema)) {
+        $schemas = $database->schema;
+        $schSqlArr = [];
+
+        foreach ($schemas as $schema) {
+            if (!empty($schema->name)) {
+                $schSqlArr[] = strtr(
+<<<EOD
+create schema "{schName}";
+comment on schema "{schName}"
+    is '{schComment}'
+;
+EOD
+                    , [
+                        '{schName}' => pg_escape_string($schema->name),
+                        '{schComment}' => pg_escape_string($schema->comment),
+                    ]
+                );
+            }
+        }
+        
+        array_walk($schSqlArr, 'trim');
+        $schSql = implode("\n\n", $schSqlArr);
+    }
 }
 
-var_dump($dbSql);
+var_dump($schSql);
