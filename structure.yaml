@@ -32,8 +32,6 @@ database: &database_name
                             length:
                             not_null:
                             default_value:
-                            primary_key:
-                            indexed:
                     relation:
                         - &relation_name
                             name:
