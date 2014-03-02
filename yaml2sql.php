@@ -205,11 +205,13 @@ EOD
                                         case 'primary_key':
                                             $cstType = 'primary key';
                                             $cstSuffix = 'pkey';
+                                            $objType = 'index';
                                             break;
                                         
                                         case 'foreign_key':
                                             $cstType = 'foreign key';
                                             $cstSuffix = 'fkey';
+                                            $objType = 'constraint';
                                             
                                             if (!empty($constraint->attributes)) {
                                                 $attributes = $constraint->attributes;
@@ -274,16 +276,25 @@ EOD
                                         ]));
                                     }
                                     
+                                    switch ($constraint->type) {
+                                        case 'primary_key':
+                                            $objName = '"' . $schName . '"."' . $cstName . '"';
+                                            break;
+                                        case 'foreign_key':
+                                            $objName = '"' . $cstName . '" on "' . $schName . '"."' . $tblName . '"';
+                                            break;
+                                    }
+                                    
                                     if (!empty($constraint->comment)) {
                                         $cmtSqlArr[] = strtr(
 <<<EOD
-comment on {objType} {objName} on {objTable}
+comment on {objType} {objName}
     is '{cmtVal}';
 EOD
                                             , [
-                                                '{objType}' => 'constraint',
-                                                '{objName}' => '"' . $cstName . '"',
-                                                '{objTable}' => '"' . $schName . '"."' . $tblName . '"',
+                                                '{objType}' => $objType, # 'constraint',
+                                                '{objName}' => $objName, # '"' . $schName . '"."' . $cstName . '"'
+                                                // '{objTable}' => '"' . $schName . '"."' . $tblName . '"',
                                                 '{cmtVal}' => pg_escape_string($constraint->comment),
                                             ]
                                         );
@@ -333,15 +344,13 @@ EOD
                                     }
                                     
                                     if (empty($index->name)) {
-                                        $idxName = strtr('{schema}_{table}_{column}_idx', [
-                                            '{schema}' => $schName,
+                                        $idxName = strtr('{table}_{column}_idx', [
                                             '{table}' => $tblName,
                                             '{column}' => $idxColumnName,
                                         ]);
                                     }
                                     else {
                                         $idxName = strtr($index->name, [
-                                            '{schema}' => $schName,
                                             '{table}' => $tblName,
                                             '{column}' => $idxColumnName,
                                         ]);
@@ -355,7 +364,7 @@ comment on {objType} {objName}
 EOD
                                             , [
                                                 '{objType}' => 'index',
-                                                '{objName}' => '"' . $idxName . '"',
+                                                '{objName}' => '"' . $schName . '"."' . $idxName . '"',
                                                 '{cmtVal}' => pg_escape_string($index->comment),
                                             ]
                                         );
@@ -400,12 +409,9 @@ EOD
                 $schSqlArr[$schIdx] = strtr(
 <<<EOD
 create schema "{schName}";
-comment on schema "{schName}"
-    is '{schComment}';
 EOD
                     , [
                         '{schName}' => $schName,
-                        '{schComment}' => pg_escape_string($schema->comment),
                     ]
                 );
             }
