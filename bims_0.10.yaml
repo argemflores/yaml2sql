@@ -1,82 +1,107 @@
 dictionary:
     column:
-        - &id_column
+        - &id_col
             name: id
             type: serial
             not_null: true
             comment: Locally unique primary key
-        - &abbrev_column
+        - &abbrev_col
             name: abbrev
             type: varchar
             length: 128
             not_null: true
             comment: Short name identifier or abbreviation
-        - &name_column
+        - &name_col
             name: name
             type: varchar
             length: 128
             not_null: true
             comment: Name identifier
-        - &description_column
+        - &description_col
             name: description
             type: text
             comment: Description
-        - &remarks_column
+        - &remarks_col
             name: remarks
             type: text
             comment: Additional details
-        - &creation_timestamp_column
+        - &creation_timestamp_col
             name: creation_timestamp
             type: timestamp
             not_null: true
             comment: Timestamp when the record was added to the table
-        - &creator_id_column
+        - &creator_id_col
             name: creator_id
             type: integer
             not_null: true
             comment: ID of the user who added the record to the table
-        - &modification_timestamp_column
+        - &modification_timestamp_col
             name: modification_timestamp
             type: timestamp
             not_null: true
             comment: Timestamp when the record was last modified
-        - &modifier_id_column
+        - &modifier_id_col
             name: modifier_id
             type: integer
             not_null: true
             comment: ID of the user who last modified the record
-        - &notes_column
+        - &notes_col
             name: notes
             type: text
             comment: Additional details added by an admin; can be technical or advanced details
-        - &is_void_column
+        - &is_void_col
             name: is_void
             type: boolean
             default_value: false
             not_null: true
             comment: Indicator whether the record is deleted or not
+        - &order_no_col
+            name: order_no
+            type: integer
+            not_null: true
+            default_value: 1
+            comment: Ordering number
     constraint:
-        - &id_constraint
+        - &id_cst
             name: {table}_id_pkey
             type: primary_key
             column: id
             comment: Primary key constraint for the id column
-        - &creator_id_fkey_constraint
+        - &creator_id_fkey_cst
             name: {table}_creator_id_fkey
             type: foreign_key
             column: creator_id
             comment: Foreign key constraint for the creator_id column, which refers to the master.user.id table
-        - &modifier_id_fkey_constraint
+        - &modifier_id_fkey_cst
             name: {table}_modifier_id_fkey
             type: foreign_key
             column: modifier_id
             comment: Foreign key constraint for the modifier_id column, which refers to the master.user.id table
     index:
-        - &abbrev_index
+        - &abbrev_idx
             name: {schema}_{table}_abbrev_idx
             column: abbrev
             unique: true
             comment: Unique index for the abbrev column
+    table:
+        - &default_tbl
+            name: {table}
+            column: &default_tbl_col
+                - *id_col
+                - *abbrev_col
+                - *name_col
+                - *description_col
+                - *creation_timestamp_col
+                - *creator_id_col
+                - *modification_timestamp_col
+                - *modifier_id_col
+                - *notes_col
+                - *is_void_col
+            constraint: &default_tbl_cst
+                - *id_cst
+            index: &default_tbl_idx
+                - *abbrev_idx
+            comment:
 database: &bims_0.10
     name: bims_0.10
     comment: 'BIMS: Breeding Information Management System'
@@ -84,25 +109,58 @@ database: &bims_0.10
     lc_collate: C
     lc_ctype: C
     schema:
-        - &master_schema
+        - &master_sch
             name: master
             comment: Stores master data, which are absolutely correct and does not change frequently
             table:
-                - &pipeline_table
-                    name: pipeline
-                    comment: Pipeline
+                - &program_tbl
+                    <<: *default_tbl
+                    name: program
+                    comment: Programs for product-development profiles
+                - &place_tbl
+                    <<: *default_tbl
+                    name: place
+                    comment: Places and locations
+                - &phase_tbl
+                    <<: *default_tbl
+                    name: phase
+                    comment: Breeding phases
                     column:
-                        - *id_column
-                        - *abbrev_column
-                        - *name_column
-                        - *description_column
-                        - *creation_timestamp_column
-                        - *creator_id_column
-                        - *modification_timestamp_column
-                        - *modifier_id_column
-                        - *notes_column
-                        - *is_void_column
-                    constraint:
-                        - *id_constraint
-                    index:
-                        - *abbrev_index
+                        <<: *default_tbl_col
+                        - *order_no_col
+                - &product_tbl
+                    <<: *default_tbl
+                    name: product
+                    comment: Product catalog
+                    column:
+                        <<: *default_tbl_col
+                        - &gid_col
+                            name: gid
+                            type: integer
+                            not_null: true
+                        - &type_col
+                            name: type
+                            type: varchar
+                            not_null: true
+                        - &authority_col
+                            name: authority
+                            type: varchar
+                            not_null: true
+                        - &generation_col
+                            name: generation
+                            type: integer
+                        - &iris_preferred_id_col
+                            name: iris_preferred_id
+                            type: varchar
+                        - &breeding_line_name_col
+                            name: breeding_line_name_id
+                            type: varchar
+                        - &fixed_line_name_col
+                            name: fixed_line_name
+                            type: varchar
+                        - &common_name_col
+                            name: common_name
+                            type: varchar
+                        - &cultivar_name_col
+                            name: cultivar_name
+                            type: varchar
