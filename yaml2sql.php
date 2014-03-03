@@ -180,13 +180,14 @@ EOD
 create table "{schName}"."{tblName}" (
     {tblColumn}
 ) with (
-    oids = false
+    oids = {tblWithOids}
 );
 EOD
                             , [
                                 '{schName}' => $schName,
                                 '{tblName}' => $tblName,
                                 '{tblColumn}' => $colSql,
+                                '{tblWithOids}' => !empty($table->with_oids) ? $table->with_oids : 'false',
                             ]
                         );
                         
