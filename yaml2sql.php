@@ -39,9 +39,9 @@ create database "{dbName}"
 EOD
         , [
             '{dbName}' => $dbName,
-            '{dbEncoding}' => pg_escape_string($database->encoding),
-            '{dbLcCollate}' => pg_escape_string($database->lc_collate),
-            '{dbLcCtype}' => pg_escape_string($database->lc_ctype),
+            '{dbEncoding}' => pg_escape_string(!empty($database->encoding) ? $database->encoding : 'UTF8'),
+            '{dbLcCollate}' => pg_escape_string(!empty($database->lc_collate) ? $database->lc_collate : 'C'),
+            '{dbLcCtype}' => pg_escape_string(!empty($database->lc_ctype) ? $database->lc_ctype : 'C'),
         ]
     );
     
@@ -112,9 +112,9 @@ EOD
                             $colSql = '';
                             
                             foreach ($columns as $colIdx => $column) {
-                                if (!empty($column->name) and !empty($column->type)) {
+                                if (!empty($column->name) and !empty($column->data_type)) {
                                     $colName = pg_escape_string($column->name);
-                                    $colType = $column->type;
+                                    $colType = $column->data_type;
                                     $colAttributes = '';
                                     
                                     if (!empty($column->length)) {
@@ -126,8 +126,7 @@ EOD
                                     }
                                     
                                     if (!empty($column->default_value)) {
-                                        if (strpos($column->default_value, '()') > 0
-                                            || in_array($column->default_value, ['true', 'false'])) {
+                                        if (strpos($column->default_value, '()') > 0) {
                                             $colDefaultValue = $column->default_value;
                                         }
                                         else {
@@ -397,13 +396,13 @@ EOD
                             }
                         }
                         
-                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql;
+                        $tblSqlArr[$tblIdx] .= "\n" . $cstSql . "\n" . $idxSql;
                     }
                 }
                 
                 if (!empty($tblSqlArr)) {
                     $tblSqlArr = array_map('trim', $tblSqlArr);
-                    $tblSql = implode("\n\n", $tblSqlArr);
+                    $tblSql = implode("\n\n-- ----------------\n\n", $tblSqlArr);
                 }
                 
                 $schSqlArr[$schIdx] = strtr(
@@ -429,4 +428,7 @@ if (!empty($cmtSqlArr)) {
     $cmtSql = implode("\n\n", $cmtSqlArr);
 }
 
-echo $dbSql, "\n\n", $schSql, "\n\n", $tblSql, "\n\n", $cmtSql, "\n";
+// echo $dbSql, "\n\n", $schSql, "\n\n", $tblSql, "\n\n", $cmtSql, "\n";
+echo $dbSql, "\n\n-- --------------------------------\n\n",
+    $schSql, "\n\n-- --------------------------------\n\n",
+    $tblSql, "\n\n";
