@@ -213,8 +213,8 @@ EOD
                                             $cstSuffix = 'fkey';
                                             $objType = 'constraint';
                                             
-                                            if (!empty($constraint->attributes)) {
-                                                $attributes = $constraint->attributes;
+                                            if (!empty($constraint->other_attributes)) {
+                                                $attributes = $constraint->other_attributes;
                                                 
                                                 if (!empty($attributes->foreign_table) and !empty($attributes->foreign_column)) {
                                                     if (strpos($attributes->foreign_table, '.')) {
@@ -397,7 +397,7 @@ EOD
                             }
                         }
                         
-                        $tblSqlArr[$tblIdx] .= "\n" . $cstSql . "\n" . $idxSql;
+                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql;
                     }
                 }
                 
@@ -433,3 +433,4 @@ if (!empty($cmtSqlArr)) {
 echo $dbSql, "\n\n-- --------------------------------\n\n",
     $schSql, "\n\n-- --------------------------------\n\n",
     $tblSql, "\n\n";
+// var_dump(json_encode(Spyc::YAMLLoad($inputFile)));
