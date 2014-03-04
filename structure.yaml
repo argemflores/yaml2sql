@@ -84,3 +84,8 @@ database: &database_name
                             function:
                             argument:
                             condition:
+            view:
+                - &view_name
+                    name:
+                    comment:
+                    body:
