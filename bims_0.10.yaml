@@ -287,30 +287,52 @@ database: &bims_0.10
                     column:
                         <<: *def_id_tbl_col
                         - *database_id
-                        - &schema_id
-                            name: schema_id
-                            data_type: integer
-                            not_null: true
+                        # - &schema_id
+                        #     name: schema_id
+                        #     data_type: integer
+                        #     not_null: true
                         <<: *def_meta_tbl_col
                         - *comment_col
                         <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                     constraint:
                         <<: *schema_tbl_cst
-                        - &schema_fkey_cst
-                            name: schema_fkey_cst
-                            type: foreign_key
-                            column: schema_id
-                            comment: Schema containing the table
-                            other_attributes:
-                                foreign_table: dictionary.schema
-                                foreign_column: id
+                        # - &schema_fkey_cst
+                        #     name: schema_fkey_cst
+                        #     type: foreign_key
+                        #     column: schema_id
+                        #     comment: Schema containing the table
+                        #     other_attributes:
+                        #         foreign_table: dictionary.schema
+                        #         foreign_column: id
                 - &column_tbl
-                    <<: *def_tbl_col
+                    <<: *def_tbl
                     name: column
                     comment: Columns of a table
                     column:
                         <<: *def_id_tbl_col
                         <<: *def_meta_tbl_col
+                        - &data_type_col
+                            name: data_type
+                            data_type: varchar
+                            length: 32
+                            not_null: true
+                            comment: Type of data the column can store
+                        - &length_col
+                            name: length
+                            data_type: varchar
+                            length: 32
+                            comment: Maximum character size for text data types or precision for numeric data types
+                        - &not_null_col
+                            name: not_null
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
+                            comment: Whether the column will not allow null values
+                        - &default_value_col
+                            name: default_value
+                            data_type: varchar
+                            comment: Default value to fill in the column if value is not explicitly provided
+                        - *comment_col
                         <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
