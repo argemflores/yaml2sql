@@ -71,13 +71,13 @@ database: &database_name
                             event:
                             execution:
                             condition:
-                            definition:
+                            command:
                     trigger:
                         - &trigger_name
                             name:
                             comment:
                             enabled:
-                            type:
+                            execution:
                             for_each:
                             event:
                             function:
