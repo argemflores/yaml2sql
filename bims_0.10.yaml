@@ -70,6 +70,21 @@ dictionary:
             name: comment
             data_type: text
             comment: Additional details
+        - &database_id_col
+            name: database_id
+            data_type: integer
+            not_null: true
+            comment: ID of the database where the record belongs to
+        - &schema_id_col
+            name: scheme_id
+            data_type: integer
+            not_null: true
+            comment: ID of the schema where the record belongs to
+        - &table_id_col
+            name: table_id
+            data_type: integer
+            not_null: true
+            comment: ID of the table where the record belongs to
     constraint:
         - &id_pkey_cst
             name: {table}_id_pkey
@@ -80,23 +95,50 @@ dictionary:
             name: {table}_creator_id_fkey
             type: foreign_key
             column: creator_id
-            comment: Foreign key constraint for the creator_id column, which refers to the id column of master.user table
-            attributes:
+            comment: 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table'
+            other_attributes:
                 foreign_table: master.user
                 foreign_column: id
         - &modifier_id_fkey_cst
-            name: {table}_modifier_id_fkey
+            name: '{table}_modifier_id_fkey'
             type: foreign_key
             column: modifier_id
-            comment: Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table
-            attributes:
+            comment: 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table'
+            other_attributes:
                 foreign_table: master.user
                 foreign_column: id
         - &user_id_fkey_cst
-            name: {table}_user_id_fkey
+            name: '{table}_user_id_fkey'
             type: foreign_key
             column: user_id
-            comment: Foreign key constraint for the user_id column, which refers to the id column of the master.user table
+            comment: 'Foreign key constraint for the user_id column, which refers to the id column of the master.user table'
+            other_attributes:
+                foreign_table: master.user
+                foreign_column: id
+        - &database_id_fkey_cst
+            name: '{table}_database_id_fkey'
+            type: foreign_key
+            column: database_id
+            comment: 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table'
+            other_attributes:
+                foreign_table: dictionary.database
+                foreign_column: id
+        - &schema_id_fkey_cst
+            name: '{table}_schema_id_fkey'
+            type: foreign_key
+            column: schema_id
+            comment: 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table'
+            other_attributes:
+                foreign_table: dictionary.schema
+                foreign_column: id
+        - &table_id_fkey_cst
+            name: '{table}_table_id_fkey'
+            type: foreign_key
+            column: table_id
+            comment: 'Foreign key constraint for the table_id column, which refers to the id column of the dictionary.table table'
+            other_attributes:
+                foreign_table: dictionary.table
+                foreign_column: id
     index:
         - &abbrev_idx
             name: {table}_abbrev_idx
@@ -161,9 +203,9 @@ database: &bims_0.10
     lc_collate: C
     lc_ctype: C
     schema:
-        - &dictionary_sch
-            name: dictionary
-            comment:
+        - &master_sch
+            name: master
+            comment: 'Stores master data, which are absolutely correct data that does not change frequently'
             table:
                 - &user_tbl
                     <<: *def_tbl
@@ -219,7 +261,7 @@ database: &bims_0.10
                             name: user_type
                             data_type: integer
                             not_null: true
-                        <<: *def_desc_tbl_col
+                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                     index:
                         - &email_idx
@@ -230,7 +272,11 @@ database: &bims_0.10
                             name: user_username_idx
                             column: username
                             unique: true
-                        <<: *def_tbl_idx
+                        <<: *def_log_tbl_idx
+        - &dictionary_sch
+            name: dictionary
+            comment:
+            table:
                 - &database_tbl
                     <<: *def_tbl
                     name: database
@@ -262,55 +308,35 @@ database: &bims_0.10
                     comment: Schemas in a database
                     column:
                         <<: *def_id_tbl_col
-                        - &database_id
-                            name: database_id
-                            data_type: integer
-                            not_null: true
-                        <<: *def_meta_tbl_col
-                        - *comment_col
-                        <<: *def_desc_tbl_col
-                        <<: *def_log_tbl_col
-                    constraint: &schema_tbl_cst
-                        - &database_fkey_cst
-                            name: database_fkey_cst
-                            type: foreign_key
-                            column: database_id
-                            comment: Database containing the schema
-                            other_attributes:
-                                foreign_table: dictionary.database
-                                foreign_column: id
-                        <<: *def_tbl_cst
-                - &table_tbl
-                    <<: *def_tbl_col
-                    name: table
-                    comment: Tables in a schema
-                    column:
-                        <<: *def_id_tbl_col
-                        - *database_id
-                        # - &schema_id
-                        #     name: schema_id
-                        #     data_type: integer
-                        #     not_null: true
+                        # - *database_id_col
                         <<: *def_meta_tbl_col
                         - *comment_col
                         <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                     constraint:
-                        <<: *schema_tbl_cst
-                        # - &schema_fkey_cst
-                        #     name: schema_fkey_cst
-                        #     type: foreign_key
-                        #     column: schema_id
-                        #     comment: Schema containing the table
-                        #     other_attributes:
-                        #         foreign_table: dictionary.schema
-                        #         foreign_column: id
+                        # - *database_id_fkey_cst
+                        <<: *def_tbl_cst
+                - &table_tbl
+                    <<: *def_tbl
+                    name: table
+                    comment: Tables in a schema
+                    column:
+                        <<: *def_id_tbl_col
+                        # - *database_id_col
+                        # - *schema_id_col
+                        <<: *def_meta_tbl_col
+                        - *comment_col
+                        <<: *def_desc_tbl_col
+                        <<: *def_log_tbl_col
                 - &column_tbl
                     <<: *def_tbl
                     name: column
                     comment: Columns of a table
                     column:
                         <<: *def_id_tbl_col
+                        # - *database_id_col
+                        # - *schema_id_col
+                        # - *table_id_col
                         <<: *def_meta_tbl_col
                         - &data_type_col
                             name: data_type
@@ -334,5 +360,145 @@ database: &bims_0.10
                             data_type: varchar
                             comment: Default value to fill in the column if value is not explicitly provided
                         - *comment_col
-                        <<: *def_desc_tbl_col
+                        # <<: *def_desc_tbl_col
+                        <<: *def_log_tbl_col
+                    constraint:
+                        # - *database_id_fkey_cst
+                        # - *schema_id_fkey_cst
+                        # - *table_id_fkey_cst
+                        <<: *def_tbl_cst
+                - &constraint_tbl
+                    <<: *def_tbl
+                    name: constraint
+                    comment: Constraints of table columns
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - &type_col
+                            name: type
+                            data_type: varchar
+                            comment: 'Primary key, foreign key, or check constraint'
+                        - &column_col
+                            name: column
+                            data_type: varchar
+                            comment: Subject column of the constraint
+                        - *comment_col
+                        # foreign tables and columns table_constraint
+                        # <<: *def_desc_tbl_col
+                        <<: *def_log_tbl_col
+                - &index_tbl
+                    <<: *def_tbl
+                    name: index
+                    comment: Indexes of table columns
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        -
+                            <<: *column_col
+                            comment: Subject column of the index
+                        - &using_col
+                            name: using
+                            data_type: varchar
+                            comment: Algorithm to use in indexing
+                        - &unique_col
+                            name: unique
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
+                            comment: Whether the index is unique or not
+                        - &concurrent_col
+                            name: concurrent
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
+                            comment: Whether the index is concurrent or not
+                        - *comment_col
+                        # <<: *def_desc_tbl_col
+                        <<: *def_log_tbl_col
+                - &rule_tbl
+                    <<: *def_tbl
+                    name: rule
+                    comment: Rules
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - &event_col
+                            name: event
+                            data_type: varchar
+                            length: 16
+                            not_null: true
+                            default_value: select # insert, update, delete
+                            comment: At what event/s the rule will be applied
+                        - # &execution_col
+                            name: execution
+                            data_type: varchar
+                            length: 8
+                            not_null: true
+                            default_value: also
+                            comment: Execution type of the rule
+                        - &condition_col
+                            name: condition
+                            data_type: text
+                            comment: Conditional expression of the rule
+                        - &command_col
+                            name: command
+                            data_type: text
+                            comment: SQL body command of the rule
+                        - *comment_col
+                        # <<: *def_desc_tbl_col
+                        <<: *def_log_tbl_col
+                - &trigger_tbl
+                    <<: *def_tbl
+                    name: trigger
+                    comment: Triggers
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - &enabled_col
+                            name: enabled
+                            data_type: boolean
+                            not_null: true
+                            default_value: true
+                            comment: Whether the trigger is enabled to execute or not
+                        - # &execution_col
+                            name: execution
+                            data_type: varchar
+                            not_null: true
+                            default_value: before
+                            comment: Execution type of trigger
+                        - &for_each_col
+                            name: for_each
+                            data_type: varchar
+                            not_null: true
+                            default_value: row
+                            comment: Apply trigger for each row or statement
+                        -
+                            <<: *event_col
+                            default_value: insert # update, delete
+                            comment: At what event/s the trigger will be executed
+                        - &function_col
+                            name: function
+                            data_type: varchar
+                            not_null: true
+                        - &argument_col
+                            name: argument
+                            data_type: varchar
+                        - &condition_col
+                            name: condition
+                            data_type: varchar
+                        - *comment_col
+                        # <<: *def_desc_tbl_col
+                        <<: *def_log_tbl_col
+                - &view_tbl
+                    <<: *def_tbl
+                    name: view
+                    comment: Views
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        -
+                            <<: *command_col
+                            comment: SQL body command of the view
+                        - *comment_col
+                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
