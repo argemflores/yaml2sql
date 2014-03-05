@@ -74,17 +74,27 @@ dictionary:
             name: database_id
             data_type: integer
             not_null: true
-            comment: ID of the database where the record belongs to
+            comment: ID of the database to use as reference key
         - &schema_id_col
-            name: scheme_id
+            name: schema_id
             data_type: integer
             not_null: true
-            comment: ID of the schema where the record belongs to
+            comment: ID of the schema to use as reference key
         - &table_id_col
             name: table_id
             data_type: integer
             not_null: true
-            comment: ID of the table where the record belongs to
+            comment: ID of the table to use as reference key
+        - &column_id_col
+            name: column_id
+            data_type: integer
+            not_null: true
+            comment: ID of the column to use as reference key
+        - &constraint_id_col
+            name: constraint_id
+            data_type: integer
+            not_null: true
+            comment: ID of the constraint to use as reference key
     constraint:
         - &id_pkey_cst
             name: {table}_id_pkey
@@ -139,6 +149,22 @@ dictionary:
             other_attributes:
                 foreign_table: dictionary.table
                 foreign_column: id
+        - &column_id_fkey_cst
+            name: '{table}_column_id_fkey'
+            type: foreign_key
+            column: column_id
+            comment: 'Foreign key constraint for the column_id column, which refers to the id column of the dictionary.column table'
+            other_attributes:
+                foreign_table: dictionary.column
+                foreign_column: id
+        - &constraint_id_fkey_cst
+            name: '{table}_constraint_id_fkey'
+            type: foreign_key
+            column: constraint_id
+            comment: 'Foreign key constraint for the constraint_id column, which refers to the id column of the dictionary.constraint table'
+            other_attributes:
+                foreign_table: dictionary.constraint
+                foreign_column: id
     index:
         - &abbrev_idx
             name: {table}_abbrev_idx
@@ -153,8 +179,28 @@ dictionary:
             name: {table}_user_id_idx
             column: user_id
             comment: Index for the user_id column
+        - &database_id_idx
+            name: {table}_database_id_idx
+            column: database_id
+            comment: Index for the database_id column
+        - &schema_id_idx
+            name: {table}_schema_id_idx
+            column: schema_id
+            comment: Index for the schema_id column
+        - &table_id_idx
+            name: {table}_table_id_idx
+            column: table_id
+            comment: Index for the table_id column
+        - &column_id_idx
+            name: {table}_column_id_idx
+            column: column_id
+            comment: Index for the column_id column
+        - &constraint_id_idx
+            name: {table}_constraint_id_idx
+            column: constraint_id
+            comment: Index for the constraint_id column
     custom:
-        column_set:
+        column:
             - &def_id_tbl_col
                 - *id_col
             - &def_meta_tbl_col
@@ -170,13 +216,13 @@ dictionary:
                 - *modifier_id_col
                 - *notes_col
                 - *is_void_col
-        constraint_set:
+        constraint:
             - &def_ident_tbl_cst
                 - *id_pkey_cst
             - &def_log_tbl_cst
                 - *creator_id_fkey_cst
                 - *modifier_id_fkey_cst
-        index_set:
+        index:
             - &def_ident_tbl_idx
                 - *abbrev_idx
             - &def_log_tbl_idx
@@ -502,3 +548,171 @@ database: &bims_0.10
                         - *comment_col
                         # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
+                - &sequence_tbl
+                    <<: *def_tbl
+                    name: sequence
+                    comment: Sequences
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - &value_col
+                            name: value
+                            data_type: integer
+                            not_null: true
+                            default_value: 1
+                        - &increment_col
+                            name: increment
+                            data_type: integer
+                            not_null: true
+                            default_value: 1
+                        - &maximum_value_col
+                            name: maximum_value
+                            data_type: integer
+                            not_null: true
+                            default_value: 9223372036854775807
+                        - &minimum_value_col
+                            name: minimum_value
+                            data_type: integer
+                            not_null: true
+                            default_value: 1
+                        - &cache_col
+                            name: cache
+                            data_type: integer
+                            not_null: true
+                            default_value: 1
+                        - &cycle_col
+                            name: cycle
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
+                        - *comment_col
+                        <<: *def_log_tbl_col
+                - &function_tbl
+                    <<: *def_tbl
+                    name: function
+                    comment: Functions
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - &returns_col
+                            name: cycle
+                            data_type: varchar
+                            not_null: true
+                            default_value: single_value
+                        - &return_type_col
+                            name: return_type
+                            data_type: varchar
+                            not_null: true
+                            default_value: varchar
+                        - &language_col
+                            name: language
+                            data_type: varchar
+                            not_null: true
+                            default_value: plpgsql
+                        - &strict_col
+                            name: strict
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
+                        - &execution_privileges_col
+                            name: execution_privileges
+                            data_type: varchar
+                            not_null: true
+                            default_value: invoker
+                        - &stability_col
+                            name: stability
+                            data_type: varchar
+                            not_null: true
+                            default_value: volatile
+                        - *comment_col
+                        <<: *def_log_tbl_col
+                - &database_schema_tbl
+                    <<: *def_tbl
+                    name: database_schema
+                    comment: Schemas in a database
+                    column:
+                        <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
+                        <<: *def_log_tbl_col
+                    constraint:
+                        <<: *def_ident_tbl_cst
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        <<: *def_log_tbl_cst
+                    index:
+                        - *database_id_idx
+                        - *schema_id_idx
+                        <<: *def_log_tbl_idx
+                - &schema_table_tbl
+                    <<: *def_tbl
+                    name: schema_table
+                    comment: Tables in a schema
+                    column:
+                        <<: *def_id_tbl_col
+                        - *schema_id_col
+                        - *table_id_col
+                        <<: *def_log_tbl_col
+                    constraint:
+                        <<: *def_ident_tbl_cst
+                        - *schema_id_fkey_cst
+                        - *table_id_fkey_cst
+                        <<: *def_log_tbl_cst
+                    index:
+                        - *schema_id_idx
+                        - *table_id_idx
+                        <<: *def_log_tbl_idx
+                - &table_column_tbl
+                    <<: *def_tbl
+                    name: table_column
+                    comment: Columns in a table
+                    column:
+                        <<: *def_id_tbl_col
+                        - *table_id_col
+                        - *column_id_col
+                        <<: *def_log_tbl_col
+                    constraint:
+                        <<: *def_ident_tbl_cst
+                        - *table_id_fkey_cst
+                        - *column_id_fkey_cst
+                        <<: *def_log_tbl_cst
+                    index:
+                        - *table_id_idx
+                        - *column_id_idx
+                        <<: *def_log_tbl_idx
+                - &column_constraint_tbl
+                    <<: *def_tbl
+                    name: column_constraint
+                    comment: Constraints of columns
+                    column:
+                        <<: *def_id_tbl_col
+                        - *column_id_col
+                        - *constraint_id_col
+                        <<: *def_log_tbl_col
+                    constraint:
+                        <<: *def_ident_tbl_cst
+                        - *column_id_fkey_cst
+                        - *constraint_id_fkey_cst
+                        <<: *def_log_tbl_cst
+                    index:
+                        - *column_id_idx
+                        - *constraint_id_idx
+                        <<: *def_log_tbl_idx
+                - &column_index_tbl
+                    <<: *def_tbl
+                    name: column_index
+                    comment: Indexes of columns
+                    column:
+                        <<: *def_id_tbl_col
+                        - *column_id_col
+                        - *index_id_col
+                        <<: *def_log_tbl_col
+                    constraint:
+                        <<: *def_ident_tbl_cst
+                        - *column_id_fkey_cst
+                        - *index_id_fkey_cst
+                        <<: *def_log_tbl_cst
+                    index:
+                        - *column_id_idx
+                        - *index_id_idx
+                        <<: *def_log_tbl_idx
