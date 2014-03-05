@@ -95,6 +95,11 @@ dictionary:
             data_type: integer
             not_null: true
             comment: ID of the constraint to use as reference key
+        - &index_id_col
+            name: index_id
+            data_type: integer
+            not_null: true
+            comment: ID of the index to use as reference key
     constraint:
         - &id_pkey_cst
             name: {table}_id_pkey
@@ -165,6 +170,14 @@ dictionary:
             other_attributes:
                 foreign_table: dictionary.constraint
                 foreign_column: id
+        - &index_id_fkey_cst
+            name: '{table}_index_id_fkey'
+            type: foreign_key
+            column: index_id
+            comment: 'Foreign key constraint for the index_id column, which refers to the id column of the dictionary.index table'
+            other_attributes:
+                foreign_table: dictionary.index
+                foreign_column: id
     index:
         - &abbrev_idx
             name: {table}_abbrev_idx
@@ -199,6 +212,10 @@ dictionary:
             name: {table}_constraint_id_idx
             column: constraint_id
             comment: Index for the constraint_id column
+        - &index_id_idx
+            name: {table}_index_id_idx
+            column: index_id
+            comment: Index for the index_id column
     custom:
         column:
             - &def_id_tbl_col
@@ -326,7 +343,7 @@ database: &bims_0.10
                 - &database_tbl
                     <<: *def_tbl
                     name: database
-                    comment: Databases
+                    comment: Data sources
                     column:
                         <<: *def_id_tbl_col
                         <<: *def_meta_tbl_col
@@ -346,7 +363,6 @@ database: &bims_0.10
                             data_type: varchar
                             not_null: true
                             default_value: C
-                        <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                 - &schema_tbl
                     <<: *def_tbl
@@ -354,13 +370,11 @@ database: &bims_0.10
                     comment: Schemas in a database
                     column:
                         <<: *def_id_tbl_col
-                        # - *database_id_col
                         <<: *def_meta_tbl_col
                         - *comment_col
                         <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                     constraint:
-                        # - *database_id_fkey_cst
                         <<: *def_tbl_cst
                 - &table_tbl
                     <<: *def_tbl
@@ -368,8 +382,6 @@ database: &bims_0.10
                     comment: Tables in a schema
                     column:
                         <<: *def_id_tbl_col
-                        # - *database_id_col
-                        # - *schema_id_col
                         <<: *def_meta_tbl_col
                         - *comment_col
                         <<: *def_desc_tbl_col
@@ -380,9 +392,6 @@ database: &bims_0.10
                     comment: Columns of a table
                     column:
                         <<: *def_id_tbl_col
-                        # - *database_id_col
-                        # - *schema_id_col
-                        # - *table_id_col
                         <<: *def_meta_tbl_col
                         - &data_type_col
                             name: data_type
@@ -406,12 +415,8 @@ database: &bims_0.10
                             data_type: varchar
                             comment: Default value to fill in the column if value is not explicitly provided
                         - *comment_col
-                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                     constraint:
-                        # - *database_id_fkey_cst
-                        # - *schema_id_fkey_cst
-                        # - *table_id_fkey_cst
                         <<: *def_tbl_cst
                 - &constraint_tbl
                     <<: *def_tbl
@@ -428,9 +433,12 @@ database: &bims_0.10
                             name: column
                             data_type: varchar
                             comment: Subject column of the constraint
+                        - &command_col
+                            name: command
+                            data_type: text
+                            comment: SQL body command of the constraint
                         - *comment_col
                         # foreign tables and columns table_constraint
-                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                 - &index_tbl
                     <<: *def_tbl
@@ -459,7 +467,6 @@ database: &bims_0.10
                             default_value: false
                             comment: Whether the index is concurrent or not
                         - *comment_col
-                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                 - &rule_tbl
                     <<: *def_tbl
@@ -486,12 +493,10 @@ database: &bims_0.10
                             name: condition
                             data_type: text
                             comment: Conditional expression of the rule
-                        - &command_col
-                            name: command
-                            data_type: text
+                        - # &command_col
+                            <<: *command_col
                             comment: SQL body command of the rule
                         - *comment_col
-                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                 - &trigger_tbl
                     <<: *def_tbl
@@ -533,7 +538,6 @@ database: &bims_0.10
                             name: condition
                             data_type: varchar
                         - *comment_col
-                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                 - &view_tbl
                     <<: *def_tbl
@@ -546,7 +550,6 @@ database: &bims_0.10
                             <<: *command_col
                             comment: SQL body command of the view
                         - *comment_col
-                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                 - &sequence_tbl
                     <<: *def_tbl
@@ -626,6 +629,70 @@ database: &bims_0.10
                             default_value: volatile
                         - *comment_col
                         <<: *def_log_tbl_col
+                - &domain_tbl
+                    <<: *def_tbl
+                    name: domain
+                    comment: Domains
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - *data_type_col
+                        - *not_null_col
+                        - *default_value_col
+                        - &collation_col
+                            name: collation
+                            data_type: varchar
+                            not_null: true
+                            default_value: pg_catalog.C
+                        - *comment_col
+                        <<: *def_log_tbl_col
+                - &aggregate_tbl
+                    <<: *def_tbl
+                    name: aggregate
+                    comment: Aggregates
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - &base_type_col
+                            name: base_type
+                            data_type: varchar
+                            not_null: true
+                            default_value: integer
+                        - &state_type_col
+                            name: state_type
+                            data_type: varchar
+                            not_null: true
+                            default_value: integer
+                        - &state_function_id_col
+                            name: state_function_id
+                            data_type: integer
+                            not_null: true
+                        - &final_function_id_col
+                            name: final_function_id
+                            data_type: integer
+                        - &initial_condition_col
+                            name: initial_condition
+                            data_type: text
+                        - *comment_col
+                        <<: *def_log_tbl_col
+                    constraint:
+                        - &state_function_id_cst
+                            name: aggregate_state_function_id_fkey
+                            type: foreign_key
+                            column: state_function_id
+                            comment: 'Foreign key constraint for the state_function_id column, which refers to the id column of dictionary.function table'
+                            other_attributes:
+                                foreign_table: master.function
+                                foreign_column: id
+                        - &final_function_id_cst
+                            name: aggregate_final_function_id_fkey
+                            type: foreign_key
+                            column: final_function_id
+                            comment: 'Foreign key constraint for the final_function_id column, which refers to the id column of dictionary.function table'
+                            other_attributes:
+                                foreign_table: master.function
+                                foreign_column: id
+                        <<: *def_tbl_cst
                 - &database_schema_tbl
                     <<: *def_tbl
                     name: database_schema
