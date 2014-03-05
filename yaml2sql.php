@@ -239,14 +239,34 @@ EOD
                                                         $cstMatchType = 'match simple';
                                                     }
                                                     
+                                                    if (!empty($attributes->on_update)) {
+                                                        $cstOnUpdate = 'on update ' . $attributes->match_type;
+                                                    }
+                                                    else {
+                                                        $cstOnUpdate = 'on update cascade';
+                                                    }
+                                                    
+                                                    if (!empty($attributes->on_delete)) {
+                                                        $cstOnDelete = 'on delete ' . $attributes->match_type;
+                                                    }
+                                                    else {
+                                                        $cstOnDelete = 'on delete cascade';
+                                                    }
+
+                                                    
                                                     $cstAttributes = strtr(
 <<<EOD
-references {cstForeignTable} ({cstForeignColumn}) {cstMatchType}
+references {cstForeignTable} ({cstForeignColumn})
+    {cstMatchType}
+    {cstOnUpdate}
+    {cstOnDelete}
 EOD
                                                         , [
                                                             '{cstForeignTable}' => $cstForeignTable,
                                                             '{cstForeignColumn}' => $cstForeignColumn,
                                                             '{cstMatchType}' => $cstMatchType,
+                                                            '{cstOnUpdate}' => $cstOnUpdate,
+                                                            '{cstOnDelete}' => $cstOnDelete,
                                                         ]
                                                     );
                                                 }
@@ -431,6 +451,7 @@ if (!empty($cmtSqlArr)) {
 
 // echo $dbSql, "\n\n", $schSql, "\n\n", $tblSql, "\n\n", $cmtSql, "\n";
 echo $dbSql, "\n\n-- --------------------------------\n\n",
-    $schSql, "\n\n-- --------------------------------\n\n",
-    $tblSql, "\n\n";
+    // $schSql, "\n\n-- --------------------------------\n\n"; // ,
+    $schSql, "\n\n"; // ,
+    // $tblSql, "\n\n";
 // var_dump(json_encode(Spyc::YAMLLoad($inputFile)));
