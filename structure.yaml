@@ -27,11 +27,10 @@ database: &database_name
                         - &column_name
                             name:
                             comment:
-                            type:
+                            data_type:
                             length:
                             not_null:
                             default_value:
-                            primary_key:
                     constraint:
                         - &constraint_primary_key
                             name:
