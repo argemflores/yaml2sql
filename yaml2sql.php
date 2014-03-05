@@ -257,9 +257,7 @@ EOD
                                                     $cstAttributes = strtr(
 <<<EOD
 references {cstForeignTable} ({cstForeignColumn})
-    {cstMatchType}
-    {cstOnUpdate}
-    {cstOnDelete}
+    {cstMatchType} {cstOnUpdate} {cstOnDelete}
 EOD
                                                         , [
                                                             '{cstForeignTable}' => $cstForeignTable,
@@ -324,8 +322,7 @@ EOD
 <<<EOD
 alter table "{schName}"."{tblName}"
     add constraint "{cstName}"
-    {cstType} ({cstColumn})
-    {cstAttributes}
+    {cstType} ({cstColumn}) {cstAttributes}
 EOD
                                         , [
                                             '{schName}' => $schName,
