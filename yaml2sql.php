@@ -429,9 +429,12 @@ EOD
                 $schSqlArr[$schIdx] = strtr(
 <<<EOD
 create schema "{schName}";
+
+{tblSql}
 EOD
                     , [
                         '{schName}' => $schName,
+                        '{tblSql}' => $tblSql,
                     ]
                 );
             }
