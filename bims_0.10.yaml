@@ -370,11 +370,13 @@ database: &bims_0.10
                     comment: Schemas in a database
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
                         <<: *def_meta_tbl_col
                         - *comment_col
                         <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                     constraint:
+                        - *database_id_fkey_cst
                         <<: *def_tbl_cst
                 - &table_tbl
                     <<: *def_tbl
@@ -382,16 +384,25 @@ database: &bims_0.10
                     comment: Tables in a schema
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
                         <<: *def_meta_tbl_col
                         - *comment_col
                         <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        <<: *def_tbl_cst
                 - &column_tbl
                     <<: *def_tbl
                     name: column
                     comment: Columns of a table
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
+                        - *table_id_col
                         <<: *def_meta_tbl_col
                         - &data_type_col
                             name: data_type
@@ -417,6 +428,9 @@ database: &bims_0.10
                         - *comment_col
                         <<: *def_log_tbl_col
                     constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        - *table_id_fkey_cst
                         <<: *def_tbl_cst
                 - &constraint_tbl
                     <<: *def_tbl
@@ -424,14 +438,16 @@ database: &bims_0.10
                     comment: Constraints of table columns
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
+                        - *table_id_col
                         <<: *def_meta_tbl_col
                         - &type_col
                             name: type
                             data_type: varchar
                             comment: 'Primary key, foreign key, or check constraint'
-                        - &column_col
-                            name: column
-                            data_type: varchar
+                        - # &column_id_col
+                            <<: *column_id_col
                             comment: Subject column of the constraint
                         - &command_col
                             name: command
@@ -440,15 +456,24 @@ database: &bims_0.10
                         - *comment_col
                         # foreign tables and columns table_constraint
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        - *table_id_fkey_cst
+                        - *column_id_fkey_cst
+                        <<: *def_tbl_cst
                 - &index_tbl
                     <<: *def_tbl
                     name: index
                     comment: Indexes of table columns
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
+                        - *table_id_col
                         <<: *def_meta_tbl_col
-                        -
-                            <<: *column_col
+                        - # &column_id_col
+                            <<: *column_id_col
                             comment: Subject column of the index
                         - &using_col
                             name: using
@@ -468,12 +493,21 @@ database: &bims_0.10
                             comment: Whether the index is concurrent or not
                         - *comment_col
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        - *table_id_fkey_cst
+                        - *column_id_fkey_cst
+                        <<: *def_tbl_cst
+                    cons
                 - &rule_tbl
                     <<: *def_tbl
                     name: rule
                     comment: Rules
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
                         <<: *def_meta_tbl_col
                         - &event_col
                             name: event
@@ -498,12 +532,18 @@ database: &bims_0.10
                             comment: SQL body command of the rule
                         - *comment_col
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        <<: *def_tbl_cst
                 - &trigger_tbl
                     <<: *def_tbl
                     name: trigger
                     comment: Triggers
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
                         <<: *def_meta_tbl_col
                         - &enabled_col
                             name: enabled
@@ -539,24 +579,36 @@ database: &bims_0.10
                             data_type: varchar
                         - *comment_col
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        <<: *def_tbl_cst
                 - &view_tbl
                     <<: *def_tbl
                     name: view
                     comment: Views
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
                         <<: *def_meta_tbl_col
-                        -
+                        - # &command_col
                             <<: *command_col
                             comment: SQL body command of the view
                         - *comment_col
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        <<: *def_tbl_cst
                 - &sequence_tbl
                     <<: *def_tbl
                     name: sequence
                     comment: Sequences
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
                         <<: *def_meta_tbl_col
                         - &value_col
                             name: value
@@ -590,12 +642,18 @@ database: &bims_0.10
                             default_value: false
                         - *comment_col
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        <<: *def_tbl_cst
                 - &function_tbl
                     <<: *def_tbl
                     name: function
                     comment: Functions
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
                         <<: *def_meta_tbl_col
                         - &returns_col
                             name: cycle
@@ -629,12 +687,18 @@ database: &bims_0.10
                             default_value: volatile
                         - *comment_col
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        <<: *def_tbl_cst
                 - &domain_tbl
                     <<: *def_tbl
                     name: domain
                     comment: Domains
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
                         <<: *def_meta_tbl_col
                         - *data_type_col
                         - *not_null_col
@@ -646,12 +710,18 @@ database: &bims_0.10
                             default_value: pg_catalog.C
                         - *comment_col
                         <<: *def_log_tbl_col
+                    constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
+                        <<: *def_tbl_cst
                 - &aggregate_tbl
                     <<: *def_tbl
                     name: aggregate
                     comment: Aggregates
                     column:
                         <<: *def_id_tbl_col
+                        - *database_id_col
+                        - *schema_id_col
                         <<: *def_meta_tbl_col
                         - &base_type_col
                             name: base_type
@@ -676,6 +746,8 @@ database: &bims_0.10
                         - *comment_col
                         <<: *def_log_tbl_col
                     constraint:
+                        - *database_id_fkey_cst
+                        - *schema_id_fkey_cst
                         - &state_function_id_cst
                             name: aggregate_state_function_id_fkey
                             type: foreign_key
