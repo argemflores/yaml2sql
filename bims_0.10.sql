@@ -35,18 +35,12 @@ alter table "master"."user"
   primary key ("id");
 alter table "master"."user"
   add constraint "user_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "master"."user"
   add constraint "user_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "user_email_idx"
   on "master"."user"
@@ -58,6 +52,8 @@ create index "user_is_void_idx"
   on "master"."user"
   using btree ("is_void");
 
+-- --------------------------------
+
 create schema "dictionary";
 
 create table "dictionary"."database" (
@@ -68,8 +64,6 @@ create table "dictionary"."database" (
     "encoding" varchar not null default 'UTF8',
     "lc_collate" varchar not null default 'C',
     "lc_ctype" varchar not null default 'C',
-    "description" text,
-    "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
     "modification_timestamp" timestamp not null,
@@ -85,18 +79,12 @@ alter table "dictionary"."database"
   primary key ("id");
 alter table "dictionary"."database"
   add constraint "database_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."database"
   add constraint "database_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "database_abbrev_idx"
   on "dictionary"."database"
@@ -109,6 +97,7 @@ create index "database_is_void_idx"
 
 create table "dictionary"."schema" (
     "id" serial not null,
+    "database_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "comment" text,
@@ -125,22 +114,20 @@ create table "dictionary"."schema" (
 );
 
 alter table "dictionary"."schema"
+  add constraint "schema_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."schema"
   add constraint "schema_id_pkey"
   primary key ("id");
 alter table "dictionary"."schema"
   add constraint "schema_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."schema"
   add constraint "schema_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "schema_abbrev_idx"
   on "dictionary"."schema"
@@ -153,6 +140,8 @@ create index "schema_is_void_idx"
 
 create table "dictionary"."table" (
     "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "comment" text,
@@ -169,27 +158,39 @@ create table "dictionary"."table" (
 );
 
 alter table "dictionary"."table"
+  add constraint "table_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."table"
+  add constraint "table_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."table"
   add constraint "table_id_pkey"
   primary key ("id");
 alter table "dictionary"."table"
   add constraint "table_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."table"
   add constraint "table_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "table_abbrev_idx"
+  on "dictionary"."table"
+  using btree ("abbrev");
+create index "table_is_void_idx"
+  on "dictionary"."table"
+  using btree ("is_void");
 
 -- ----------------
 
 create table "dictionary"."column" (
     "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
+    "table_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "data_type" varchar(32) not null,
@@ -208,22 +209,28 @@ create table "dictionary"."column" (
 );
 
 alter table "dictionary"."column"
+  add constraint "column_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column"
+  add constraint "column_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column"
+  add constraint "column_table_id_fkey"
+  foreign key ("table_id") references "dictionary"."table" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column"
   add constraint "column_id_pkey"
   primary key ("id");
 alter table "dictionary"."column"
   add constraint "column_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."column"
   add constraint "column_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "column_abbrev_idx"
   on "dictionary"."column"
@@ -236,10 +243,14 @@ create index "column_is_void_idx"
 
 create table "dictionary"."constraint" (
     "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
+    "table_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "type" varchar,
-    "column" varchar,
+    "column_id" integer not null,
+    "command" text,
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
@@ -252,22 +263,32 @@ create table "dictionary"."constraint" (
 );
 
 alter table "dictionary"."constraint"
+  add constraint "constraint_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint"
+  add constraint "constraint_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint"
+  add constraint "constraint_table_id_fkey"
+  foreign key ("table_id") references "dictionary"."table" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint"
+  add constraint "constraint_column_id_fkey"
+  foreign key ("column_id") references "dictionary"."column" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint"
   add constraint "constraint_id_pkey"
   primary key ("id");
 alter table "dictionary"."constraint"
   add constraint "constraint_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."constraint"
   add constraint "constraint_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "constraint_abbrev_idx"
   on "dictionary"."constraint"
@@ -280,9 +301,12 @@ create index "constraint_is_void_idx"
 
 create table "dictionary"."index" (
     "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
+    "table_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
-    "column" varchar,
+    "column_id" integer not null,
     "using" varchar,
     "unique" boolean not null,
     "concurrent" boolean not null,
@@ -298,22 +322,32 @@ create table "dictionary"."index" (
 );
 
 alter table "dictionary"."index"
+  add constraint "index_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."index"
+  add constraint "index_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."index"
+  add constraint "index_table_id_fkey"
+  foreign key ("table_id") references "dictionary"."table" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."index"
+  add constraint "index_column_id_fkey"
+  foreign key ("column_id") references "dictionary"."column" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."index"
   add constraint "index_id_pkey"
   primary key ("id");
 alter table "dictionary"."index"
   add constraint "index_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."index"
   add constraint "index_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "index_abbrev_idx"
   on "dictionary"."index"
@@ -326,6 +360,8 @@ create index "index_is_void_idx"
 
 create table "dictionary"."rule" (
     "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "event" varchar(16) not null default 'select',
@@ -344,22 +380,24 @@ create table "dictionary"."rule" (
 );
 
 alter table "dictionary"."rule"
+  add constraint "rule_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."rule"
+  add constraint "rule_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."rule"
   add constraint "rule_id_pkey"
   primary key ("id");
 alter table "dictionary"."rule"
   add constraint "rule_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."rule"
   add constraint "rule_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "rule_abbrev_idx"
   on "dictionary"."rule"
@@ -372,6 +410,8 @@ create index "rule_is_void_idx"
 
 create table "dictionary"."trigger" (
     "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "enabled" boolean not null default '1',
@@ -393,22 +433,24 @@ create table "dictionary"."trigger" (
 );
 
 alter table "dictionary"."trigger"
+  add constraint "trigger_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."trigger"
+  add constraint "trigger_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."trigger"
   add constraint "trigger_id_pkey"
   primary key ("id");
 alter table "dictionary"."trigger"
   add constraint "trigger_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."trigger"
   add constraint "trigger_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "trigger_abbrev_idx"
   on "dictionary"."trigger"
@@ -421,6 +463,8 @@ create index "trigger_is_void_idx"
 
 create table "dictionary"."view" (
     "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "command" text,
@@ -436,27 +480,472 @@ create table "dictionary"."view" (
 );
 
 alter table "dictionary"."view"
+  add constraint "view_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."view"
+  add constraint "view_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."view"
   add constraint "view_id_pkey"
   primary key ("id");
 alter table "dictionary"."view"
   add constraint "view_creator_id_fkey"
-  foreign key ("creator_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 alter table "dictionary"."view"
   add constraint "view_modifier_id_fkey"
-  foreign key ("modifier_id")
-  references "master"."user" ("id")
-  match simple
-  on update cascade
-  on delete cascade;
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "view_abbrev_idx"
   on "dictionary"."view"
   using btree ("abbrev");
 create index "view_is_void_idx"
   on "dictionary"."view"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."sequence" (
+    "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(128) not null,
+    "value" integer not null default '1',
+    "increment" integer not null default '1',
+    "maximum_value" integer not null default '2147483647',
+    "minimum_value" integer not null default '1',
+    "cache" integer not null default '1',
+    "cycle" boolean not null,
+    "comment" text,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."sequence"
+  add constraint "sequence_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."sequence"
+  add constraint "sequence_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."sequence"
+  add constraint "sequence_id_pkey"
+  primary key ("id");
+alter table "dictionary"."sequence"
+  add constraint "sequence_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."sequence"
+  add constraint "sequence_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "sequence_abbrev_idx"
+  on "dictionary"."sequence"
+  using btree ("abbrev");
+create index "sequence_is_void_idx"
+  on "dictionary"."sequence"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."function" (
+    "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(128) not null,
+    "cycle" varchar not null default 'single_value',
+    "return_type" varchar not null default 'varchar',
+    "language" varchar not null default 'plpgsql',
+    "strict" boolean not null,
+    "execution_privileges" varchar not null default 'invoker',
+    "stability" varchar not null default 'volatile',
+    "comment" text,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."function"
+  add constraint "function_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."function"
+  add constraint "function_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."function"
+  add constraint "function_id_pkey"
+  primary key ("id");
+alter table "dictionary"."function"
+  add constraint "function_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."function"
+  add constraint "function_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "function_abbrev_idx"
+  on "dictionary"."function"
+  using btree ("abbrev");
+create index "function_is_void_idx"
+  on "dictionary"."function"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."domain" (
+    "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(128) not null,
+    "data_type" varchar(32) not null,
+    "not_null" boolean not null,
+    "default_value" varchar,
+    "collation" varchar not null default 'pg_catalog.C',
+    "comment" text,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."domain"
+  add constraint "domain_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."domain"
+  add constraint "domain_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."domain"
+  add constraint "domain_id_pkey"
+  primary key ("id");
+alter table "dictionary"."domain"
+  add constraint "domain_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."domain"
+  add constraint "domain_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "domain_abbrev_idx"
+  on "dictionary"."domain"
+  using btree ("abbrev");
+create index "domain_is_void_idx"
+  on "dictionary"."domain"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."aggregate" (
+    "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(128) not null,
+    "base_type" varchar not null default 'integer',
+    "state_type" varchar not null default 'integer',
+    "state_function_id" integer not null,
+    "final_function_id" integer,
+    "initial_condition" text,
+    "comment" text,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."aggregate"
+  add constraint "aggregate_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."aggregate"
+  add constraint "aggregate_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."aggregate"
+  add constraint "aggregate_state_function_id_fkey"
+  foreign key ("state_function_id") references "dictionary"."function" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."aggregate"
+  add constraint "aggregate_final_function_id_fkey"
+  foreign key ("final_function_id") references "dictionary"."function" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."aggregate"
+  add constraint "aggregate_id_pkey"
+  primary key ("id");
+alter table "dictionary"."aggregate"
+  add constraint "aggregate_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."aggregate"
+  add constraint "aggregate_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "aggregate_abbrev_idx"
+  on "dictionary"."aggregate"
+  using btree ("abbrev");
+create index "aggregate_is_void_idx"
+  on "dictionary"."aggregate"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."database_schema" (
+    "id" serial not null,
+    "database_id" integer not null,
+    "schema_id" integer not null,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."database_schema"
+  add constraint "database_schema_id_pkey"
+  primary key ("id");
+alter table "dictionary"."database_schema"
+  add constraint "database_schema_database_id_fkey"
+  foreign key ("database_id") references "dictionary"."database" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."database_schema"
+  add constraint "database_schema_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."database_schema"
+  add constraint "database_schema_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."database_schema"
+  add constraint "database_schema_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "database_schema_database_id_idx"
+  on "dictionary"."database_schema"
+  using btree ("database_id");
+create index "database_schema_schema_id_idx"
+  on "dictionary"."database_schema"
+  using btree ("schema_id");
+create index "database_schema_is_void_idx"
+  on "dictionary"."database_schema"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."schema_table" (
+    "id" serial not null,
+    "schema_id" integer not null,
+    "table_id" integer not null,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."schema_table"
+  add constraint "schema_table_id_pkey"
+  primary key ("id");
+alter table "dictionary"."schema_table"
+  add constraint "schema_table_schema_id_fkey"
+  foreign key ("schema_id") references "dictionary"."schema" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."schema_table"
+  add constraint "schema_table_table_id_fkey"
+  foreign key ("table_id") references "dictionary"."table" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."schema_table"
+  add constraint "schema_table_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."schema_table"
+  add constraint "schema_table_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "schema_table_schema_id_idx"
+  on "dictionary"."schema_table"
+  using btree ("schema_id");
+create index "schema_table_table_id_idx"
+  on "dictionary"."schema_table"
+  using btree ("table_id");
+create index "schema_table_is_void_idx"
+  on "dictionary"."schema_table"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."table_column" (
+    "id" serial not null,
+    "table_id" integer not null,
+    "column_id" integer not null,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."table_column"
+  add constraint "table_column_id_pkey"
+  primary key ("id");
+alter table "dictionary"."table_column"
+  add constraint "table_column_table_id_fkey"
+  foreign key ("table_id") references "dictionary"."table" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."table_column"
+  add constraint "table_column_column_id_fkey"
+  foreign key ("column_id") references "dictionary"."column" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."table_column"
+  add constraint "table_column_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."table_column"
+  add constraint "table_column_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "table_column_table_id_idx"
+  on "dictionary"."table_column"
+  using btree ("table_id");
+create index "table_column_column_id_idx"
+  on "dictionary"."table_column"
+  using btree ("column_id");
+create index "table_column_is_void_idx"
+  on "dictionary"."table_column"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."column_constraint" (
+    "id" serial not null,
+    "column_id" integer not null,
+    "constraint_id" integer not null,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."column_constraint"
+  add constraint "column_constraint_id_pkey"
+  primary key ("id");
+alter table "dictionary"."column_constraint"
+  add constraint "column_constraint_column_id_fkey"
+  foreign key ("column_id") references "dictionary"."column" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column_constraint"
+  add constraint "column_constraint_constraint_id_fkey"
+  foreign key ("constraint_id") references "dictionary"."constraint" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column_constraint"
+  add constraint "column_constraint_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column_constraint"
+  add constraint "column_constraint_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "column_constraint_column_id_idx"
+  on "dictionary"."column_constraint"
+  using btree ("column_id");
+create index "column_constraint_constraint_id_idx"
+  on "dictionary"."column_constraint"
+  using btree ("constraint_id");
+create index "column_constraint_is_void_idx"
+  on "dictionary"."column_constraint"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."column_index" (
+    "id" serial not null,
+    "column_id" integer not null,
+    "index_id" integer not null,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp not null,
+    "modifier_id" integer not null,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "dictionary"."column_index"
+  add constraint "column_index_id_pkey"
+  primary key ("id");
+alter table "dictionary"."column_index"
+  add constraint "column_index_column_id_fkey"
+  foreign key ("column_id") references "dictionary"."column" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column_index"
+  add constraint "column_index_index_id_fkey"
+  foreign key ("index_id") references "dictionary"."index" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column_index"
+  add constraint "column_index_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."column_index"
+  add constraint "column_index_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "column_index_column_id_idx"
+  on "dictionary"."column_index"
+  using btree ("column_id");
+create index "column_index_index_id_idx"
+  on "dictionary"."column_index"
+  using btree ("index_id");
+create index "column_index_is_void_idx"
+  on "dictionary"."column_index"
   using btree ("is_void");
 
