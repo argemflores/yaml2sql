@@ -624,7 +624,7 @@ database: &bims_0.10
                             name: maximum_value
                             data_type: integer
                             not_null: true
-                            default_value: 9223372036854775807
+                            default_value: 2147483647
                         - &minimum_value_col
                             name: minimum_value
                             data_type: integer
@@ -754,7 +754,7 @@ database: &bims_0.10
                             column: state_function_id
                             comment: 'Foreign key constraint for the state_function_id column, which refers to the id column of dictionary.function table'
                             other_attributes:
-                                foreign_table: master.function
+                                foreign_table: dictionary.function
                                 foreign_column: id
                         - &final_function_id_cst
                             name: aggregate_final_function_id_fkey
@@ -762,7 +762,7 @@ database: &bims_0.10
                             column: final_function_id
                             comment: 'Foreign key constraint for the final_function_id column, which refers to the id column of dictionary.function table'
                             other_attributes:
-                                foreign_table: master.function
+                                foreign_table: dictionary.function
                                 foreign_column: id
                         <<: *def_tbl_cst
                 - &database_schema_tbl
