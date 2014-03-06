@@ -445,7 +445,7 @@ database: &bims_0.10
                         - &type_col
                             name: type
                             data_type: varchar
-                            comment: 'Primary key, foreign key, or check constraint'
+                            comment: 'Primary key (primary_key), foreign key (foreign_key), or check (check) constraint'
                         - # &column_id_col
                             <<: *column_id_col
                             comment: Subject column of the constraint
@@ -453,6 +453,37 @@ database: &bims_0.10
                             name: command
                             data_type: text
                             comment: SQL body command of the constraint
+                        - &foreign_table_id_col
+                            name: foreign_table_id
+                            data_type: integer
+                        - &foreign_column_id_col
+                            name: foreign_column_id
+                            data_type: integer
+                        - &on_delete_col
+                            name: on_delete
+                            data_type: varchar
+                            not_null: true
+                            default_value: no action
+                        - &on_update_col
+                            name: on_update
+                            data_type: varchar
+                            not_null: true
+                            default_value: no action
+                        - &match_type_col
+                            name: match_type
+                            data_type: varchar
+                            not_null: true
+                            default_value: simple
+                        - &no_inherit_col
+                            name: no_inherit
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
+                        - &concurrent_col
+                            name: concurrent
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
                         - *comment_col
                         # foreign tables and columns table_constraint
                         <<: *def_log_tbl_col
