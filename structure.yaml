@@ -56,6 +56,11 @@ database: &database_name
                             attributes:
                                 no_inherit:
                                 expression:
+                        - &constraint_unique
+                            name:
+                            comment:
+                            type: # unique
+                            column:
                     index:
                         - &index_name
                             name:
