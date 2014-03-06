@@ -438,7 +438,7 @@ EOD
         }
         
         $schSqlArr = array_map('trim', $schSqlArr);
-        $schSql = implode("\n\n", $schSqlArr);
+        $schSql = implode("\n\n-- --------------------------------\n\n", $schSqlArr);
     }
 }
 
@@ -449,9 +449,8 @@ if (!empty($cmtSqlArr)) {
     $cmtSql = implode("\n\n", $cmtSqlArr);
 }
 
-// echo $dbSql, "\n\n", $schSql, "\n\n", $tblSql, "\n\n", $cmtSql, "\n";
 echo $dbSql, "\n\n-- --------------------------------\n\n",
-    // $schSql, "\n\n-- --------------------------------\n\n"; // ,
-    $schSql, "\n\n"; // ,
-    // $tblSql, "\n\n";
+    $schSql, "\n\n"; //,
+    // $cmtSql, "\n\n";
+
 // var_dump(json_encode(Spyc::YAMLLoad($inputFile)));
