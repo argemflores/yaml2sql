@@ -65,7 +65,7 @@ EOD
         $schSql = '';
         
         foreach ($schemas as $schIdx => $schema) {
-            if (!empty($schema->name)) {
+            if (!empty($schema->name) and (!isset($schema->skip) or $schema->skip == true)) {
                 $schName = pg_escape_string($schema->name);
                 
                 if (!empty($schema->comment)) {
