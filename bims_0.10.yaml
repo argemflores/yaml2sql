@@ -115,7 +115,7 @@ dictionary:
                 foreign_table: master.user
                 foreign_column: id
         - &modifier_id_fkey_cst
-            name: '{table}_modifier_id_fkey'
+            name: {table}_modifier_id_fkey
             type: foreign_key
             column: modifier_id
             comment: 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table'
@@ -123,7 +123,7 @@ dictionary:
                 foreign_table: master.user
                 foreign_column: id
         - &user_id_fkey_cst
-            name: '{table}_user_id_fkey'
+            name: {table}_user_id_fkey
             type: foreign_key
             column: user_id
             comment: 'Foreign key constraint for the user_id column, which refers to the id column of the master.user table'
@@ -131,7 +131,7 @@ dictionary:
                 foreign_table: master.user
                 foreign_column: id
         - &database_id_fkey_cst
-            name: '{table}_database_id_fkey'
+            name: {table}_database_id_fkey
             type: foreign_key
             column: database_id
             comment: 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table'
@@ -139,7 +139,7 @@ dictionary:
                 foreign_table: dictionary.database
                 foreign_column: id
         - &schema_id_fkey_cst
-            name: '{table}_schema_id_fkey'
+            name: {table}_schema_id_fkey
             type: foreign_key
             column: schema_id
             comment: 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table'
@@ -147,7 +147,7 @@ dictionary:
                 foreign_table: dictionary.schema
                 foreign_column: id
         - &table_id_fkey_cst
-            name: '{table}_table_id_fkey'
+            name: {table}_table_id_fkey
             type: foreign_key
             column: table_id
             comment: 'Foreign key constraint for the table_id column, which refers to the id column of the dictionary.table table'
@@ -155,7 +155,7 @@ dictionary:
                 foreign_table: dictionary.table
                 foreign_column: id
         - &column_id_fkey_cst
-            name: '{table}_column_id_fkey'
+            name: {table}_column_id_fkey
             type: foreign_key
             column: column_id
             comment: 'Foreign key constraint for the column_id column, which refers to the id column of the dictionary.column table'
@@ -163,7 +163,7 @@ dictionary:
                 foreign_table: dictionary.column
                 foreign_column: id
         - &constraint_id_fkey_cst
-            name: '{table}_constraint_id_fkey'
+            name: {table}_constraint_id_fkey
             type: foreign_key
             column: constraint_id
             comment: 'Foreign key constraint for the constraint_id column, which refers to the id column of the dictionary.constraint table'
@@ -171,7 +171,7 @@ dictionary:
                 foreign_table: dictionary.constraint
                 foreign_column: id
         - &index_id_fkey_cst
-            name: '{table}_index_id_fkey'
+            name: {table}_index_id_fkey
             type: foreign_key
             column: index_id
             comment: 'Foreign key constraint for the index_id column, which refers to the id column of the dictionary.index table'
@@ -270,6 +270,7 @@ database: &bims_0.10
             name: master
             comment: 'Stores master data, which are absolutely correct data that does not change frequently'
             table:
+                - 
                 - &user_tbl
                     <<: *def_tbl
                     name: user
@@ -324,7 +325,6 @@ database: &bims_0.10
                             name: user_type
                             data_type: integer
                             not_null: true
-                        # <<: *def_desc_tbl_col
                         <<: *def_log_tbl_col
                     index:
                         - &email_idx
@@ -336,9 +336,125 @@ database: &bims_0.10
                             column: username
                             unique: true
                         <<: *def_log_tbl_idx
+                - &property_tbl
+                    <<: *def_tbl
+                    name: property
+                    comment: 'Property describes the context of the sampling unit and experimental material, or the trait being measured.'
+                - &method_tbl
+                    <<: *def_tbl
+                    name: method
+                    comment: 'Method describes how the property is applied or the protocol by which a variable is measured.'
+                - &scale_tbl
+                    <<: *def_tbl
+                    name: scale
+                    comment: 'Scale describes the units in which the variables are recorded.'
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - &unit_col
+                            name: unit
+                            data_type: varchar
+                        <<: *def_desc_tbl_col
+                        <<: *def_log_tbl_col
+                - &scale_value_tbl
+                    <<: *def_tbl
+                    name: scale_value
+                    comment: Discrete values a scale can have.
+                    column:
+                        <<: *def_id_tbl_col
+                        - &scale_id_col
+                            name: scale_id
+                            data_type: integer
+                            not_null: true
+                        - &scale_value_col
+                            name: value
+                            data_type: varchar
+                            not_null: true
+                        - &scale_display_name_col
+                            name: display_name
+                            data_type: varchar
+                        - &scale_description
+                            name: description
+                            data_type: varchar
+                        - *order_no_col
+                        <<: *def_log_tbl_col
+                    constraint:
+                        - &scale_id_cst
+                            name: scale_value_scale_id_fkey_cst
+                            type: foreign_key
+                            column: scale_id
+                            other_attributes:
+                                foreign_table: master.scale
+                                foreign_column: id
+                        <<: *def_log_tbl_cst
+                    index:
+                        - &scale_id_idx
+                            name: scale_value_scale_id_idx
+                            column: scale_id
+                        <<: *def_log_tbl_idx
+                - &variable_tbl
+                    <<: *def_tbl
+                    name: variable
+                    comment: Variables
+                    column:
+                        <<: *def_id_tbl_col
+                        <<: *def_meta_tbl_col
+                        - &variable_type_col
+                            name: type
+                            data_type: varchar
+                            # accepted_values: [ system, identification, metadata, observation ]
+                        - &data_type_col
+                            name: data_type
+                            data_type: varchar
+                            # accepted_values: integer, float, varchar, text, bool, byte
+                        - &property_id_col
+                            name: property_id
+                            data_type: integer
+                        - &method_id_col
+                            name: method_id
+                            data_type: integer
+                        - &scale_id_col
+                            name: scale_id
+                            data_type: integer
+                        <<: *def_log_tbl_col
+                    constraint:
+                        - &property_id_cst
+                            name: variable_property_id_fkey_cst
+                            type: foreign_key
+                            column: property_id
+                            other_attributes:
+                                foreign_table: master.property
+                                foreign_column: id
+                        - &method_id_cst
+                            name: variable_method_id_fkey_cst
+                            type: foreign_key
+                            column: method_id
+                            other_attributes:
+                                foreign_table: master.method
+                                foreign_column: id
+                        - &scale_id_cst
+                            name: variable_scale_id_fkey_cst
+                            type: foreign_key
+                            column: scale_id
+                            other_attributes:
+                                foreign_table: master.scale
+                                foreign_column: id
+                        <<: *def_tbl_cst
+                    index:
+                        - &property_id_idx
+                            name: variable_property_id_idx
+                            column: property_id
+                        - &method_id_idx
+                            name: variable_method_id_idx
+                            column: method_id
+                        - &scale_id_idx
+                            name: variable_scale_id_idx
+                            column: scale_id
+                        <<: *def_tbl_idx
         - &dictionary_sch
             name: dictionary
             comment:
+            skip: true
             table:
                 - &database_tbl
                     <<: *def_tbl
@@ -796,3 +912,4 @@ database: &bims_0.10
                                 foreign_table: dictionary.function
                                 foreign_column: id
                         <<: *def_tbl_cst
+
