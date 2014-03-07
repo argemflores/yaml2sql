@@ -451,6 +451,57 @@ database: &bims_0.10
                             name: variable_scale_id_idx
                             column: scale_id
                         <<: *def_tbl_idx
+                - &program_tbl
+                    <<: *def_tbl
+                    name: program
+                    comment: Programs for product-development profiles
+                - &place_tbl
+                    <<: *def_tbl
+                    name: place
+                    comment: Places and locations
+                - &phase_tbl
+                    <<: *def_tbl
+                    name: phase
+                    comment: Breeding phases
+                    column:
+                        <<: *def_tbl_col
+                        - *order_no_col
+                - &product_tbl
+                    <<: *def_tbl
+                    name: product
+                    comment: Product catalog
+                    column:
+                        <<: *def_tbl_col
+                        - &gid_col
+                            name: gid
+                            data_type: integer
+                            not_null: true
+                        - &type_col
+                            name: type
+                            data_type: varchar
+                            not_null: true
+                        - &authority_col
+                            name: authority
+                            data_type: varchar
+                            not_null: true
+                        - &generation_col
+                            name: generation
+                            data_type: integer
+                        - &iris_preferred_id_col
+                            name: iris_preferred_id
+                            data_type: varchar
+                        - &breeding_line_name_col
+                            name: breeding_line_name_id
+                            data_type: varchar
+                        - &fixed_line_name_col
+                            name: fixed_line_name
+                            data_type: varchar
+                        - &common_name_col
+                            name: common_name
+                            data_type: varchar
+                        - &cultivar_name_col
+                            name: cultivar_name
+                            data_type: varchar
         - &dictionary_sch
             name: dictionary
             comment:
