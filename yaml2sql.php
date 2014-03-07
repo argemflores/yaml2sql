@@ -65,7 +65,7 @@ EOD
         $schSql = '';
         
         foreach ($schemas as $schIdx => $schema) {
-            if (!empty($schema->name) and (!isset($schema->skip) or $schema->skip == true)) {
+            if (!empty($schema->name) and (empty($schema->skip) or $schema->skip != true)) {
                 $schName = pg_escape_string($schema->name);
                 
                 if (!empty($schema->comment)) {
@@ -450,7 +450,7 @@ if (!empty($cmtSqlArr)) {
 }
 
 echo $dbSql, "\n\n-- --------------------------------\n\n",
-    $schSql, "\n\n"; //,
-    // $cmtSql, "\n\n";
+    $schSql, "\n\n";
+// echo $cmtSql, "\n\n";
 
 // var_dump(json_encode(Spyc::YAMLLoad($inputFile)));
