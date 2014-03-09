@@ -362,9 +362,8 @@ dictionary:
                 - *notes-col
                 - *is_void-col
         constraint:
-            - &def-ident-tbl-cst
-                - *id_pkey-cst
             - &def-log-tbl-cst
+                - *id_pkey-cst
                 - *creator_id-fkey-cst
                 - *modifier_id-fkey-cst
         index:
@@ -382,7 +381,6 @@ dictionary:
                 <<: *def-desc-tbl-col
                 <<: *def-log-tbl-col
             constraint: &def-tbl-cst
-                <<: *def-ident-tbl-cst
                 <<: *def-log-tbl-cst
             index: &def-tbl-idx
                 <<: *def-ident-tbl-idx
@@ -620,7 +618,6 @@ database: &bims_0.10
                             other_attributes:
                                 foreign_table: master.variable
                                 foreign_column: id
-                        <<: *def-ident-tbl-cst
                         <<: *def-log-tbl-cst
                 - &master-pipeline-tbl
                     <<: *def-tbl
