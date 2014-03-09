@@ -1,3 +1,13 @@
+drop schema if exists "master" cascade;
+
+drop schema if exists "dictionary" cascade;
+
+drop schema if exists "operational" cascade;
+
+drop schema if exists "warehouse" cascade;
+
+-- --------------------------------
+
 -- create database "bims_0.10"
     -- encoding = 'UTF8'
     -- lc_collate = 'C'
@@ -1541,7 +1551,7 @@ create table "operational"."entry" (
     "study_id" integer not null,
     "number" integer not null default '1',
     "key" integer not null,
-    "code" varchar not null,
+    "code" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
     "product_name" varchar(128) not null,
@@ -1710,7 +1720,7 @@ create table "operational"."plot" (
     "entry_id" integer not null,
     "replication_number" integer,
     "key" integer not null,
-    "code" varchar not null,
+    "code" varchar,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null,
@@ -2363,7 +2373,7 @@ create table "warehouse"."entry" (
     "study_id" integer not null,
     "number" integer not null default '1',
     "key" integer not null,
-    "code" varchar not null,
+    "code" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
     "product_name" varchar(128) not null,
@@ -2420,7 +2430,7 @@ create table "warehouse"."plot" (
     "entry_id" integer not null,
     "replication_number" integer,
     "key" integer not null,
-    "code" varchar not null,
+    "code" varchar,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null,
