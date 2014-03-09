@@ -1260,3 +1260,386 @@ database: &bims_0.10
                                 foreign_table: dictionary.function
                                 foreign_column: id
                         <<: *def-tbl-cst
+        - &operational-sch
+            name: operational
+            comment: |
+                Consist the basic study, entry, plot, and subplot data, the study meta, observation data and the audit data
+                produced in day to day data production events (knowledge work) in the product development programs
+            table:
+                - &operational-study-tbl
+                    <<: *def-tbl
+                    name: study
+                    comment: Studies
+                    column:
+                        <<: *def-id-tbl-col
+                        - &study-program_id-col
+                            name: program_id
+                            data_type: integer
+                            not_null: true
+                        - &study-place_id-col
+                            name: place_id
+                            data_type: integer
+                            not_null: true
+                        - &study-phase_id-col
+                            name: phase_id
+                            data_type: integer
+                            not_null: true
+                        - &study-year-col
+                            name: year
+                            data_type: integer
+                            not_null: true
+                        - &study-season_id-col
+                            name: season_id
+                            data_type: integer
+                            not_null: true
+                        - &study-sequence_number-col
+                            name: sequence_number
+                            data_type: integer
+                            not_null: true
+                        - &study-key-col
+                            <<: *key-col
+                            comment: Logical key of the study
+                        - &study-name-col
+                            <<: *name-col
+                            comment: Logical name of the study
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &study-program_id-fkey-cst
+                            name: study_program_id_fkey
+                            type: foreign_key
+                            column: program_id
+                            other_attributes:
+                                foreign_table: master.program
+                                foreign_column: id
+                        - &study-place_id-fkey-cst
+                            name: study_place_id_fkey
+                            type: foreign_key
+                            column: place_id
+                            other_attributes:
+                                foreign_table: master.place
+                                foreign_column: id
+                        - &study-phase_id-fkey-cst
+                            name: study_phase_id_fkey
+                            type: foreign_key
+                            column: phase_id
+                            other_attributes:
+                                foreign_table: master.phase
+                                foreign_column: id
+                        - &study-season_id-fkey-cst
+                            name: study_season_id_fkey
+                            type: foreign_key
+                            column: season_id
+                            other_attributes:
+                                foreign_table: master.season
+                                foreign_column: id
+                        <<: *def-tbl-cst
+                    index:
+                        - &study-program_id-idx
+                            name: study_program_id_idx
+                            column: program_id
+                        - &study-place_id-idx
+                            name: study_place_id_idx
+                            column: place_id
+                        - &study-phase_id-idx
+                            name: study_phase_id_idx
+                            column: phase_id
+                        - &study-year-idx
+                            name: study_year_idx
+                            column: year
+                        - &study-season_id-idx
+                            name: study_season_id_idx
+                            column: season_id
+                        - &study-year_season_id-idx
+                            name: study_program_id_idx
+                            column:
+                                - year
+                                - season_id
+                        - &study-key-idx
+                            <<: *key-idx
+                        - &study-name-idx
+                            name: study_name_idx
+                            column: name
+                        <<: *def-log-tbl-idx
+                - &operational-study_metadata-tbl
+                    <<: *def-tbl
+                    name: study_metadata
+                    comment: Metadata of a study
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-cst
+                        - *variable_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &operational-entry-tbl
+                    <<: *def-tbl
+                    name: entry
+                    comment: Entries of a study
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - &entry-number-col
+                            <<: *number-col
+                            comment: Number of the entry within the study
+                        - &entry-key-col
+                            <<: *key-col
+                            comment: Logical key of the entry
+                        - &entry-code-col
+                            <<: *code-col
+                            comment: Code of the entry within the study
+                        - &entry-product_id-col
+                            <<: *product_id-col
+                        - &entry-product_gid-col
+                            <<: *gid-col
+                            name: product_name
+                            comment: 
+                        - &entry-product_name-col
+                            <<: *name-col
+                            name: product_name
+                            comment: Name or designation used for the product within the study
+                        # - &entry-seed_storage_id-col
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &entry-study_id-fkey-cst
+                            <<: *study_id-cst
+                        - &entry-product_id-fkey-cst
+                            <<: *product_id-cst
+                        # - &entry-seed_storage_id-fkey-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - &entry-study_id-idx
+                            <<: *study_id-idx
+                        - &entry-key-idx
+                            <<: *key-idx
+                        - &entry-product_id-idx
+                            <<: *product_id-idx
+                        <<: *def-log-tbl-idx
+                - &operational-entry_metadata-tbl
+                    <<: *def-tbl
+                    name: entry_metadata
+                    comment: Metadata of an entry
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-cst
+                        - *entry_id-cst
+                        - *variable_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &operational-entry_data-tbl
+                    <<: *def-tbl
+                    name: entry_data
+                    comment: Observational data of an entry
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-cst
+                        - *entry_id-cst
+                        - *variable_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &operation-plot-tbl
+                    <<: *def-tbl
+                    name: plot
+                    comment: Plot of a study entry
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - &plot-replication_number-col
+                            name: replication_number
+                            data_type: integer
+                            comment: Replication number of a plot
+                        - &plot-key-col
+                            <<: *key-col
+                            comment: Logical key of the plot
+                        - &plot-code-col
+                            <<: *code-col
+                            comment: Code of the plot within the study
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &plot-study_id-fkey-cst
+                            <<: *study_id-cst
+                        - &plot-entry_id-fkey-cst
+                            <<: *entry_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - &plot-study_id-idx
+                            <<: *study_id-idx
+                        - &plot-entry_id-idx
+                            <<: *entry_id-idx
+                        - &plot-key-idx
+                            <<: *key-idx
+                        <<: *def-log-tbl-idx
+                - &operational-plot_metadata-tbl
+                    <<: *def-tbl
+                    name: plot_metadata
+                    comment: Metadata of a plot
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *plot_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-cst
+                        - *entry_id-cst
+                        - *plot_id-cst
+                        - *variable_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *plot_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &operational-plot_data-tbl
+                    <<: *def-tbl
+                    name: plot_data
+                    comment: Observational data of a plot
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *plot_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-cst
+                        - *entry_id-cst
+                        - *plot_id-cst
+                        - *variable_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *plot_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &operation-subplot-tbl
+                    <<: *def-tbl
+                    name: subplot
+                    comment: Subplot of a study entry's plot
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *plot_id-col
+                        - &plot-number-col
+                            <<: *number-col
+                            comment: Number of the subplot within the plot
+                        - &plot-key-col
+                            <<: *key-col
+                            comment: Logical key of the subplot
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &plot-study_id-fkey-cst
+                            <<: *study_id-cst
+                        - &plot-entry_id-fkey-cst
+                            <<: *entry_id-cst
+                        - &plot-plot_id-fkey-cst
+                            <<: *plot_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - &plot-study_id-idx
+                            <<: *study_id-idx
+                        - &plot-entry_id-idx
+                            <<: *entry_id-idx
+                        - &plot-plot_id-idx
+                            <<: *plot_id-idx
+                        - &plot-key-idx
+                            <<: *key-idx
+                        <<: *def-log-tbl-idx
+                - &operational-subplot_metadata-tbl
+                    <<: *def-tbl
+                    name: subplot_metadata
+                    comment: Metadata of a subplot
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *plot_id-col
+                        - *subplot_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-cst
+                        - *entry_id-cst
+                        - *plot_id-cst
+                        - *subplot_id-cst
+                        - *variable_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *plot_id-idx
+                        - *subplot_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &operational-subplot_data-tbl
+                    <<: *def-tbl
+                    name: subplot_data
+                    comment: Observational data of a subplot
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *plot_id-col
+                        - *subplot_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-cst
+                        - *entry_id-cst
+                        - *plot_id-cst
+                        - *subplot_id-cst
+                        - *variable_id-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *plot_id-idx
+                        - *subplot_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+
