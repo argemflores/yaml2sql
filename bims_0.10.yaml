@@ -783,6 +783,10 @@ database: &bims_0.10
                         - &place_season-season_id-idx
                             name: place_season_season_id_idx
                             column: season_id
+                - &master-cross_method-tbl
+                    <<: *def-tbl
+                    name: cross_method
+                    comment: Methods used in crossing studies
         - &dictionary-sch
             name: dictionary
             comment:
@@ -1399,8 +1403,7 @@ database: &bims_0.10
                             <<: *product_id-col
                         - &entry-product_gid-col
                             <<: *gid-col
-                            name: product_name
-                            comment: 
+                            name: product_gid
                         - &entry-product_name-col
                             <<: *name-col
                             name: product_name
@@ -1642,4 +1645,61 @@ database: &bims_0.10
                         - *subplot_id-idx
                         - *variable_id-idx
                         <<: *def-log-tbl-idx
-
+                - &operational-cross-tbl
+                    <<: *def-tbl
+                    name: cross
+                    comment: Crosses in a crossing study in the hybridization (HB) phase
+                    column:
+                        <<: *def-id-tbl-col
+                        - &cross-female_product_id-col
+                            <<: *product_id-col
+                            name: female_product_id
+                            comment: ID of the female product in the cross
+                        - &cross-female_product_name-col
+                            <<: *name-col
+                            name: female_product_name
+                            comment: Name or designation used for the female product in the cross
+                        - &cross-male_product_id-col
+                            <<: *product_id-col
+                            name: male_product_id
+                            comment: ID of the male product in the cross
+                        - &cross-male_product_name-col
+                            <<: *name-col
+                            name: male_product_name
+                            comment: Name or designation used for the male product in the cross
+                        - &cross-cross_method_id-col
+                            name: cross_method_id
+                            data_type: integer
+                            not_null: true
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &cross-female_product_id-fkey-cst
+                            <<: *product_id-cst
+                            name: cross_female_product_id_fkey
+                            column: female_product_id
+                        - &cross-male_product_id-fkey-cst
+                            <<: *product_id-cst
+                            name: cross_male_product_id_fkey
+                            column: male_product_id
+                        - &cross-cross_method_id-fkey-cst
+                            name: cross_cross_method_id_fkey
+                            type: foreign_key
+                            column: cross_method_id
+                            comment: 'Foreign key constraint for the cross_method_id column, which refers to the id column of the master.cross_method table'
+                            other_attributes:
+                                foreign_table: master.cross_method
+                                foreign_column: id
+                        <<: *def-tbl-cst
+                    index:
+                        - &cross-female_product_id-idx
+                            <<: *product_id-cst
+                            name: cross_female_product_id_idx
+                            column: female_product_id
+                        - &cross-male_product_id-idx
+                            <<: *product_id-cst
+                            name: cross_male_product_id_idx
+                            column: male_product_id
+                        - &cross-cross_method_id-idx
+                            name: cross_cross_method_id_idx
+                            column: cross_method_id
