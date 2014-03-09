@@ -230,7 +230,7 @@ dictionary:
             other_attributes:
                 foreign_table: dictionary.index
                 foreign_column: id
-        - &variable_id-cst
+        - &variable_id-fkey-cst
             name: {table}_variable_id_fkey
             type: foreign_key
             column: variable_id
@@ -238,7 +238,7 @@ dictionary:
             other_attributes:
                 foreign_table: master.variable
                 foreign_column: id
-        - &product_id-cst
+        - &product_id-fkey-cst
             name: {table}_product_id_fkey
             type: foreign_key
             column: product_id
@@ -246,7 +246,7 @@ dictionary:
             other_attributes:
                 foreign_table: master.product
                 foreign_column: id
-        - &study_id-cst
+        - &study_id-fkey-cst
             name: {table}_study_id_fkey
             type: foreign_key
             column: study_id
@@ -254,7 +254,7 @@ dictionary:
             other_attributes:
                 foreign_table: {schema}.study
                 foreign_column: id
-        - &entry_id-cst
+        - &entry_id-fkey-cst
             name: {table}_entry_id_fkey
             type: foreign_key
             column: entry_id
@@ -262,7 +262,7 @@ dictionary:
             other_attributes:
                 foreign_table: {schema}.entry
                 foreign_column: id
-        - &plot_id-cst
+        - &plot_id-fkey-cst
             name: {table}_plot_id_fkey
             type: foreign_key
             column: plot_id
@@ -270,7 +270,7 @@ dictionary:
             other_attributes:
                 foreign_table: {schema}.plot
                 foreign_column: id
-        - &subplot_id-cst
+        - &subplot_id-fkey-cst
             name: {table}_subplot_id_fkey
             type: foreign_key
             column: subplot_id
@@ -1376,8 +1376,8 @@ database: &bims_0.10
                         - *remarks-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - *study_id-cst
-                        - *variable_id-cst
+                        - *study_id-fkey-cst
+                        - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - *study_id-idx
@@ -1413,9 +1413,9 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                     constraint:
                         - &entry-study_id-fkey-cst
-                            <<: *study_id-cst
+                            <<: *study_id-fkey-cst
                         - &entry-product_id-fkey-cst
-                            <<: *product_id-cst
+                            <<: *product_id-fkey-cst
                         # - &entry-seed_storage_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
@@ -1439,9 +1439,9 @@ database: &bims_0.10
                         - *remarks-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - *study_id-cst
-                        - *entry_id-cst
-                        - *variable_id-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - *study_id-idx
@@ -1461,9 +1461,9 @@ database: &bims_0.10
                         - *remarks-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - *study_id-cst
-                        - *entry_id-cst
-                        - *variable_id-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - *study_id-idx
@@ -1492,9 +1492,9 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                     constraint:
                         - &plot-study_id-fkey-cst
-                            <<: *study_id-cst
+                            <<: *study_id-fkey-cst
                         - &plot-entry_id-fkey-cst
-                            <<: *entry_id-cst
+                            <<: *entry_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - &plot-study_id-idx
@@ -1518,10 +1518,10 @@ database: &bims_0.10
                         - *remarks-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - *study_id-cst
-                        - *entry_id-cst
-                        - *plot_id-cst
-                        - *variable_id-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *plot_id-fkey-cst
+                        - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - *study_id-idx
@@ -1543,10 +1543,10 @@ database: &bims_0.10
                         - *remarks-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - *study_id-cst
-                        - *entry_id-cst
-                        - *plot_id-cst
-                        - *variable_id-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *plot_id-fkey-cst
+                        - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - *study_id-idx
@@ -1573,11 +1573,11 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                     constraint:
                         - &plot-study_id-fkey-cst
-                            <<: *study_id-cst
+                            <<: *study_id-fkey-cst
                         - &plot-entry_id-fkey-cst
-                            <<: *entry_id-cst
+                            <<: *entry_id-fkey-cst
                         - &plot-plot_id-fkey-cst
-                            <<: *plot_id-cst
+                            <<: *plot_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - &plot-study_id-idx
@@ -1604,11 +1604,11 @@ database: &bims_0.10
                         - *remarks-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - *study_id-cst
-                        - *entry_id-cst
-                        - *plot_id-cst
-                        - *subplot_id-cst
-                        - *variable_id-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *plot_id-fkey-cst
+                        - *subplot_id-fkey-cst
+                        - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - *study_id-idx
@@ -1632,11 +1632,11 @@ database: &bims_0.10
                         - *remarks-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - *study_id-cst
-                        - *entry_id-cst
-                        - *plot_id-cst
-                        - *subplot_id-cst
-                        - *variable_id-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *plot_id-fkey-cst
+                        - *subplot_id-fkey-cst
+                        - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
                         - *study_id-idx
@@ -1651,6 +1651,12 @@ database: &bims_0.10
                     comment: Crosses in a crossing study in the hybridization (HB) phase
                     column:
                         <<: *def-id-tbl-col
+                        - &cross-study_id-col
+                            <<: *study_id-col
+                        - &cross-female_entry_id-col
+                            <<: *entry_id-col
+                            name: female_entry_id
+                            comment: ID of the female entry in the cross
                         - &cross-female_product_id-col
                             <<: *product_id-col
                             name: female_product_id
@@ -1659,6 +1665,10 @@ database: &bims_0.10
                             <<: *name-col
                             name: female_product_name
                             comment: Name or designation used for the female product in the cross
+                        - &cross-male_entry_id-col
+                            <<: *entry_id-col
+                            name: male_entry_id
+                            comment: ID of the male entry in the cross
                         - &cross-male_product_id-col
                             <<: *product_id-col
                             name: male_product_id
@@ -1674,12 +1684,22 @@ database: &bims_0.10
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
+                        - &cross-study_id-col
+                            <<: *study_id-col
+                        - &cross-female_entry_id-fkey-cst
+                            <<: *entry_id-fkey-cst
+                            name: cross_female_entry_id_fkey
+                            column: female_entry_id
                         - &cross-female_product_id-fkey-cst
-                            <<: *product_id-cst
+                            <<: *product_id-fkey-cst
                             name: cross_female_product_id_fkey
                             column: female_product_id
+                        - &cross-male_entry_id-fkey-cst
+                            <<: *entry_id-fkey-cst
+                            name: cross_male_entry_id_fkey
+                            column: male_entry_id
                         - &cross-male_product_id-fkey-cst
-                            <<: *product_id-cst
+                            <<: *product_id-fkey-cst
                             name: cross_male_product_id_fkey
                             column: male_product_id
                         - &cross-cross_method_id-fkey-cst
@@ -1692,14 +1712,91 @@ database: &bims_0.10
                                 foreign_column: id
                         <<: *def-tbl-cst
                     index:
+                        - &cross-study_id-idx
+                            <<: *study_id-idx
+                        - &cross-female_entry_id-idx
+                            <<: *entry_id-fkey-cst
+                            name: cross_female_entry_id_idx
+                            column: female_entry_id
                         - &cross-female_product_id-idx
-                            <<: *product_id-cst
+                            <<: *product_id-fkey-cst
                             name: cross_female_product_id_idx
                             column: female_product_id
+                        - &cross-male_entry_id-idx
+                            <<: *entry_id-fkey-cst
+                            name: cross_male_entry_id_idx
+                            column: male_entry_id
                         - &cross-male_product_id-idx
-                            <<: *product_id-cst
+                            <<: *product_id-fkey-cst
                             name: cross_male_product_id_idx
                             column: male_product_id
                         - &cross-cross_method_id-idx
                             name: cross_cross_method_id_idx
                             column: cross_method_id
+                - &operational-cross_metadata-tbl
+                    <<: *def-tbl
+                    name: cross_metadata
+                    comment: Metadata about a cross
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - &cross_metadata-cross_id-col
+                            name: cross_id
+                            data_type: integer
+                            not_null: true
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-fkey-cst
+                        - &cross_metadata-cross_id-fkey-cst
+                            name: cross_metadata_cross_id_fkey
+                            type: foreign_key
+                            column: cross_id
+                            other_attributes:
+                                foreign_table: operational.cross
+                                foreign_key: id
+                        - *variable_id-fkey-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - &cross_metadata-cross_id-idx
+                            name: cross_metadata_cross_id_idx
+                            column: cross_id
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &operational-cross_data-tbl
+                    <<: *def-tbl
+                    name: cross_data
+                    comment: Observational data of a cross
+                    column:
+                        <<: *def-id-tbl-col
+                        - *study_id-col
+                        - &cross_data-cross_id-col
+                            name: cross_id
+                            data_type: integer
+                            not_null: true
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *study_id-fkey-cst
+                        - &cross_data-cross_id-fkey-cst
+                            name: cross_data_cross_id_fkey
+                            type: foreign_key
+                            column: cross_id
+                            other_attributes:
+                                foreign_table: operational.cross
+                                foreign_key: id
+                        - *variable_id-fkey-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *study_id-idx
+                        - &cross_data-cross_id-idx
+                            name: cross_data_cross_id_idx
+                            column: cross_id
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+
