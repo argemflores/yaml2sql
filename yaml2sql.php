@@ -32,10 +32,10 @@ if (!empty($input->database)) {
     
     $dbSql = strtr(
 <<<EOD
-create database "{dbName}"
-    encoding = '{dbEncoding}'
-    lc_collate = '{dbLcCollate}'
-    lc_ctype = '{dbLcCtype}';
+-- create database "{dbName}"
+    -- encoding = '{dbEncoding}'
+    -- lc_collate = '{dbLcCollate}'
+    -- lc_ctype = '{dbLcCtype}';
 EOD
         , [
             '{dbName}' => $dbName,
@@ -217,12 +217,27 @@ EOD
                                                 $attributes = $constraint->other_attributes;
                                                 
                                                 if (!empty($attributes->foreign_table) and !empty($attributes->foreign_column)) {
-                                                    if (strpos($attributes->foreign_table, '.')) {
-                                                        list($foreignTable, $foreignColumn) = explode('.', $attributes->foreign_table);
-                                                        $cstForeignTable = '"' . pg_escape_string($foreignTable) . '"."' . pg_escape_string($foreignColumn) . '"';
+                                                    if (strpos($attributes->foreign_table, '.') >= 0) {
+                                                        list($foreignSchema, $foreignTable) = explode('.', $attributes->foreign_table);
+                                                            
+                                                        if (strpos($foreignSchema, '{schema}') >= 0) {
+                                                            $foreignSchema = strtr($foreignSchema, [
+                                                                '{schema}' => $schName,
+                                                                '{table}' => $tblName,
+                                                            ]);
+                                                        }
+                                                        
+                                                        if (strpos($foreignTable, '{table}') >= 0) {
+                                                            $foreignTable = strtr($foreignTable, [
+                                                                '{schema}' => $schName,
+                                                                '{table}' => $tblName,
+                                                            ]);
+                                                        }
+                                                        
+                                                        $cstForeignTable = '"' . pg_escape_string($foreignSchema) . '"."' . pg_escape_string($foreignTable) . '"';
                                                     }
                                                     else {
-                                                        $cstForeignTable = '"' . $attributes->foreign_table . '"';
+                                                        $cstForeignTable = '"' . pg_escape_string($attributes->foreign_table) . '"';
                                                     }
                                                     
                                                     if (is_array($attributes->foreign_column)) {
