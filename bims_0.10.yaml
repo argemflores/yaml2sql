@@ -1,112 +1,164 @@
 dictionary:
     column:
-        - &id_col
+        - &id-col
             name: id
             data_type: serial
             not_null: true
             comment: Locally unique primary key
-        - &abbrev_col
+        - &abbrev-col
             name: abbrev
             data_type: varchar
             length: 128
             not_null: true
             comment: Short name identifier or abbreviation
-        - &name_col
+        - &name-col
             name: name
             data_type: varchar
             length: 128
             not_null: true
             comment: Name identifier
-        - &description_col
+        - &description-col
             name: description
             data_type: text
             comment: Description
-        - &remarks_col
+        - &remarks-col
             name: remarks
             data_type: text
             comment: Additional details
-        - &creation_timestamp_col
+        - &creation_timestamp-col
             name: creation_timestamp
             data_type: timestamp
             not_null: true
             comment: Timestamp when the record was added to the table
-        - &creator_id_col
+        - &creator_id-col
             name: creator_id
             data_type: integer
             not_null: true
             comment: ID of the user who added the record to the table
-        - &modification_timestamp_col
+        - &modification_timestamp-col
             name: modification_timestamp
             data_type: timestamp
             not_null: true
             comment: Timestamp when the record was last modified
-        - &modifier_id_col
+        - &modifier_id-col
             name: modifier_id
             data_type: integer
             not_null: true
             comment: ID of the user who last modified the record
-        - &notes_col
+        - &notes-col
             name: notes
             data_type: text
             comment: Additional details added by an admin; can be technical or advanced details
-        - &is_void_col
+        - &is_void-col
             name: is_void
             data_type: boolean
             default_value: false
             not_null: true
             comment: Indicator whether the record is deleted or not
-        - &order_number_col
+        - &order_number-col
             name: order_number
             data_type: integer
             not_null: true
             default_value: 1
             comment: Ordering number
-        - &user_id_col
+        - &user_id-col
             name: user_id
             data_type: integer
             not_null: true
             comment: ID of user
-        - &comment_col
+        - &comment-col
             name: comment
             data_type: text
             comment: Additional details
-        - &database_id_col
+        - &database_id-col
             name: database_id
             data_type: integer
             not_null: true
             comment: ID of the database to use as reference key
-        - &schema_id_col
+        - &schema_id-col
             name: schema_id
             data_type: integer
             not_null: true
             comment: ID of the schema to use as reference key
-        - &table_id_col
+        - &table_id-col
             name: table_id
             data_type: integer
             not_null: true
             comment: ID of the table to use as reference key
-        - &column_id_col
+        - &column_id-col
             name: column_id
             data_type: integer
             not_null: true
             comment: ID of the column to use as reference key
-        - &constraint_id_col
+        - &constraint_id-col
             name: constraint_id
             data_type: integer
             not_null: true
             comment: ID of the constraint to use as reference key
-        - &index_id_col
+        - &index_id-col
             name: index_id
             data_type: integer
             not_null: true
             comment: ID of the index to use as reference key
+        - &product_id-col
+            name: product_id
+            data_type: integer
+            not_null: true
+            comment: ID of the product in the product table
+        - &gid-col
+            name: gid
+            data_type: integer
+            not_null: true
+            comment: ID of germplasm from the IRIS GMS database; related to the germplasm's seed stocks
+        - &study_id-col
+            name: study_id
+            data_type: integer
+            not_null: true
+            comment: ID referring to study
+        - &entry_id-col
+            name: entry_id
+            data_type: integer
+            not_null: true
+            comment: ID referring to entry
+        - &plot_id-col
+            name: plot_id
+            data_type: integer
+            not_null: true
+            comment: ID referring to plot
+        - &subplot_id-col
+            name: subplot_id
+            data_type: integer
+            not_null: true
+            comment: ID referring to subplot
+        - &variable_id-col
+            name: variable_id
+            data_type: integer
+            not_null: true
+        - &value-col
+            name: value
+            data_type: varchar
+            not_null: true
+            comment: Value of a variable
+        - &key-col
+            name: key
+            data_type: integer
+            not_null: true
+        - &number-col
+            name: number
+            data_type: integer
+            not_null: true
+            default_value: 1
+        - &code-col
+            name: code
+            data_type: varchar
+            not_null: true
     constraint:
-        - &id_pkey_cst
+        - &id_pkey-cst
             name: {table}_id_pkey
             type: primary_key
             column: id
             comment: Primary key constraint for the id column
-        - &creator_id_fkey_cst
+        - &creator_id-fkey-cst
             name: {table}_creator_id_fkey
             type: foreign_key
             column: creator_id
@@ -114,7 +166,7 @@ dictionary:
             other_attributes:
                 foreign_table: master.user
                 foreign_column: id
-        - &modifier_id_fkey_cst
+        - &modifier_id-fkey-cst
             name: {table}_modifier_id_fkey
             type: foreign_key
             column: modifier_id
@@ -122,7 +174,7 @@ dictionary:
             other_attributes:
                 foreign_table: master.user
                 foreign_column: id
-        - &user_id_fkey_cst
+        - &user_id-fkey-cst
             name: {table}_user_id_fkey
             type: foreign_key
             column: user_id
@@ -130,7 +182,7 @@ dictionary:
             other_attributes:
                 foreign_table: master.user
                 foreign_column: id
-        - &database_id_fkey_cst
+        - &database_id-fkey-cst
             name: {table}_database_id_fkey
             type: foreign_key
             column: database_id
@@ -138,15 +190,15 @@ dictionary:
             other_attributes:
                 foreign_table: dictionary.database
                 foreign_column: id
-        - &schema_id_fkey_cst
-            name: {table}_schema_id_fkey
+        - &schema_id-fkey-cst
+            name: {table}-schema_id_fkey
             type: foreign_key
             column: schema_id
             comment: 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table'
             other_attributes:
                 foreign_table: dictionary.schema
                 foreign_column: id
-        - &table_id_fkey_cst
+        - &table_id-fkey-cst
             name: {table}_table_id_fkey
             type: foreign_key
             column: table_id
@@ -154,15 +206,15 @@ dictionary:
             other_attributes:
                 foreign_table: dictionary.table
                 foreign_column: id
-        - &column_id_fkey_cst
-            name: {table}_column_id_fkey
+        - &column_id-fkey-cst
+            name: {table}-column_id_fkey
             type: foreign_key
             column: column_id
             comment: 'Foreign key constraint for the column_id column, which refers to the id column of the dictionary.column table'
             other_attributes:
                 foreign_table: dictionary.column
                 foreign_column: id
-        - &constraint_id_fkey_cst
+        - &constraint_id-fkey-cst
             name: {table}_constraint_id_fkey
             type: foreign_key
             column: constraint_id
@@ -170,7 +222,7 @@ dictionary:
             other_attributes:
                 foreign_table: dictionary.constraint
                 foreign_column: id
-        - &index_id_fkey_cst
+        - &index_id-fkey-cst
             name: {table}_index_id_fkey
             type: foreign_key
             column: index_id
@@ -178,326 +230,400 @@ dictionary:
             other_attributes:
                 foreign_table: dictionary.index
                 foreign_column: id
+        - &variable_id-cst
+            name: {table}_variable_id_fkey
+            type: foreign_key
+            column: variable_id
+            comment: 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table'
+            other_attributes:
+                foreign_table: master.variable
+                foreign_column: id
+        - &product_id-cst
+            name: {table}_product_id_fkey
+            type: foreign_key
+            column: product_id
+            comment: 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table'
+            other_attributes:
+                foreign_table: master.product
+                foreign_column: id
+        - &study_id-cst
+            name: {table}_study_id_fkey
+            type: foreign_key
+            column: study_id
+            comment: 'Foreign key constraint for the study_id column, which refers to the id column of the study table'
+            other_attributes:
+                foreign_table: {schema}.study
+                foreign_column: id
+        - &entry_id-cst
+            name: {table}_entry_id_fkey
+            type: foreign_key
+            column: entry_id
+            comment: 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table'
+            other_attributes:
+                foreign_table: {schema}.entry
+                foreign_column: id
+        - &plot_id-cst
+            name: {table}_plot_id_fkey
+            type: foreign_key
+            column: plot_id
+            comment: 'Foreign key constraint for the plot_id column, which refers to the id column of the plot table'
+            other_attributes:
+                foreign_table: {schema}.plot
+                foreign_column: id
+        - &subplot_id-cst
+            name: {table}_subplot_id_fkey
+            type: foreign_key
+            column: subplot_id
+            comment: 'Foreign key constraint for the subplot_id column, which refers to the id column of the subplot table'
+            other_attributes:
+                foreign_table: {schema}.subplot
+                foreign_column: id
     index:
-        - &abbrev_idx
+        - &abbrev-idx
             name: {table}_abbrev_idx
             column: abbrev
             unique: true
             comment: Unique index for the abbrev column
-        - &is_void_idx
+        - &is_void-idx
             name: {table}_is_void_idx
             column: is_void
             comment: Index for the is_void column
-        - &user_id_idx
+        - &user_id-idx
             name: {table}_user_id_idx
             column: user_id
             comment: Index for the user_id column
-        - &database_id_idx
+        - &database_id-idx
             name: {table}_database_id_idx
             column: database_id
             comment: Index for the database_id column
-        - &schema_id_idx
-            name: {table}_schema_id_idx
+        - &schema_id-idx
+            name: {table}-schema_id_idx
             column: schema_id
             comment: Index for the schema_id column
-        - &table_id_idx
+        - &table_id-idx
             name: {table}_table_id_idx
             column: table_id
             comment: Index for the table_id column
-        - &column_id_idx
-            name: {table}_column_id_idx
+        - &column_id-idx
+            name: {table}-column_id_idx
             column: column_id
             comment: Index for the column_id column
-        - &constraint_id_idx
+        - &constraint_id-idx
             name: {table}_constraint_id_idx
             column: constraint_id
             comment: Index for the constraint_id column
-        - &index_id_idx
+        - &index_id-idx
             name: {table}_index_id_idx
             column: index_id
             comment: Index for the index_id column
-    custom:
+        - &product_id-idx
+            name: {table}_product_id_idx
+            column: product_id
+            comment: Index for the product_id column
+        - &variable_id-idx
+            name: {table}_variable_id_idx
+            column: variable_id
+            comment: Index for the variable_id column
+        - &key-idx
+            name: {table}_key_idx
+            column: key
+            comment: Index for the key column
+        - &study_id-idx
+            name: {table}_study_id_idx
+            column: study_id
+            comment: Index for the study_id column
+        - &entry_id-idx
+            name: {table}_entry_id_idx
+            column: entry_id
+            comment: Index for the entry_id column
+        - &plot_id-idx
+            name: {table}_plot_id_idx
+            column: plot_id
+            comment: Index for the plot_id column
+        - &subplot_id-idx
+            name: {table}_subplot_id_idx
+            column: variable_id
+            comment: Index for the subplot_id column
+    set:
         column:
-            - &def_id_tbl_col
-                - *id_col
-            - &def_meta_tbl_col
-                - *abbrev_col
-                - *name_col
-            - &def_desc_tbl_col
-                - *description_col
-                - *remarks_col
-            - &def_log_tbl_col
-                - *creation_timestamp_col
-                - *creator_id_col
-                - *modification_timestamp_col
-                - *modifier_id_col
-                - *notes_col
-                - *is_void_col
+            - &def-id-tbl-col
+                - *id-col
+            - &def-meta-tbl-col
+                - *abbrev-col
+                - *name-col
+            - &def-desc-tbl-col
+                - *description-col
+                - *remarks-col
+            - &def-log-tbl-col
+                - *creation_timestamp-col
+                - *creator_id-col
+                - *modification_timestamp-col
+                - *modifier_id-col
+                - *notes-col
+                - *is_void-col
         constraint:
-            - &def_ident_tbl_cst
-                - *id_pkey_cst
-            - &def_log_tbl_cst
-                - *creator_id_fkey_cst
-                - *modifier_id_fkey_cst
+            - &def-ident-tbl-cst
+                - *id_pkey-cst
+            - &def-log-tbl-cst
+                - *creator_id-fkey-cst
+                - *modifier_id-fkey-cst
         index:
-            - &def_ident_tbl_idx
-                - *abbrev_idx
-            - &def_log_tbl_idx
-                - *is_void_idx
+            - &def-ident-tbl-idx
+                - *abbrev-idx
+            - &def-log-tbl-idx
+                - *is_void-idx
     table:
-        - &def_tbl
+        - &def-tbl
             name: {table}
             comment: {table}
-            column: &def_tbl_col
-                <<: *def_id_tbl_col
-                <<: *def_meta_tbl_col
-                <<: *def_desc_tbl_col
-                <<: *def_log_tbl_col
-            constraint: &def_tbl_cst
-                <<: *def_ident_tbl_cst
-                <<: *def_log_tbl_cst
-            index: &def_tbl_idx
-                <<: *def_ident_tbl_idx
-                <<: *def_log_tbl_idx
+            column: &def-tbl-col
+                <<: *def-id-tbl-col
+                <<: *def-meta-tbl-col
+                <<: *def-desc-tbl-col
+                <<: *def-log-tbl-col
+            constraint: &def-tbl-cst
+                <<: *def-ident-tbl-cst
+                <<: *def-log-tbl-cst
+            index: &def-tbl-idx
+                <<: *def-ident-tbl-idx
+                <<: *def-log-tbl-idx
 database: &bims_0.10
     name: bims_0.10
     comment: 'BIMS: Breeding Information Management System'
     encoding: UTF8
-    lc_collate: C
+    lc-collate: C
     lc_ctype: C
     schema:
-        - &master_sch
+        - &master-sch
             name: master
             comment: 'Stores master data, which are absolutely correct data that does not change frequently'
             table:
-                - &user_tbl
-                    <<: *def_tbl
+                - &master-user-tbl
+                    <<: *def-tbl
                     name: user
                     comment: Users
                     column:
-                        <<: *def_id_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - &user-email-col
                             name: email
                             data_type: varchar
                             length: 64
                             not_null: true
-                        -
+                        - &user-username-col
                             name: username
                             data_type: varchar
                             length: 64
                             not_null: true
-                        -
+                        - &user-last_name-col
                             name: last_name
                             data_type: varchar
                             length: 32
                             not_null: true
-                        -
+                        - &user-first_name-col
                             name: first_name
                             data_type: varchar
                             length: 32
                             not_null: true
-                        -
+                        - &user-middle_name-col
                             name: middle_name
                             data_type: varchar
                             length: 32
-                        -
+                        - &user-display_name-col
                             name: display_name
                             data_type: varchar
                             length: 64
                             not_null: true
-                        -
+                        - &user-status-col
                             name: status
                             data_type: varchar
                             not_null: true
                             default: active
-                        -
+                        - &user-salutation-col
                             name: salutation
                             data_type: varchar
                             length: 16
-                        -
+                        - &user-valid_start_date-col
                             name: valid_start_date
                             data_type: date
-                        -
+                        - &user-valid_end_date-col
                             name: valid_end_date
                             data_type: date
-                        -
+                        - &user-user_type-col
                             name: user_type
                             data_type: integer
                             not_null: true
-                        <<: *def_log_tbl_col
+                        <<: *def-log-tbl-col
                     index:
-                        -
+                        - &user-email-idx
                             name: user_email_idx
                             column: email
                             unique: true
-                        -
+                        - &user-username-idx
                             name: user_username_idx
                             column: username
                             unique: true
-                        <<: *def_log_tbl_idx
-                - &property_tbl
-                    <<: *def_tbl
+                        <<: *def-log-tbl-idx
+                - &master-property-tbl
+                    <<: *def-tbl
                     name: property
                     comment: 'Property describes the context of the sampling unit and experimental material, or the trait being measured.'
-                - &method_tbl
-                    <<: *def_tbl
+                - &master-method-tbl
+                    <<: *def-tbl
                     name: method
                     comment: 'Method describes how the property is applied or the protocol by which a variable is measured.'
-                - &scale_tbl
-                    <<: *def_tbl
+                - &master-scale-tbl
+                    <<: *def-tbl
                     name: scale
                     comment: 'Scale describes the units in which the variables are recorded.'
                     column:
-                        <<: *def_id_tbl_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        - &scale-unit-col
                             name: unit
                             data_type: varchar
-                        <<: *def_desc_tbl_col
-                        <<: *def_log_tbl_col
-                - &scale_value_tbl
-                    <<: *def_tbl
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                - &master-scale_value-tbl
+                    <<: *def-tbl
                     name: scale_value
                     comment: Discrete values a scale can have.
                     column:
-                        <<: *def_id_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - &scale_value-scale_id-col
                             name: scale_id
                             data_type: integer
                             not_null: true
-                        -
+                        - &scale_value-value-col
                             name: value
                             data_type: varchar
                             not_null: true
-                        -
+                        - &scale_value-display_name-col
                             name: display_name
                             data_type: varchar
-                        -
-                            name: description
-                            data_type: varchar
-                        - *order_number_col
-                        <<: *def_log_tbl_col
+                        <<: *def-desc-tbl-col
+                        - *order_number-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        -
-                            name: scale_value_scale_id_fkey_cst
+                        - &scale_value-scale_id-cst
+                            name: scale_value_scale_id_fkey
                             type: foreign_key
                             column: scale_id
                             other_attributes:
                                 foreign_table: master.scale
                                 foreign_column: id
-                        <<: *def_log_tbl_cst
+                        <<: *def-log-tbl-cst
                     index:
-                        -
+                        - &scale_value-scale_id-idx
                             name: scale_value_scale_id_idx
                             column: scale_id
-                        <<: *def_log_tbl_idx
-                - &variable_set_tbl
-                    <<: *def_tbl
-                    name: variable_set
-                    comment: Groups of variables
-                    column:
-                        <<: *def_id_tbl_col
-                        <<: *def_meta_tbl_col
-                        <<: *def_desc_tbl_col
-                        <<: *def_log_tbl_col
-                - &variable_set_member_tbl
-                    <<: *def_tbl
-                    name: variable_set_member
-                    comment: variables
-                    column:
-                        <<: *def_id_tbl_col
-                        -
-                            name: variable_set_id
-                            data_type: integer
-                            not_null: true
-                        -
-                            name: variable_id
-                            data_type: integer
-                            not_null: true
-                        -
-                            name: order_number
-                            data_type: integer
-                            not_null: true
-                            default_value: 1
-                        <<: *def_log_tbl_col
-                    constraint:
-                        -
-                            name: variable_set_member_variable_set_id_fkey
-                            type: foreign_key
-                            column: variable_set_id
-                            other_attributes:
-                                foreign_table: master.variable_set
-                                foreign_column: id
-                        -
-                            name: variable_set_member_variable_id_fkey
-                            type: foreign_key
-                            column: variable_id
-                            other_attributes:
-                                foreign_table: master.variable
-                                foreign_column: id
-                        <<: *def_ident_tbl_cst
-                        <<: *def_log_tbl_cst
-                - &variable_tbl
-                    <<: *def_tbl
+                        <<: *def-log-tbl-idx
+                - &master-variable-tbl
+                    <<: *def-tbl
                     name: variable
                     comment: Variables
                     column:
-                        <<: *def_id_tbl_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        - &variable-type-col
                             name: type
                             data_type: varchar
                             # accepted_values: [ system, identification, metadata, observation ]
-                        -
+                        - &variable-data_type-col
                             name: data_type
                             data_type: varchar
                             # accepted_values: integer, float, varchar, text, bool, byte
-                        -
+                        - &variable-property_id-col
                             name: property_id
                             data_type: integer
-                        -
+                        - &variable-method_id-col
                             name: method_id
                             data_type: integer
-                        -
+                        - &variable-scale_id-col
                             name: scale_id
                             data_type: integer
-                        <<: *def_log_tbl_col
+                        <<: *def-log-tbl-col
                     constraint:
-                        -
+                        - &variable-property_id-fkey-cst
                             name: variable_property_id_fkey
                             type: foreign_key
                             column: property_id
                             other_attributes:
                                 foreign_table: master.property
                                 foreign_column: id
-                        -
+                        - &variable-method_id-fkey-cst
                             name: variable_method_id_fkey
                             type: foreign_key
                             column: method_id
                             other_attributes:
                                 foreign_table: master.method
                                 foreign_column: id
-                        -
+                        - &variable-scale_id-fkey-cst
                             name: variable_scale_id_fkey
                             type: foreign_key
                             column: scale_id
                             other_attributes:
                                 foreign_table: master.scale
                                 foreign_column: id
-                        <<: *def_tbl_cst
+                        <<: *def-tbl-cst
                     index:
-                        -
+                        - &variable-property_id-idx
                             name: variable_property_id_idx
                             column: property_id
-                        -
+                        - &variable-method_id-idx
                             name: variable_method_id_idx
                             column: method_id
-                        -
+                        - &variable-scale_id-idx
                             name: variable_scale_id_idx
                             column: scale_id
-                        <<: *def_tbl_idx
-                - &pipeline_tbl
-                    <<: *def_tbl
+                        <<: *def-tbl-idx
+                - &master-variable_set-tbl
+                    <<: *def-tbl
+                    name: variable_set
+                    comment: Groups of variables
+                    column:
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                - &master-variable_set_member-tbl
+                    <<: *def-tbl
+                    name: variable_set_member
+                    comment: variables
+                    column:
+                        <<: *def-id-tbl-col
+                        - &variable_set_member-variable_set_id-col
+                            name: variable_set_id
+                            data_type: integer
+                            not_null: true
+                        - &variable_set_member-variable_id-col
+                            name: variable_id
+                            data_type: integer
+                            not_null: true
+                        - &variable_set_member-order_number-col
+                            name: order_number
+                            data_type: integer
+                            not_null: true
+                            default_value: 1
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &variable_set_member-variable_set_id-fkey-cst
+                            name: variable_set_member_variable_set_id_fkey
+                            type: foreign_key
+                            column: variable_set_id
+                            other_attributes:
+                                foreign_table: master.variable_set
+                                foreign_column: id
+                        - &variable_set_member-variable_id-fkey-cst
+                            name: variable_set_member_variable_id_fkey
+                            type: foreign_key
+                            column: variable_id
+                            other_attributes:
+                                foreign_table: master.variable
+                                foreign_column: id
+                        <<: *def-ident-tbl-cst
+                        <<: *def-log-tbl-cst
+                - &master-pipeline-tbl
+                    <<: *def-tbl
                     name: pipeline
                     comment: |
                         A product development schema designed to develop breeding products to a certain demand (market segment).
@@ -509,22 +635,22 @@ database: &bims_0.10
                             - Hybrid
                             - Eastern Southern Africa (ESA) - has Rainfed and Irrigated TVP's, 
                             - Japonica - has Temperate and Tropical TVP's
-                - &crosscutting_tbl
-                    <<: *def_tbl
+                - &master-crosscutting-tbl
+                    <<: *def-tbl
                     name: crosscutting
                     comment: |
                         Breeding process that provides expert service for the whole breeding operation of an organization.
                         CCRD consists of a team of experts, the CCRD facility, and operational and capital resources.
-                - &program_tbl
-                    <<: *def_tbl
+                - &master-program-tbl
+                    <<: *def-tbl
                     name: program
                     comment: |
                         Consist of variety development pipelines (VDPs), trait development teams and cross-cutting activities (CCRDs).
                         Products of VDPs are varieties, breeding lines, parental lines and other genetic materials in different stages of a breeding scheme, and IP related to the genetic materials.
                         Products of trait development are discovered trait donors, QTL's and genes, and marker application for selection of those, and related IP.
                         Trait development products work through different type IP-solutions than variety development.
-                - &place_tbl
-                    <<: *def_tbl
+                - &master-place-tbl
+                    <<: *def-tbl
                     name: place
                     comment: |
                         Represents the physical places and their segmentations such as geographies, locations, areas, zones, etc. 
@@ -536,532 +662,588 @@ database: &bims_0.10
                             - Glasshouse
                             - Warehouse
                             - Storage
-                - &phase_tbl
-                    <<: *def_tbl
+                - &master-phase-tbl
+                    <<: *def-tbl
                     name: phase
                     comment: Breeding phases
                     column:
-                        <<: *def_tbl_col
-                        - *order_number_col
-                - &product_tbl
-                    <<: *def_tbl
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        - *order_number-col
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                - &master-product-tbl
+                    <<: *def-tbl
                     name: product
                     comment: 'A progeny or a fixed line'
                     column:
-                        <<: *def_id_tbl_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        - &product-gid-col
                             name: gid
                             data_type: integer
                             not_null: true
-                        -
+                        - &product-type-col
                             name: type
                             data_type: varchar
                             not_null: true
-                        -
+                        - &product-authority-col
                             name: authority
                             data_type: varchar
                             not_null: true
-                        -
+                        - &product-generation-col
                             name: generation
                             data_type: integer
-                        -
+                            comment: Null if type is fixed line
+                        - &product-iris_preferred_id-col
                             name: iris_preferred_id
                             data_type: varchar
-                        -
-                            name: breeding_line_name_id
+                        - &product-breeding_line_name-col
+                            name: breeding_line_name
                             data_type: varchar
-                        -
+                        - &product-fixed_line_name-col
                             name: fixed_line_name
                             data_type: varchar
-                        -
+                        - &product-common_name-col
                             name: common_name
                             data_type: varchar
-                        -
+                        - &product-cultivar_name-col
                             name: cultivar_name
                             data_type: varchar
-                        <<: *def_desc_tbl_col
-                        <<: *def_log_tbl_col
-                - &product_metadata_tbl
-                    <<: *def_tbl
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                - &master-product_metadata-tbl
+                    <<: *def-tbl
                     name: product_metadata
                     comment: Additional information about products
                     column:
-                        <<: *def_id_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - &product_metadata-variable_id-col
                             name: variable_id
                             data_type: integer
                             not_nul: true
-                        -
-                            name: variable_value
+                        - &product_metadata-value-col
+                            name: value
                             data_type: varchar
                             not_null: true
-                        <<: *def_log_tbl_col
+                        <<: *def-log-tbl-col
                     constraint:
-                        -
+                        - &product_metadata-variable_id-fkey-cst
                             name: product_metadata_variable_id_fkey
                             type: foreign_key
                             column: variable_id
                             other_attributes:
                                 foreign_table: master.variable
                                 foreign_column: id
-                        <<: *def_tbl_cst
-        - &dictionary_sch
+                        <<: *def-tbl-cst
+                - &master-season-tbl
+                    <<: *def-tbl
+                    name: season
+                    comment: List of seasons
+                - &master-place_season-tbl
+                    <<: *def-tbl
+                    name: place_season
+                    comment: List of seasons in a place
+                    column:
+                        <<: *def-id-tbl-col
+                        - &place_season-place_id-col
+                            name: place_id
+                            data_type: integer
+                            not_null: true
+                        - &place_season-season_id-col
+                            name: season_id
+                            data_type: integer
+                            not_null: true
+                        - &place_season-order_number-col
+                            name: order_number
+                            data_type: integer
+                            not_null: true
+                            default_value: 1
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &place_season-place_id-fkey-cst
+                            name: place_season_place_id_fkey
+                            type: foreign_key
+                            column: place_id
+                            other_attributes:
+                                foreign_table: master.place
+                                foreign_column: id
+                        - &place_season-season_id-fkey-cst
+                            name: place_season_season_id_fkey
+                            type: foreign_key
+                            column: season_id
+                            other_attributes:
+                                foreign_table: master.season
+                                foreign_column: id
+                        <<: *def-tbl-cst
+                    index:
+                        - &place_season-place_id-idx
+                            name: place_season_place_id_idx
+                            column: place_id
+                        - &place_season-season_id-idx
+                            name: place_season_season_id_idx
+                            column: season_id
+        - &dictionary-sch
             name: dictionary
             comment:
-            skip: true
             table:
-                - &database_tbl
-                    <<: *def_tbl
+                - &dictionary-database-tbl
+                    <<: *def-tbl
                     name: database
                     comment: Data sources
                     column:
-                        <<: *def_id_tbl_col
-                        <<: *def_meta_tbl_col
-                        - *comment_col
-                        -
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        - *comment-col
+                        - &database-encoding-col
                             name: encoding
                             data_type: varchar
                             not_null: true
                             default_value: UTF8
-                        -
+                        - &database-lc_collate-col
                             name: lc_collate
                             data_type: varchar
                             not_null: true
                             default_value: C
-                        -
+                        - &database-lc_ctype-col
                             name: lc_ctype
                             data_type: varchar
                             not_null: true
                             default_value: C
-                        <<: *def_log_tbl_col
-                - &schema_tbl
-                    <<: *def_tbl
+                        <<: *def-log-tbl-col
+                - &dictionary-schema-tbl
+                    <<: *def-tbl
                     name: schema
                     comment: Schemas in a database
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        <<: *def_meta_tbl_col
-                        - *comment_col
-                        <<: *def_desc_tbl_col
-                        <<: *def_log_tbl_col
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        <<: *def-meta-tbl-col
+                        - *comment-col
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &table_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-table-tbl
+                    <<: *def-tbl
                     name: table
                     comment: Tables in a schema
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        <<: *def_meta_tbl_col
-                        - *comment_col
-                        <<: *def_desc_tbl_col
-                        <<: *def_log_tbl_col
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        <<: *def-meta-tbl-col
+                        - *comment-col
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &column_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-column-tbl
+                    <<: *def-tbl
                     name: column
                     comment: Columns of a table
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        - *table_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        - *table_id-col
+                        <<: *def-meta-tbl-col
+                        - &column-data_type-col
                             name: data_type
                             data_type: varchar
                             length: 32
                             not_null: true
                             comment: Type of data the column can store
-                        -
+                        - &column-length-col
                             name: length
                             data_type: varchar
                             length: 32
                             comment: Maximum character size for text data types or precision for numeric data types
-                        -
+                        - &column-not_null-col
                             name: not_null
                             data_type: boolean
                             not_null: true
                             default_value: false
                             comment: Whether the column will not allow null values
-                        -
+                        - &column-default_value-col
                             name: default_value
                             data_type: varchar
                             comment: Default value to fill in the column if value is not explicitly provided
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        - *table_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &constraint_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        - *table_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-constraint-tbl
+                    <<: *def-tbl
                     name: constraint
                     comment: Constraints of table columns
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        - *table_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        - *table_id-col
+                        <<: *def-meta-tbl-col
+                        - &constraint-type-col
                             name: type
                             data_type: varchar
                             comment: 'Primary key (primary_key), foreign key (foreign_key), or check (check) constraint'
-                        - # &column_id_col
-                            <<: *column_id_col
+                        -  &constraint-column_id-col
+                            name: column_id
+                            data_type: integer
+                            not_null: true
                             comment: Subject column of the constraint
-                        -
+                        - &constraint-command-col
                             name: command
                             data_type: text
                             comment: SQL body command of the constraint
-                        -
+                        - &constraint-foreign_table_id-col
                             name: foreign_table_id
                             data_type: integer
-                        -
+                            comment: Reference table for foreign key constraint only
+                        - &constraint-foreign_column_id-col
                             name: foreign_column_id
                             data_type: integer
-                        -
+                            comment: Column of the reference table for foreign key constraint only
+                        - &constraint-on_delete-col
                             name: on_delete
                             data_type: varchar
                             not_null: true
                             default_value: no action
-                        -
+                        - &constraint-on_update-col
                             name: on_update
                             data_type: varchar
                             not_null: true
                             default_value: no action
-                        -
+                        - &constraint-match_type-col
                             name: match_type
                             data_type: varchar
                             not_null: true
                             default_value: simple
-                        -
+                        - &constraint-no_inherit-col
                             name: no_inherit
                             data_type: boolean
                             not_null: true
                             default_value: false
-                        -
+                        - &constraint-concurrent-col
                             name: concurrent
                             data_type: boolean
                             not_null: true
                             default_value: false
-                        - *comment_col
+                        - *comment-col
                         # foreign tables and columns table_constraint
-                        <<: *def_log_tbl_col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        - *table_id_fkey_cst
-                        - *column_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &index_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        - *table_id-fkey-cst
+                        - *column_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-index-tbl
+                    <<: *def-tbl
                     name: index
                     comment: Indexes of table columns
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        - *table_id_col
-                        <<: *def_meta_tbl_col
-                        - # &column_id_col
-                            <<: *column_id_col
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        - *table_id-col
+                        <<: *def-meta-tbl-col
+                        -  &index-column_id-col
+                            name: column_id
+                            data_type: integer
+                            not_null: true
                             comment: Subject column of the index
-                        -
+                        - &index-using-col
                             name: using
                             data_type: varchar
                             comment: Algorithm to use in indexing
-                        -
+                        - &index-unique-col
                             name: unique
                             data_type: boolean
                             not_null: true
                             default_value: false
                             comment: Whether the index is unique or not
-                        -
+                        - &index-concurrent-col
                             name: concurrent
                             data_type: boolean
                             not_null: true
                             default_value: false
                             comment: Whether the index is concurrent or not
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        - *table_id_fkey_cst
-                        - *column_id_fkey_cst
-                        <<: *def_tbl_cst
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        - *table_id-fkey-cst
+                        - *column_id-fkey-cst
+                        <<: *def-tbl-cst
                     cons
-                - &rule_tbl
-                    <<: *def_tbl
+                - &dictionary-rule-tbl
+                    <<: *def-tbl
                     name: rule
                     comment: Rules
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        <<: *def-meta-tbl-col
+                        - &rule-event-col
                             name: event
                             data_type: varchar
                             length: 16
                             not_null: true
                             default_value: select # insert, update, delete
                             comment: At what event/s the rule will be applied
-                        - # &execution_col
+                        -  &rule-execution-col
                             name: execution
                             data_type: varchar
                             length: 8
                             not_null: true
                             default_value: also
                             comment: Execution type of the rule
-                        -
+                        - &rule-condition-col
                             name: condition
                             data_type: text
                             comment: Conditional expression of the rule
-                        -
+                        - &rule-command-col
                             name: command
                             data_type: text
                             comment: SQL body command of the rule
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &trigger_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-trigger-tbl
+                    <<: *def-tbl
                     name: trigger
                     comment: Triggers
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        <<: *def-meta-tbl-col
+                        - &trigger-enabled-col
                             name: enabled
                             data_type: boolean
                             not_null: true
                             default_value: true
                             comment: Whether the trigger is enabled to execute or not
-                        - # &execution_col
+                        -  &trigger-execution-col
                             name: execution
                             data_type: varchar
                             not_null: true
                             default_value: before
                             comment: Execution type of trigger
-                        -
+                        - &trigger-for_each-col
                             name: for_each
                             data_type: varchar
                             not_null: true
                             default_value: row
                             comment: Apply trigger for each row or statement
-                        -
+                        - &trigger-event-col
                             name: event
                             data_type: varchar
                             default_value: insert # update, delete
                             comment: At what event/s the trigger will be executed
-                        -
+                        - &trigger-function-col
                             name: function
                             data_type: varchar
                             not_null: true
-                        -
+                        - &trigger-argument-col
                             name: argument
                             data_type: varchar
-                        -
+                        - &trigger-condition-col
                             name: condition
                             data_type: varchar
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &view_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-view-tbl
+                    <<: *def-tbl
                     name: view
                     comment: Views
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        <<: *def-meta-tbl-col
+                        -  &view-command-col
                             name: command
                             data_type: text
                             comment: SQL body command of the view
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &sequence_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-sequence-tbl
+                    <<: *def-tbl
                     name: sequence
                     comment: Sequences
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        <<: *def-meta-tbl-col
+                        - &sequence-value-col
                             name: value
                             data_type: integer
                             not_null: true
                             default_value: 1
-                        -
+                        - &sequence-increment-col
                             name: increment
                             data_type: integer
                             not_null: true
                             default_value: 1
-                        -
+                        - &sequence-maximum_value-col
                             name: maximum_value
                             data_type: integer
                             not_null: true
                             default_value: 2147483647
-                        -
+                        - &sequence-minimum_value-col
                             name: minimum_value
                             data_type: integer
                             not_null: true
                             default_value: 1
-                        -
+                        - &sequence-cache-col
                             name: cache
                             data_type: integer
                             not_null: true
                             default_value: 1
-                        -
+                        - &sequence-cycle-col
                             name: cycle
                             data_type: boolean
                             not_null: true
                             default_value: false
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &function_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-function-tbl
+                    <<: *def-tbl
                     name: function
                     comment: Functions
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        <<: *def-meta-tbl-col
+                        - &function-cycle-col
                             name: cycle
                             data_type: varchar
                             not_null: true
                             default_value: single_value
-                        -
+                        - &function-return_type-col
                             name: return_type
                             data_type: varchar
                             not_null: true
                             default_value: varchar
-                        -
+                        - &function-language-col
                             name: language
                             data_type: varchar
                             not_null: true
                             default_value: plpgsql
-                        -
+                        - &function-strict-col
                             name: strict
                             data_type: boolean
                             not_null: true
                             default_value: false
-                        -
-                            name: execution_privileges
+                        - &function-execution_privilege-col
+                            name: execution_privilege
                             data_type: varchar
                             not_null: true
                             default_value: invoker
-                        -
+                        - &function-stability-col
                             name: stability
                             data_type: varchar
                             not_null: true
                             default_value: volatile
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &domain_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-domain-tbl
+                    <<: *def-tbl
                     name: domain
                     comment: Domains
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        <<: *def-meta-tbl-col
+                        - &domain--col
                             name: data_type
                             data_type: varchar
-                        -
+                        - &domain-not_null-col
                             name: not_null
                             data_type: boolean
                             not_null: true
                             default_value: false
-                        -
+                        - &domain-default_value-col
                             name: default_value
                             data_type: varchar
-                        -
+                        - &domain-collation-col
                             name: collation
                             data_type: varchar
                             not_null: true
                             default_value: pg_catalog.C
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        <<: *def_tbl_cst
-                - &aggregate_tbl
-                    <<: *def_tbl
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        <<: *def-tbl-cst
+                - &dictionary-aggregate-tbl
+                    <<: *def-tbl
                     name: aggregate
                     comment: Aggregates
                     column:
-                        <<: *def_id_tbl_col
-                        - *database_id_col
-                        - *schema_id_col
-                        <<: *def_meta_tbl_col
-                        -
+                        <<: *def-id-tbl-col
+                        - *database_id-col
+                        - *schema_id-col
+                        <<: *def-meta-tbl-col
+                        - &aggregate-base_type-col
                             name: base_type
                             data_type: varchar
                             not_null: true
                             default_value: integer
-                        -
+                        - &aggregate-state_type-col
                             name: state_type
                             data_type: varchar
                             not_null: true
                             default_value: integer
-                        -
+                        - &aggregate-state_function_id-col
                             name: state_function_id
                             data_type: integer
                             not_null: true
-                        -
+                        - &aggregate-finale_function_id-col
                             name: final_function_id
                             data_type: integer
-                        -
+                        - &aggregate-initial_condition-col
                             name: initial_condition
                             data_type: text
-                        - *comment_col
-                        <<: *def_log_tbl_col
+                        - *comment-col
+                        <<: *def-log-tbl-col
                     constraint:
-                        - *database_id_fkey_cst
-                        - *schema_id_fkey_cst
-                        -
+                        - *database_id-fkey-cst
+                        - *schema_id-fkey-cst
+                        - &aggregate-state_function_id-fkey-cst
                             name: aggregate_state_function_id_fkey
                             type: foreign_key
                             column: state_function_id
@@ -1069,7 +1251,7 @@ database: &bims_0.10
                             other_attributes:
                                 foreign_table: dictionary.function
                                 foreign_column: id
-                        -
+                        - &aggregate-final_function_id-fkey-cst
                             name: aggregate_final_function_id_fkey
                             type: foreign_key
                             column: final_function_id
@@ -1077,9 +1259,4 @@ database: &bims_0.10
                             other_attributes:
                                 foreign_table: dictionary.function
                                 foreign_column: id
-                        <<: *def_tbl_cst
-        - &operational_sch
-            name: operational
-            comment: |
-                Consist the basic study, entry, plot, and subplot data, the study meta, observation data and the audit data
-                produced in day to day data production events (knowledge work) in the product development programs
+                        <<: *def-tbl-cst
