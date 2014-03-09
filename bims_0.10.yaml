@@ -38,12 +38,10 @@ dictionary:
         - &modification_timestamp-col
             name: modification_timestamp
             data_type: timestamp
-            not_null: true
             comment: Timestamp when the record was last modified
         - &modifier_id-col
             name: modifier_id
             data_type: integer
-            not_null: true
             comment: ID of the user who last modified the record
         - &notes-col
             name: notes
@@ -619,6 +617,8 @@ database: &bims_0.10
                                 foreign_table: master.variable
                                 foreign_column: id
                         <<: *def-log-tbl-cst
+                    index:
+                        <<: *def-log-tbl-idx
                 - &master-pipeline-tbl
                     <<: *def-tbl
                     name: pipeline
@@ -733,6 +733,8 @@ database: &bims_0.10
                                 foreign_table: master.variable
                                 foreign_column: id
                         <<: *def-tbl-cst
+                    index:
+                        <<: *def-log-tbl-idx
                 - &master-season-tbl
                     <<: *def-tbl
                     name: season
@@ -1351,7 +1353,7 @@ database: &bims_0.10
                             name: study_season_id_idx
                             column: season_id
                         - &study-year_season_id-idx
-                            name: study_program_id_idx
+                            name: study_year_season_id_idx
                             column:
                                 - year
                                 - season_id
@@ -1467,7 +1469,7 @@ database: &bims_0.10
                         - *entry_id-idx
                         - *variable_id-idx
                         <<: *def-log-tbl-idx
-                - &operation-plot-tbl
+                - &operational-plot-tbl
                     <<: *def-tbl
                     name: plot
                     comment: Plot of a study entry
@@ -1551,7 +1553,7 @@ database: &bims_0.10
                         - *plot_id-idx
                         - *variable_id-idx
                         <<: *def-log-tbl-idx
-                - &operation-subplot-tbl
+                - &operational-subplot-tbl
                     <<: *def-tbl
                     name: subplot
                     comment: Subplot of a study entry's plot
@@ -1560,30 +1562,30 @@ database: &bims_0.10
                         - *study_id-col
                         - *entry_id-col
                         - *plot_id-col
-                        - &plot-number-col
+                        - &subplot-number-col
                             <<: *number-col
                             comment: Number of the subplot within the plot
-                        - &plot-key-col
+                        - &subplot-key-col
                             <<: *key-col
                             comment: Logical key of the subplot
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - &plot-study_id-fkey-cst
+                        - &subplot-study_id-fkey-cst
                             <<: *study_id-fkey-cst
-                        - &plot-entry_id-fkey-cst
+                        - &subplot-entry_id-fkey-cst
                             <<: *entry_id-fkey-cst
-                        - &plot-plot_id-fkey-cst
+                        - &subplot-plot_id-fkey-cst
                             <<: *plot_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
-                        - &plot-study_id-idx
+                        - &subplot-study_id-idx
                             <<: *study_id-idx
-                        - &plot-entry_id-idx
+                        - &subplot-entry_id-idx
                             <<: *entry_id-idx
-                        - &plot-plot_id-idx
+                        - &subplot-plot_id-idx
                             <<: *plot_id-idx
-                        - &plot-key-idx
+                        - &subplot-key-idx
                             <<: *key-idx
                         <<: *def-log-tbl-idx
                 - &operational-subplot_metadata-tbl
@@ -1753,7 +1755,7 @@ database: &bims_0.10
                             column: cross_id
                             other_attributes:
                                 foreign_table: operational.cross
-                                foreign_key: id
+                                foreign_column: id
                         - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
@@ -1786,7 +1788,7 @@ database: &bims_0.10
                             column: cross_id
                             other_attributes:
                                 foreign_table: operational.cross
-                                foreign_key: id
+                                foreign_column: id
                         - *variable_id-fkey-cst
                         <<: *def-tbl-cst
                     index:
@@ -1796,4 +1798,3 @@ database: &bims_0.10
                             column: cross_id
                         - *variable_id-idx
                         <<: *def-log-tbl-idx
-
