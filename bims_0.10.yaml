@@ -149,7 +149,6 @@ dictionary:
         - &code-col
             name: code
             data_type: varchar
-            not_null: true
     constraint:
         - &id_pkey-cst
             name: {table}_id_pkey
@@ -389,6 +388,8 @@ database: &bims_0.10
     encoding: UTF8
     lc-collate: C
     lc_ctype: C
+    options:
+        drop_schema: true
     schema:
         - &master-sch
             name: master
