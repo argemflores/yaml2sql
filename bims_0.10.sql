@@ -22,8 +22,8 @@ create table "master"."user" (
     "user_type" integer not null,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -62,8 +62,8 @@ create table "master"."property" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -99,8 +99,8 @@ create table "master"."method" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -137,8 +137,8 @@ create table "master"."scale" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -176,8 +176,8 @@ create table "master"."scale_value" (
     "order_number" integer not null default '1',
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -188,6 +188,9 @@ alter table "master"."scale_value"
   add constraint "scale_value_scale_id_fkey"
   foreign key ("scale_id") references "master"."scale" ("id")
   match simple on update cascade on delete cascade;
+alter table "master"."scale_value"
+  add constraint "scale_value_id_pkey"
+  primary key ("id");
 alter table "master"."scale_value"
   add constraint "scale_value_creator_id_fkey"
   foreign key ("creator_id") references "master"."user" ("id")
@@ -217,8 +220,8 @@ create table "master"."variable" (
     "scale_id" integer,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -275,8 +278,8 @@ create table "master"."variable_set" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -311,8 +314,8 @@ create table "master"."variable_set_member" (
     "order_number" integer not null default '1',
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -339,9 +342,6 @@ alter table "master"."variable_set_member"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "variable_set_member_abbrev_idx"
-  on "master"."variable_set_member"
-  using btree ("abbrev");
 create index "variable_set_member_is_void_idx"
   on "master"."variable_set_member"
   using btree ("is_void");
@@ -356,8 +356,8 @@ create table "master"."pipeline" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -393,8 +393,8 @@ create table "master"."crosscutting" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -430,8 +430,8 @@ create table "master"."program" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -467,8 +467,8 @@ create table "master"."place" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -505,8 +505,8 @@ create table "master"."phase" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -551,8 +551,8 @@ create table "master"."product" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -586,8 +586,8 @@ create table "master"."product_metadata" (
     "value" varchar not null,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -610,9 +610,6 @@ alter table "master"."product_metadata"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "product_metadata_abbrev_idx"
-  on "master"."product_metadata"
-  using btree ("abbrev");
 create index "product_metadata_is_void_idx"
   on "master"."product_metadata"
   using btree ("is_void");
@@ -627,8 +624,8 @@ create table "master"."season" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -663,8 +660,8 @@ create table "master"."place_season" (
     "order_number" integer not null default '1',
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -708,8 +705,8 @@ create table "master"."cross_method" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -749,8 +746,8 @@ create table "dictionary"."database" (
     "lc_ctype" varchar not null default 'C',
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -788,8 +785,8 @@ create table "dictionary"."schema" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -832,8 +829,8 @@ create table "dictionary"."table" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -883,8 +880,8 @@ create table "dictionary"."column" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -944,8 +941,8 @@ create table "dictionary"."constraint" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1003,8 +1000,8 @@ create table "dictionary"."index" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1061,8 +1058,8 @@ create table "dictionary"."rule" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1114,8 +1111,8 @@ create table "dictionary"."trigger" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1161,8 +1158,8 @@ create table "dictionary"."view" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1213,8 +1210,8 @@ create table "dictionary"."sequence" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1265,8 +1262,8 @@ create table "dictionary"."function" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1315,8 +1312,8 @@ create table "dictionary"."domain" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1366,8 +1363,8 @@ create table "dictionary"."aggregate" (
     "comment" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1425,8 +1422,8 @@ create table "operational"."study" (
     "name" varchar(128) not null,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1476,7 +1473,7 @@ create index "study_year_idx"
 create index "study_season_id_idx"
   on "operational"."study"
   using btree ("season_id");
-create index "study_program_id_idx"
+create index "study_year_season_id_idx"
   on "operational"."study"
   using btree ("year", "season_id");
 create index "study_key_idx"
@@ -1499,8 +1496,8 @@ create table "operational"."study_metadata" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1552,8 +1549,8 @@ create table "operational"."entry" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1604,8 +1601,8 @@ create table "operational"."entry_metadata" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1660,8 +1657,8 @@ create table "operational"."entry_data" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1718,8 +1715,8 @@ create table "operational"."plot" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1771,8 +1768,8 @@ create table "operational"."plot_metadata" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1835,8 +1832,8 @@ create table "operational"."plot_data" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1900,8 +1897,8 @@ create table "operational"."subplot" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -1961,8 +1958,8 @@ create table "operational"."subplot_metadata" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -2033,8 +2030,8 @@ create table "operational"."subplot_data" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -2108,8 +2105,8 @@ create table "operational"."cross" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -2178,8 +2175,8 @@ create table "operational"."cross_metadata" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -2192,7 +2189,8 @@ alter table "operational"."cross_metadata"
   match simple on update cascade on delete cascade;
 alter table "operational"."cross_metadata"
   add constraint "cross_metadata_cross_id_fkey"
-  foreign key ("cross_id");
+  foreign key ("cross_id") references "operational"."cross" ("id")
+  match simple on update cascade on delete cascade;
 alter table "operational"."cross_metadata"
   add constraint "cross_metadata_variable_id_fkey"
   foreign key ("variable_id") references "master"."variable" ("id")
@@ -2233,8 +2231,8 @@ create table "operational"."cross_data" (
     "remarks" text,
     "creation_timestamp" timestamp not null,
     "creator_id" integer not null,
-    "modification_timestamp" timestamp not null,
-    "modifier_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
     "notes" text,
     "is_void" boolean not null
 ) with (
@@ -2247,7 +2245,8 @@ alter table "operational"."cross_data"
   match simple on update cascade on delete cascade;
 alter table "operational"."cross_data"
   add constraint "cross_data_cross_id_fkey"
-  foreign key ("cross_id");
+  foreign key ("cross_id") references "operational"."cross" ("id")
+  match simple on update cascade on delete cascade;
 alter table "operational"."cross_data"
   add constraint "cross_data_variable_id_fkey"
   foreign key ("variable_id") references "master"."variable" ("id")
@@ -2275,5 +2274,256 @@ create index "cross_data_variable_id_idx"
   using btree ("variable_id");
 create index "cross_data_is_void_idx"
   on "operational"."cross_data"
+  using btree ("is_void");
+
+-- --------------------------------
+
+create schema "warehouse";
+
+create table "warehouse"."study" (
+    "id" serial not null,
+    "program_id" integer not null,
+    "place_id" integer not null,
+    "phase_id" integer not null,
+    "year" integer not null,
+    "season_id" integer not null,
+    "sequence_number" integer not null,
+    "key" integer not null,
+    "name" varchar(128) not null,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "warehouse"."study"
+  add constraint "study_program_id_fkey"
+  foreign key ("program_id") references "master"."program" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."study"
+  add constraint "study_place_id_fkey"
+  foreign key ("place_id") references "master"."place" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."study"
+  add constraint "study_phase_id_fkey"
+  foreign key ("phase_id") references "master"."phase" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."study"
+  add constraint "study_season_id_fkey"
+  foreign key ("season_id") references "master"."season" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."study"
+  add constraint "study_id_pkey"
+  primary key ("id");
+alter table "warehouse"."study"
+  add constraint "study_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."study"
+  add constraint "study_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "study_program_id_idx"
+  on "warehouse"."study"
+  using btree ("program_id");
+create index "study_place_id_idx"
+  on "warehouse"."study"
+  using btree ("place_id");
+create index "study_phase_id_idx"
+  on "warehouse"."study"
+  using btree ("phase_id");
+create index "study_year_idx"
+  on "warehouse"."study"
+  using btree ("year");
+create index "study_season_id_idx"
+  on "warehouse"."study"
+  using btree ("season_id");
+create index "study_year_season_id_idx"
+  on "warehouse"."study"
+  using btree ("year", "season_id");
+create index "study_key_idx"
+  on "warehouse"."study"
+  using btree ("key");
+create index "study_name_idx"
+  on "warehouse"."study"
+  using btree ("name");
+create index "study_is_void_idx"
+  on "warehouse"."study"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "warehouse"."entry" (
+    "id" serial not null,
+    "study_id" integer not null,
+    "number" integer not null default '1',
+    "key" integer not null,
+    "code" varchar not null,
+    "product_id" integer not null,
+    "product_gid" integer not null,
+    "product_name" varchar(128) not null,
+    "description" text,
+    "remarks" text,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "warehouse"."entry"
+  add constraint "entry_study_id_fkey"
+  foreign key ("study_id") references "warehouse"."study" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."entry"
+  add constraint "entry_product_id_fkey"
+  foreign key ("product_id") references "master"."product" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."entry"
+  add constraint "entry_id_pkey"
+  primary key ("id");
+alter table "warehouse"."entry"
+  add constraint "entry_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."entry"
+  add constraint "entry_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "entry_study_id_idx"
+  on "warehouse"."entry"
+  using btree ("study_id");
+create index "entry_key_idx"
+  on "warehouse"."entry"
+  using btree ("key");
+create index "entry_product_id_idx"
+  on "warehouse"."entry"
+  using btree ("product_id");
+create index "entry_is_void_idx"
+  on "warehouse"."entry"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "warehouse"."plot" (
+    "id" serial not null,
+    "study_id" integer not null,
+    "entry_id" integer not null,
+    "replication_number" integer,
+    "key" integer not null,
+    "code" varchar not null,
+    "description" text,
+    "remarks" text,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "warehouse"."plot"
+  add constraint "plot_study_id_fkey"
+  foreign key ("study_id") references "warehouse"."study" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."plot"
+  add constraint "plot_entry_id_fkey"
+  foreign key ("entry_id") references "warehouse"."entry" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."plot"
+  add constraint "plot_id_pkey"
+  primary key ("id");
+alter table "warehouse"."plot"
+  add constraint "plot_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."plot"
+  add constraint "plot_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "plot_study_id_idx"
+  on "warehouse"."plot"
+  using btree ("study_id");
+create index "plot_entry_id_idx"
+  on "warehouse"."plot"
+  using btree ("entry_id");
+create index "plot_key_idx"
+  on "warehouse"."plot"
+  using btree ("key");
+create index "plot_is_void_idx"
+  on "warehouse"."plot"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "warehouse"."subplot" (
+    "id" serial not null,
+    "study_id" integer not null,
+    "entry_id" integer not null,
+    "plot_id" integer not null,
+    "number" integer not null default '1',
+    "key" integer not null,
+    "description" text,
+    "remarks" text,
+    "creation_timestamp" timestamp not null,
+    "creator_id" integer not null,
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null
+) with (
+    oids = false
+);
+
+alter table "warehouse"."subplot"
+  add constraint "subplot_study_id_fkey"
+  foreign key ("study_id") references "warehouse"."study" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."subplot"
+  add constraint "subplot_entry_id_fkey"
+  foreign key ("entry_id") references "warehouse"."entry" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."subplot"
+  add constraint "subplot_plot_id_fkey"
+  foreign key ("plot_id") references "warehouse"."plot" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."subplot"
+  add constraint "subplot_id_pkey"
+  primary key ("id");
+alter table "warehouse"."subplot"
+  add constraint "subplot_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse"."subplot"
+  add constraint "subplot_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "subplot_study_id_idx"
+  on "warehouse"."subplot"
+  using btree ("study_id");
+create index "subplot_entry_id_idx"
+  on "warehouse"."subplot"
+  using btree ("entry_id");
+create index "subplot_plot_id_idx"
+  on "warehouse"."subplot"
+  using btree ("plot_id");
+create index "subplot_key_idx"
+  on "warehouse"."subplot"
+  using btree ("key");
+create index "subplot_is_void_idx"
+  on "warehouse"."subplot"
   using btree ("is_void");
 
