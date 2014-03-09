@@ -65,7 +65,7 @@ EOD
         $schSql = '';
         
         foreach ($schemas as $schIdx => $schema) {
-            if (!empty($schema->name) and (empty($schema->skip) or $schema->skip != true)) {
+            if (!empty($schema->name) and (empty($schema->options->skip) or $schema->options->skip != true)) {
                 $schName = pg_escape_string($schema->name);
                 
                 if (!empty($schema->comment)) {
@@ -462,6 +462,41 @@ if (!empty($cmtSqlArr)) {
         return str_replace('  ', ' ', trim($val));
     }, $cmtSqlArr);
     $cmtSql = implode("\n\n", $cmtSqlArr);
+}
+
+if (!empty($database->options)) {
+    $dbOpts = $database->options;
+    
+    if (isset($dbOpts->drop_schema) and $dbOpts->drop_schema == true) {
+        $schemas = $database->schema;
+        $schDropSql = '';
+        
+        foreach ($schemas as $schIdx => $schema) {
+            if (!empty($schema->name)) {
+                $schDropSql .= strtr(
+<<<EOD
+drop schema if exists "{schName}" cascade;\n\n
+EOD
+                    , [
+                        '{schName}' => pg_escape_string($schema->name),
+                    ]
+                );
+            }
+        }
+        
+        if (isset($dbOpts->drop_database) and $dbOpts->drop_database == true) {
+            echo strtr(
+<<<EOD
+drop database "{dbName}";
+EOD
+                , [
+                    '{dbName}' => pg_escape_string($dbName),
+                ]
+            );
+        }
+        
+        echo $schDropSql, "-- --------------------------------\n\n";
+    }
 }
 
 echo $dbSql, "\n\n-- --------------------------------\n\n",
