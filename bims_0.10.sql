@@ -6,6 +6,8 @@ drop schema if exists "operational" cascade;
 
 drop schema if exists "warehouse" cascade;
 
+drop schema if exists "terminal" cascade;
+
 -- --------------------------------
 
 -- create database "bims_0.10"
@@ -25,17 +27,17 @@ create table "master"."user" (
     "first_name" varchar(32) not null,
     "middle_name" varchar(32),
     "display_name" varchar(64) not null,
-    "status" varchar not null,
+    "status" varchar not null default 'active',
     "salutation" varchar(16),
     "valid_start_date" date,
     "valid_end_date" date,
     "user_type" integer not null,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -62,6 +64,22 @@ create index "user_is_void_idx"
   on "master"."user"
   using btree ("is_void");
 
+insert into "master"."user" (
+    "email",
+    "username",
+    "last_name",
+    "first_name",
+    "display_name",
+    "user_type"
+) values (
+    'bims.irri@gmail.com',
+    'bims.irri',
+    'IRRI',
+    'BIMS',
+    'IRRI, BIMS',
+    '1'
+);
+
 -- ----------------
 
 create table "master"."property" (
@@ -70,12 +88,12 @@ create table "master"."property" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -99,6 +117,16 @@ create index "property_is_void_idx"
   on "master"."property"
   using btree ("is_void");
 
+insert into "master"."property" (
+    "abbrev",
+    "name",
+    "description"
+) values (
+    'ht',
+    'plant height',
+    'Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]'
+);
+
 -- ----------------
 
 create table "master"."method" (
@@ -107,12 +135,12 @@ create table "master"."method" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -136,6 +164,16 @@ create index "method_is_void_idx"
   on "master"."method"
   using btree ("is_void");
 
+insert into "master"."method" (
+    "abbrev",
+    "name",
+    "description"
+) values (
+    'ht_measured',
+    'plant height measured',
+    'Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []'
+);
+
 -- ----------------
 
 create table "master"."scale" (
@@ -143,14 +181,16 @@ create table "master"."scale" (
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "unit" varchar,
+    "type" varchar not null,
+    "level" varchar,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -174,6 +214,20 @@ create index "scale_is_void_idx"
   on "master"."scale"
   using btree ("is_void");
 
+insert into "master"."scale" (
+    "abbrev",
+    "name",
+    "description",
+    "unit",
+    "type"
+) values (
+    'ht_measured_continuous',
+    'plant height measured continuous',
+    '1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)',
+    'cm',
+    'continuous'
+);
+
 -- ----------------
 
 create table "master"."scale_value" (
@@ -184,12 +238,12 @@ create table "master"."scale_value" (
     "description" text,
     "remarks" text,
     "order_number" integer not null default '1',
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -223,17 +277,22 @@ create table "master"."variable" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
-    "type" varchar,
     "data_type" varchar,
+    "not_null" boolean not null default false,
+    "type" varchar(32),
+    "status" varchar(32),
+    "display_name" varchar not null,
+    "ontology_reference" varchar,
+    "bibliographical_reference" varchar,
     "property_id" integer,
     "method_id" integer,
     "scale_id" integer,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -286,12 +345,12 @@ create table "master"."variable_set" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -322,12 +381,12 @@ create table "master"."variable_set_member" (
     "variable_set_id" integer not null,
     "variable_id" integer not null,
     "order_number" integer not null default '1',
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -364,12 +423,12 @@ create table "master"."pipeline" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -401,12 +460,12 @@ create table "master"."crosscutting" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -438,12 +497,12 @@ create table "master"."program" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -475,12 +534,12 @@ create table "master"."place" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -513,12 +572,12 @@ create table "master"."phase" (
     "order_number" integer not null default '1',
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -559,12 +618,12 @@ create table "master"."product" (
     "cultivar_name" varchar,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -594,12 +653,12 @@ create table "master"."product_metadata" (
     "id" serial not null,
     "variable_id" integer,
     "value" varchar not null,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -632,12 +691,12 @@ create table "master"."season" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -668,12 +727,12 @@ create table "master"."place_season" (
     "place_id" integer not null,
     "season_id" integer not null,
     "order_number" integer not null default '1',
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -713,12 +772,12 @@ create table "master"."cross_method" (
     "name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -754,12 +813,12 @@ create table "dictionary"."database" (
     "encoding" varchar not null default 'UTF8',
     "lc_collate" varchar not null default 'C',
     "lc_ctype" varchar not null default 'C',
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -793,12 +852,12 @@ create table "dictionary"."schema" (
     "comment" text,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -837,12 +896,12 @@ create table "dictionary"."table" (
     "comment" text,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -885,15 +944,15 @@ create table "dictionary"."column" (
     "name" varchar(128) not null,
     "data_type" varchar(32) not null,
     "length" varchar(32),
-    "not_null" boolean not null,
+    "not_null" boolean not null default false,
     "default_value" varchar,
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -946,15 +1005,15 @@ create table "dictionary"."constraint" (
     "on_delete" varchar not null default 'no action',
     "on_update" varchar not null default 'no action',
     "match_type" varchar not null default 'simple',
-    "no_inherit" boolean not null,
-    "concurrent" boolean not null,
+    "no_inherit" boolean not null default false,
+    "concurrent" boolean not null default false,
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1005,15 +1064,15 @@ create table "dictionary"."index" (
     "name" varchar(128) not null,
     "column_id" integer not null,
     "using" varchar,
-    "unique" boolean not null,
-    "concurrent" boolean not null,
+    "unique" boolean not null default false,
+    "concurrent" boolean not null default false,
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1066,12 +1125,12 @@ create table "dictionary"."rule" (
     "condition" text,
     "command" text,
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1111,7 +1170,7 @@ create table "dictionary"."trigger" (
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
-    "enabled" boolean not null default '1',
+    "enabled" boolean not null default true,
     "execution" varchar not null default 'before',
     "for_each" varchar not null default 'row',
     "event" varchar default 'insert',
@@ -1119,12 +1178,12 @@ create table "dictionary"."trigger" (
     "argument" varchar,
     "condition" varchar,
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1166,12 +1225,12 @@ create table "dictionary"."view" (
     "name" varchar(128) not null,
     "command" text,
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1216,14 +1275,14 @@ create table "dictionary"."sequence" (
     "maximum_value" integer not null default '2147483647',
     "minimum_value" integer not null default '1',
     "cache" integer not null default '1',
-    "cycle" boolean not null,
+    "cycle" boolean not null default false,
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1266,16 +1325,16 @@ create table "dictionary"."function" (
     "cycle" varchar not null default 'single_value',
     "return_type" varchar not null default 'varchar',
     "language" varchar not null default 'plpgsql',
-    "strict" boolean not null,
+    "strict" boolean not null default false,
     "execution_privilege" varchar not null default 'invoker',
     "stability" varchar not null default 'volatile',
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1316,16 +1375,16 @@ create table "dictionary"."domain" (
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "data_type" varchar,
-    "not_null" boolean not null,
+    "not_null" boolean not null default false,
     "default_value" varchar,
     "collation" varchar not null default 'pg_catalog.C',
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1371,12 +1430,12 @@ create table "dictionary"."aggregate" (
     "final_function_id" integer,
     "initial_condition" text,
     "comment" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1430,12 +1489,12 @@ create table "operational"."study" (
     "sequence_number" integer not null,
     "key" integer not null,
     "name" varchar(128) not null,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1504,12 +1563,12 @@ create table "operational"."study_metadata" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1557,12 +1616,12 @@ create table "operational"."entry" (
     "product_name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1609,12 +1668,12 @@ create table "operational"."entry_metadata" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1665,12 +1724,12 @@ create table "operational"."entry_data" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1723,12 +1782,12 @@ create table "operational"."plot" (
     "code" varchar,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1776,12 +1835,12 @@ create table "operational"."plot_metadata" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1840,12 +1899,12 @@ create table "operational"."plot_data" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1905,12 +1964,12 @@ create table "operational"."subplot" (
     "key" integer not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -1966,12 +2025,12 @@ create table "operational"."subplot_metadata" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2038,12 +2097,12 @@ create table "operational"."subplot_data" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2113,12 +2172,12 @@ create table "operational"."cross" (
     "cross_method_id" integer not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2183,12 +2242,12 @@ create table "operational"."cross_metadata" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2239,12 +2298,12 @@ create table "operational"."cross_data" (
     "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2300,12 +2359,12 @@ create table "warehouse"."study" (
     "sequence_number" integer not null,
     "key" integer not null,
     "name" varchar(128) not null,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2379,12 +2438,12 @@ create table "warehouse"."entry" (
     "product_name" varchar(128) not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2433,12 +2492,12 @@ create table "warehouse"."plot" (
     "code" varchar,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2487,12 +2546,12 @@ create table "warehouse"."subplot" (
     "key" integer not null,
     "description" text,
     "remarks" text,
-    "creation_timestamp" timestamp not null,
-    "creator_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
     "modifier_id" integer,
     "notes" text,
-    "is_void" boolean not null
+    "is_void" boolean not null default false
 ) with (
     oids = false
 );
@@ -2536,4 +2595,115 @@ create index "subplot_key_idx"
 create index "subplot_is_void_idx"
   on "warehouse"."subplot"
   using btree ("is_void");
+
+-- --------------------------------
+
+create schema "terminal";
+
+create table "terminal"."variable" (
+    "id" serial not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(128) not null,
+    "description" varchar,
+    "data_type" varchar,
+    "not_null" varchar,
+    "type" varchar,
+    "status" varchar(32),
+    "display_name" varchar,
+    "ontology_reference" varchar,
+    "bibliographical_reference" varchar,
+    "method" varchar,
+    "scale" varchar,
+    "scale_unit" varchar,
+    "scale_type" varchar,
+    "scale_level" varchar,
+    "default_value" varchar,
+    "minimum_value" varchar,
+    "maximum_value" varchar,
+    "variable_set" varchar,
+    "synonym" varchar,
+    "entry_message" varchar,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "terminal"."variable"
+  add constraint "variable_id_pkey"
+  primary key ("id");
+alter table "terminal"."variable"
+  add constraint "variable_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "terminal"."variable"
+  add constraint "variable_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "variable_abbrev_idx"
+  on "terminal"."variable"
+  using btree ("abbrev");
+create index "variable_is_void_idx"
+  on "terminal"."variable"
+  using btree ("is_void");
+
+
+
+-- --------------------------------
+
+-- DROP TRIGGER add_variable_column ON master."variable";
+-- DROP FUNCTION public.add_variable_column();
+
+create or replace function "master"."add_variable_column"() returns trigger as $add_var_col$
+declare
+    column_name varchar;
+    data_type varchar;
+    not_null varchar;
+
+    add_column varchar;
+begin
+    if (upper(new."type") = 'METADATA' or upper(new."type") = 'OBSERVATION') then
+        -- column name
+        if (new."abbrev" is null or trim(new.abbrev) = '') then
+            column_name := lower(new."name");
+        else
+            column_name := lower(new."abbrev");
+        end if;
+
+        -- data type
+        if (new."data_type" is null or trim(new."data_type") = '') then
+            data_type := 'varchar';
+        else
+            data_type := lower(new."data_type");
+        end if;
+
+        -- not null
+        not_null := '';
+        if (new."not_null" = true) then
+            not_null := 'not null';
+        end if;
+
+        add_column := 'add column ' || column_name || ' ' || data_type || ' ' || not_null;
+
+        -- add column to warehouse.entry
+        execute
+            'alter table "warehouse"."entry" ' || add_column;
+
+        -- add column to warehouse.plot
+        execute
+            'alter table "warehouse"."plot" ' || add_column;
+    end if;
+
+    return new;
+end;
+$add_var_col$ language plpgsql;
+
+create trigger "add_variable_column"
+    after insert on "master"."variable"
+    for each row execute procedure "master"."add_variable_column"();
 
