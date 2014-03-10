@@ -465,53 +465,14 @@ database: &bims_0.10
                             column: username
                             unique: true
                         <<: *def-log-tbl-idx
-                    options:
-                        append_sql: |
-                            insert into "master"."user" (
-                                "email",
-                                "username",
-                                "last_name",
-                                "first_name",
-                                "display_name",
-                                "user_type"
-                            ) values (
-                                'bims.irri@gmail.com',
-                                'bims.irri',
-                                'IRRI',
-                                'BIMS',
-                                'IRRI, BIMS',
-                                '1'
-                            );
                 - &master-property-tbl
                     <<: *def-tbl
                     name: property
                     comment: 'Property describes the context of the sampling unit and experimental material, or the trait being measured.'
-                    options:
-                        append_sql: |
-                            insert into "master"."property" (
-                                "abbrev",
-                                "name",
-                                "description"
-                            ) values (
-                                'ht',
-                                'plant height',
-                                'Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]'
-                            );
                 - &master-method-tbl
                     <<: *def-tbl
                     name: method
                     comment: 'Method describes how the property is applied or the protocol by which a variable is measured.'
-                    options:
-                        append_sql: |
-                            insert into "master"."method" (
-                                "abbrev",
-                                "name",
-                                "description"
-                            ) values (
-                                'ht_measured',
-                                'plant height measured',
-                                'Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []'
-                            );
                 - &master-scale-tbl
                     <<: *def-tbl
                     name: scale
@@ -533,21 +494,6 @@ database: &bims_0.10
                             comment: 'nominal; ordinal; interval; ratio'
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
-                    options:
-                        append_sql: |
-                            insert into "master"."scale" (
-                                "abbrev",
-                                "name",
-                                "description",
-                                "unit",
-                                "type"
-                            ) values (
-                                'ht_measured_continuous',
-                                'plant height measured continuous',
-                                '1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)',
-                                'cm',
-                                'continuous'
-                            );
                 - &master-scale_value-tbl
                     <<: *def-tbl
                     name: scale_value
@@ -2108,9 +2054,12 @@ database: &bims_0.10
                     name: variable
                     comment: Variable list by the data managers
                     column:
-                        <<: *def-id-tbl-col
-                        - *abbrev-col
-                        - *name-col
+                        -
+                            <<: *abbrev-col
+                            not_null: false
+                        -
+                            <<: *name-col
+                            not_null: false
                         -
                             name: description
                             data_type: varchar
@@ -2123,7 +2072,8 @@ database: &bims_0.10
                         -
                             name: type
                             data_type: varchar
-                        - *status-col
+                        -
+                            <<: *status-col
                         -
                             name: display_name
                             data_type: varchar
@@ -2166,10 +2116,31 @@ database: &bims_0.10
                         -
                             name: entry_message
                             data_type: varchar
+                        <<: *def-id-tbl-col
                         <<: *def-log-tbl-col
+                    index:
+                        <<: *def-log-tbl-idx
     options:
         drop_schema: true
         append_sql: |
+            insert into "master"."user" (
+                "email",
+                "username",
+                "last_name",
+                "first_name",
+                "display_name",
+                "user_type"
+            ) values (
+                'bims.irri@gmail.com',
+                'bims.irri',
+                'IRRI',
+                'BIMS',
+                'IRRI, BIMS',
+                '1'
+            );
+            
+            -- ---------------------------------------------------
+            
             -- DROP TRIGGER add_variable_column ON master."variable";
             -- DROP FUNCTION public.add_variable_column();
             
@@ -2217,7 +2188,41 @@ database: &bims_0.10
             end;
             $add_var_col$ language plpgsql;
             
-            create trigger "add_variable_column"
+            /*create trigger "add_variable_column"
                 after insert on "master"."variable"
                 for each row execute procedure "master"."add_variable_column"();
+            
+            insert into "master"."property" (
+                "abbrev",
+                "name",
+                "description"
+            ) values (
+                'ht',
+                'plant height',
+                'Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]'
+            );
+            
+            insert into "master"."method" (
+                "abbrev",
+                "name",
+                "description"
+            ) values (
+                'ht_measured',
+                'plant height measured',
+                'Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []'
+            );
+            
+            insert into "master"."scale" (
+                "abbrev",
+                "name",
+                "description",
+                "unit",
+                "type"
+            ) values (
+                'ht_measured_continuous',
+                'plant height measured continuous',
+                '1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)',
+                'cm',
+                'continuous'
+            );*/
 ...
