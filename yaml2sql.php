@@ -487,7 +487,7 @@ if (!empty($database->options)) {
         $schDropSql = '';
         
         foreach ($schemas as $schIdx => $schema) {
-            if (!empty($schema->name)) {
+            if (!empty($schema->name) and (!isset($schema->options->skip_drop) or $schema->options->skip_drop != true)) {
                 $schDropSql .= strtr(
 <<<EOD
 drop schema if exists "{schName}" cascade;\n\n
