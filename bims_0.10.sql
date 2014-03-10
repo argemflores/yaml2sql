@@ -64,22 +64,6 @@ create index "user_is_void_idx"
   on "master"."user"
   using btree ("is_void");
 
-insert into "master"."user" (
-    "email",
-    "username",
-    "last_name",
-    "first_name",
-    "display_name",
-    "user_type"
-) values (
-    'bims.irri@gmail.com',
-    'bims.irri',
-    'IRRI',
-    'BIMS',
-    'IRRI, BIMS',
-    '1'
-);
-
 -- ----------------
 
 create table "master"."property" (
@@ -117,16 +101,6 @@ create index "property_is_void_idx"
   on "master"."property"
   using btree ("is_void");
 
-insert into "master"."property" (
-    "abbrev",
-    "name",
-    "description"
-) values (
-    'ht',
-    'plant height',
-    'Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]'
-);
-
 -- ----------------
 
 create table "master"."method" (
@@ -163,16 +137,6 @@ create unique index "method_abbrev_idx"
 create index "method_is_void_idx"
   on "master"."method"
   using btree ("is_void");
-
-insert into "master"."method" (
-    "abbrev",
-    "name",
-    "description"
-) values (
-    'ht_measured',
-    'plant height measured',
-    'Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []'
-);
 
 -- ----------------
 
@@ -213,20 +177,6 @@ create unique index "scale_abbrev_idx"
 create index "scale_is_void_idx"
   on "master"."scale"
   using btree ("is_void");
-
-insert into "master"."scale" (
-    "abbrev",
-    "name",
-    "description",
-    "unit",
-    "type"
-) values (
-    'ht_measured_continuous',
-    'plant height measured continuous',
-    '1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)',
-    'cm',
-    'continuous'
-);
 
 -- ----------------
 
@@ -2601,9 +2551,8 @@ create index "subplot_is_void_idx"
 create schema "terminal";
 
 create table "terminal"."variable" (
-    "id" serial not null,
-    "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "abbrev" varchar(128),
+    "name" varchar(128),
     "description" varchar,
     "data_type" varchar,
     "not_null" varchar,
@@ -2623,6 +2572,7 @@ create table "terminal"."variable" (
     "variable_set" varchar,
     "synonym" varchar,
     "entry_message" varchar,
+    "id" serial not null,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2645,9 +2595,6 @@ alter table "terminal"."variable"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "variable_abbrev_idx"
-  on "terminal"."variable"
-  using btree ("abbrev");
 create index "variable_is_void_idx"
   on "terminal"."variable"
   using btree ("is_void");
@@ -2655,6 +2602,24 @@ create index "variable_is_void_idx"
 
 
 -- --------------------------------
+
+insert into "master"."user" (
+    "email",
+    "username",
+    "last_name",
+    "first_name",
+    "display_name",
+    "user_type"
+) values (
+    'bims.irri@gmail.com',
+    'bims.irri',
+    'IRRI',
+    'BIMS',
+    'IRRI, BIMS',
+    '1'
+);
+
+-- ---------------------------------------------------
 
 -- DROP TRIGGER add_variable_column ON master."variable";
 -- DROP FUNCTION public.add_variable_column();
@@ -2703,7 +2668,41 @@ begin
 end;
 $add_var_col$ language plpgsql;
 
-create trigger "add_variable_column"
+/*create trigger "add_variable_column"
     after insert on "master"."variable"
     for each row execute procedure "master"."add_variable_column"();
+
+insert into "master"."property" (
+    "abbrev",
+    "name",
+    "description"
+) values (
+    'ht',
+    'plant height',
+    'Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]'
+);
+
+insert into "master"."method" (
+    "abbrev",
+    "name",
+    "description"
+) values (
+    'ht_measured',
+    'plant height measured',
+    'Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []'
+);
+
+insert into "master"."scale" (
+    "abbrev",
+    "name",
+    "description",
+    "unit",
+    "type"
+) values (
+    'ht_measured_continuous',
+    'plant height measured continuous',
+    '1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)',
+    'cm',
+    'continuous'
+);*/
 
