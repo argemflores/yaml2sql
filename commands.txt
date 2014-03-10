@@ -1,0 +1,1 @@
+cls && php yaml2sql.php bims_0.10.yaml > bims_0.10.sql && psql -U postgres -d bims_0.10 -E -f bims_0.10.sql
