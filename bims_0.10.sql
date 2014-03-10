@@ -6,8 +6,6 @@ drop schema if exists "operational" cascade;
 
 drop schema if exists "warehouse" cascade;
 
-drop schema if exists "terminal" cascade;
-
 -- --------------------------------
 
 -- create database "bims_0.10"
@@ -106,7 +104,7 @@ create index "property_is_void_idx"
 create table "master"."method" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -145,7 +143,7 @@ create table "master"."scale" (
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
     "unit" varchar,
-    "type" varchar not null,
+    "type" varchar,
     "level" varchar,
     "description" text,
     "remarks" text,
@@ -2546,59 +2544,6 @@ create index "subplot_is_void_idx"
   on "warehouse"."subplot"
   using btree ("is_void");
 
--- --------------------------------
-
-create schema "terminal";
-
-create table "terminal"."variable" (
-    "abbrev" varchar(128),
-    "name" varchar(128),
-    "description" varchar,
-    "data_type" varchar,
-    "not_null" varchar,
-    "type" varchar,
-    "status" varchar(32),
-    "display_name" varchar,
-    "ontology_reference" varchar,
-    "bibliographical_reference" varchar,
-    "method" varchar,
-    "scale" varchar,
-    "scale_unit" varchar,
-    "scale_type" varchar,
-    "scale_level" varchar,
-    "default_value" varchar,
-    "minimum_value" varchar,
-    "maximum_value" varchar,
-    "variable_set" varchar,
-    "synonym" varchar,
-    "entry_message" varchar,
-    "id" serial not null,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "terminal"."variable"
-  add constraint "variable_id_pkey"
-  primary key ("id");
-alter table "terminal"."variable"
-  add constraint "variable_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "terminal"."variable"
-  add constraint "variable_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "variable_is_void_idx"
-  on "terminal"."variable"
-  using btree ("is_void");
-
 
 
 -- --------------------------------
@@ -2705,4 +2650,89 @@ insert into "master"."scale" (
     'cm',
     'continuous'
 );*/
+
+insert into
+    master.property (
+        abbrev,
+        name,
+        description
+    )
+select
+    upper(replace(trim(var."name"), ' ', '_')) "abbrev",
+    lower(trim(var."name")) "name",
+    (
+        select
+            description
+        from
+            import.variable
+        where
+            id = id_arr[1]
+    ) "description"
+from (
+    select
+        lower(trim(iv."name")) "name",
+        count(iv.id) id_count,
+        array_agg(iv.id) id_arr
+    from
+        import.variable iv
+    group by
+        lower(trim(iv."name"))
+    order by
+        lower(trim(iv."name")) asc,
+        count(iv.id) desc
+) var
+;
+
+insert into
+    master.method (
+        abbrev,
+        name,
+        description
+    )
+select
+    upper(replace(trim(var."name"), ' ', '_')) || '_METHOD_'
+        || row_number() over (partition by "name") "abbrev",
+    trim(var."name") || ' method',
+    var.method "description"
+from (
+    select
+        trim(iv."method") "method",
+        lower(trim(iv."name")) "name"
+    from
+        import.variable iv
+    order by
+        trim(iv."method") asc
+) var
+;
+
+insert into
+    master.scale (
+        abbrev,
+        name,
+        description,
+        unit,
+        type,
+        level
+    )
+select
+    upper(replace(trim(var."name"), ' ', '_')) || '_SCALE_'
+        || row_number() over (partition by "name") "abbrev",
+    trim(var."name") "name",
+    var.method "description",
+    var."unit",
+    var."type",
+    var."level"
+from (
+    select
+        trim(iv."method") "method",
+        lower(trim(iv."name")) "name",
+        trim(iv.scale_unit) "unit",
+        trim(iv.scale_type) "type",
+        trim(iv.scale_level) "level"
+    from
+        import.variable iv
+    order by
+        trim(iv."method") asc
+) var
+;
 
