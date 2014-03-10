@@ -125,8 +125,11 @@ EOD
                                         $colAttributes .= ' not null ';
                                     }
                                     
-                                    if (!empty($column->default_value)) {
-                                        if (strpos($column->default_value, '()') > 0) {
+                                    if (isset($column->default_value)) {
+                                        if (is_bool($column->default_value)) {
+                                            $colDefaultValue = $column->default_value ? 'true' : 'false';
+                                        }
+                                        elseif (strpos($column->default_value, '()') > 0) {
                                             $colDefaultValue = $column->default_value;
                                         }
                                         else {
@@ -429,7 +432,17 @@ EOD
                             }
                         }
                         
-                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql;
+                        $tblOptsSql = '';
+                        if (!empty($table->options)) {
+                            $tblOpts = $table->options;
+                            
+                            if (!empty($tblOpts->append_sql)) {
+                                // $tblOptsSql .= "execute '" . pg_escape_string($tblOpts->append_sql) . "';";
+                                $tblOptsSql .= $tblOpts->append_sql;
+                            }
+                        }
+                        
+                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $tblOptsSql;
                     }
                 }
                 
@@ -464,6 +477,8 @@ if (!empty($cmtSqlArr)) {
     $cmtSql = implode("\n\n", $cmtSqlArr);
 }
 
+$optsSql = '';
+
 if (!empty($database->options)) {
     $dbOpts = $database->options;
     
@@ -484,23 +499,29 @@ EOD
             }
         }
         
-        if (isset($dbOpts->drop_database) and $dbOpts->drop_database == true) {
-            echo strtr(
+        echo $schDropSql, "-- --------------------------------\n\n";
+    }
+        
+    if (isset($dbOpts->drop_database) and $dbOpts->drop_database == true) {
+        echo strtr(
 <<<EOD
 drop database "{dbName}";
 EOD
-                , [
-                    '{dbName}' => pg_escape_string($dbName),
-                ]
-            );
-        }
-        
-        echo $schDropSql, "-- --------------------------------\n\n";
+            , [
+                '{dbName}' => pg_escape_string($dbName),
+            ]
+        );
+    }
+    
+    if (!empty($dbOpts->append_sql)) {
+        $optsSql .= $dbOpts->append_sql;
     }
 }
 
 echo $dbSql, "\n\n-- --------------------------------\n\n",
     $schSql, "\n\n";
 // echo $cmtSql, "\n\n";
+echo "\n\n-- --------------------------------\n\n",
+    $optsSql, "\n\n";
 
 // var_dump(json_encode(Spyc::YAMLLoad($inputFile)));
