@@ -51,17 +51,23 @@ create trigger "add_variable_column"
 
 
 select
-    upper(replace(trim(var."name"), ' ', '_')) || '_METHOD_'
+    upper(replace(trim(var."name"), ' ', '_')) || '_SCALE_'
         || row_number() over (partition by "name") "abbrev",
-    trim(var."name") || ' method',
-    var.method "description"
-    from (
+    trim(var."name") "name",
+    var.method "description",
+    var.scale_unit "unit",
+    var.scale_type "type",
+    var.scale_level "level"
+from (
     select
         trim(iv."method") "method",
-        lower(trim(iv."name")) "name"
+        lower(trim(iv."name")) "name",
+        trim(iv.scale_unit) "unit",
+        trim(iv.scale_type) "type",
+        trim(iv.scale_level) "level",
     from
         import.variable iv
     order by
         trim(iv."method") asc
-    ) var
+) var
 ;
