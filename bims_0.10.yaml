@@ -1,3 +1,4 @@
+---
 dictionary:
     column:
         - &id-col
@@ -30,11 +31,13 @@ dictionary:
             data_type: timestamp
             not_null: true
             comment: Timestamp when the record was added to the table
+            default_value: now()
         - &creator_id-col
             name: creator_id
             data_type: integer
             not_null: true
             comment: ID of the user who added the record to the table
+            default_value: 1
         - &modification_timestamp-col
             name: modification_timestamp
             data_type: timestamp
@@ -50,8 +53,8 @@ dictionary:
         - &is_void-col
             name: is_void
             data_type: boolean
-            default_value: false
             not_null: true
+            default_value: false
             comment: Indicator whether the record is deleted or not
         - &order_number-col
             name: order_number
@@ -149,6 +152,10 @@ dictionary:
         - &code-col
             name: code
             data_type: varchar
+        - &status-col
+            name: status
+            data_type: varchar
+            length: 32
     constraint:
         - &id_pkey-cst
             name: {table}_id_pkey
@@ -388,8 +395,6 @@ database: &bims_0.10
     encoding: UTF8
     lc-collate: C
     lc_ctype: C
-    options:
-        drop_schema: true
     schema:
         - &master-sch
             name: master
@@ -434,7 +439,7 @@ database: &bims_0.10
                             name: status
                             data_type: varchar
                             not_null: true
-                            default: active
+                            default_value: active
                         - &user-salutation-col
                             name: salutation
                             data_type: varchar
@@ -460,14 +465,53 @@ database: &bims_0.10
                             column: username
                             unique: true
                         <<: *def-log-tbl-idx
+                    options:
+                        append_sql: |
+                            insert into "master"."user" (
+                                "email",
+                                "username",
+                                "last_name",
+                                "first_name",
+                                "display_name",
+                                "user_type"
+                            ) values (
+                                'bims.irri@gmail.com',
+                                'bims.irri',
+                                'IRRI',
+                                'BIMS',
+                                'IRRI, BIMS',
+                                '1'
+                            );
                 - &master-property-tbl
                     <<: *def-tbl
                     name: property
                     comment: 'Property describes the context of the sampling unit and experimental material, or the trait being measured.'
+                    options:
+                        append_sql: |
+                            insert into "master"."property" (
+                                "abbrev",
+                                "name",
+                                "description"
+                            ) values (
+                                'ht',
+                                'plant height',
+                                'Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]'
+                            );
                 - &master-method-tbl
                     <<: *def-tbl
                     name: method
                     comment: 'Method describes how the property is applied or the protocol by which a variable is measured.'
+                    options:
+                        append_sql: |
+                            insert into "master"."method" (
+                                "abbrev",
+                                "name",
+                                "description"
+                            ) values (
+                                'ht_measured',
+                                'plant height measured',
+                                'Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []'
+                            );
                 - &master-scale-tbl
                     <<: *def-tbl
                     name: scale
@@ -478,8 +522,32 @@ database: &bims_0.10
                         - &scale-unit-col
                             name: unit
                             data_type: varchar
+                        - &scale-type-col
+                            name: type
+                            data_type: varchar
+                            not_null: true
+                            comment: 'categorical; continuous; discrete'
+                        - &scale-level-col
+                            name: level
+                            data_type: varchar
+                            comment: 'nominal; ordinal; interval; ratio'
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
+                    options:
+                        append_sql: |
+                            insert into "master"."scale" (
+                                "abbrev",
+                                "name",
+                                "description",
+                                "unit",
+                                "type"
+                            ) values (
+                                'ht_measured_continuous',
+                                'plant height measured continuous',
+                                '1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)',
+                                'cm',
+                                'continuous'
+                            );
                 - &master-scale_value-tbl
                     <<: *def-tbl
                     name: scale_value
@@ -520,15 +588,36 @@ database: &bims_0.10
                     comment: Variables
                     column:
                         <<: *def-id-tbl-col
-                        <<: *def-meta-tbl-col
-                        - &variable-type-col
-                            name: type
-                            data_type: varchar
-                            # accepted_values: [ system, identification, metadata, observation ]
+                        - &variable-abbrev-col
+                            <<: *abbrev-col
+                        - &variable-name-col
+                            <<: *name-col
                         - &variable-data_type-col
                             name: data_type
                             data_type: varchar
                             # accepted_values: integer, float, varchar, text, bool, byte
+                        - &variable-not_null-col
+                            name: not_null
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
+                        - &variable-type-col
+                            name: type
+                            data_type: varchar
+                            length: 32
+                            # accepted_values: [ system, identification, metadata, observation ]
+                        - &variable-status-col
+                            <<: *status-col
+                        - &variable-display_name-col
+                            name: display_name
+                            data_type: varchar
+                            not_null: true
+                        - &variable-ontology_reference-col
+                            name: ontology_reference
+                            data_type: varchar
+                        - &variable-bibliographical_reference-col
+                            name: bibliographical_reference
+                            data_type: varchar
                         - &variable-property_id-col
                             name: property_id
                             data_type: integer
@@ -2010,3 +2099,125 @@ database: &bims_0.10
                         - &subplot-key-idx
                             <<: *key-idx
                         <<: *def-log-tbl-idx
+
+        - &import-sch
+            name: terminal
+            table:
+                - &import-variable-tbl
+                    <<: *def-tbl
+                    name: variable
+                    comment: Variable list by the data managers
+                    column:
+                        <<: *def-id-tbl-col
+                        - *abbrev-col
+                        - *name-col
+                        -
+                            name: description
+                            data_type: varchar
+                        -
+                            name: data_type
+                            data_type: varchar
+                        -
+                            name: not_null
+                            data_type: varchar
+                        -
+                            name: type
+                            data_type: varchar
+                        - *status-col
+                        -
+                            name: display_name
+                            data_type: varchar
+                        -
+                            name: ontology_reference
+                            data_type: varchar
+                        -
+                            name: bibliographical_reference
+                            data_type: varchar
+                        -
+                            name: method
+                            data_type: varchar
+                        -
+                            name: scale
+                            data_type: varchar
+                        -
+                            name: scale_unit
+                            data_type: varchar
+                        -
+                            name: scale_type
+                            data_type: varchar
+                        -
+                            name: scale_level
+                            data_type: varchar
+                        -
+                            name: default_value
+                            data_type: varchar
+                        -
+                            name: minimum_value
+                            data_type: varchar
+                        -
+                            name: maximum_value
+                            data_type: varchar
+                        -
+                            name: variable_set
+                            data_type: varchar
+                        -
+                            name: synonym
+                            data_type: varchar
+                        -
+                            name: entry_message
+                            data_type: varchar
+                        <<: *def-log-tbl-col
+    options:
+        drop_schema: true
+        append_sql: |
+            -- DROP TRIGGER add_variable_column ON master."variable";
+            -- DROP FUNCTION public.add_variable_column();
+            
+            create or replace function "master"."add_variable_column"() returns trigger as $add_var_col$
+            declare
+                column_name varchar;
+                data_type varchar;
+                not_null varchar;
+                
+                add_column varchar;
+            begin
+                if (upper(new."type") = 'METADATA' or upper(new."type") = 'OBSERVATION') then
+                    -- column name
+                    if (new."abbrev" is null or trim(new.abbrev) = '') then
+                        column_name := lower(new."name");
+                    else
+                        column_name := lower(new."abbrev");
+                    end if;
+                    
+                    -- data type
+                    if (new."data_type" is null or trim(new."data_type") = '') then
+                        data_type := 'varchar';
+                    else
+                        data_type := lower(new."data_type");
+                    end if;
+                    
+                    -- not null
+                    not_null := '';
+                    if (new."not_null" = true) then
+                        not_null := 'not null';
+                    end if;
+                    
+                    add_column := 'add column ' || column_name || ' ' || data_type || ' ' || not_null;
+                    
+                    -- add column to warehouse.entry
+                    execute
+                        'alter table "warehouse"."entry" ' || add_column;
+                    
+                    -- add column to warehouse.plot
+                    execute
+                        'alter table "warehouse"."plot" ' || add_column;
+                end if;
+                
+                return new;
+            end;
+            $add_var_col$ language plpgsql;
+            
+            create trigger "add_variable_column"
+                after insert on "master"."variable"
+                for each row execute procedure "master"."add_variable_column"();
+...
