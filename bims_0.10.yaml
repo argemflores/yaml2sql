@@ -473,6 +473,15 @@ database: &bims_0.10
                     <<: *def-tbl
                     name: method
                     comment: 'Method describes how the property is applied or the protocol by which a variable is measured.'
+                    column:
+                        <<: *def-id-tbl-col
+                        - &method-abbrev-col
+                            <<: *abbrev-col
+                        - &method-name-col
+                            name: name
+                            data_type: varchar
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
                 - &master-scale-tbl
                     <<: *def-tbl
                     name: scale
@@ -486,7 +495,7 @@ database: &bims_0.10
                         - &scale-type-col
                             name: type
                             data_type: varchar
-                            not_null: true
+                            # not_null: true
                             comment: 'categorical; continuous; discrete'
                         - &scale-level-col
                             name: level
@@ -2047,7 +2056,7 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
 
         - &import-sch
-            name: terminal
+            name: import
             table:
                 - &import-variable-tbl
                     <<: *def-tbl
@@ -2120,6 +2129,9 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                     index:
                         <<: *def-log-tbl-idx
+            options:
+                skip_drop: true
+                skip: true
     options:
         drop_schema: true
         append_sql: |
@@ -2225,4 +2237,89 @@ database: &bims_0.10
                 'cm',
                 'continuous'
             );*/
+            
+            insert into
+                master.property (
+                    abbrev,
+                    name,
+                    description
+                )
+            select
+                upper(replace(trim(var."name"), ' ', '_')) "abbrev",
+                lower(trim(var."name")) "name",
+                (
+                    select
+                        description
+                    from
+                        import.variable
+                    where
+                        id = id_arr[1]
+                ) "description"
+            from (
+                select
+                    lower(trim(iv."name")) "name",
+                    count(iv.id) id_count,
+                    array_agg(iv.id) id_arr
+                from
+                    import.variable iv
+                group by
+                    lower(trim(iv."name"))
+                order by
+                    lower(trim(iv."name")) asc,
+                    count(iv.id) desc
+            ) var
+            ;
+            
+            insert into
+                master.method (
+                    abbrev,
+                    name,
+                    description
+                )
+            select
+                upper(replace(trim(var."name"), ' ', '_')) || '_METHOD_'
+                    || row_number() over (partition by "name") "abbrev",
+                trim(var."name") || ' method',
+                var.method "description"
+            from (
+                select
+                    trim(iv."method") "method",
+                    lower(trim(iv."name")) "name"
+                from
+                    import.variable iv
+                order by
+                    trim(iv."method") asc
+            ) var
+            ;
+            
+            insert into
+                master.scale (
+                    abbrev,
+                    name,
+                    description,
+                    unit,
+                    type,
+                    level
+                )
+            select
+                upper(replace(trim(var."name"), ' ', '_')) || '_SCALE_'
+                    || row_number() over (partition by "name") "abbrev",
+                trim(var."name") "name",
+                var.method "description",
+                var."unit",
+                var."type",
+                var."level"
+            from (
+                select
+                    trim(iv."method") "method",
+                    lower(trim(iv."name")) "name",
+                    trim(iv.scale_unit) "unit",
+                    trim(iv.scale_type) "type",
+                    trim(iv.scale_level) "level"
+                from
+                    import.variable iv
+                order by
+                    trim(iv."method") asc
+            ) var
+            ;
 ...
