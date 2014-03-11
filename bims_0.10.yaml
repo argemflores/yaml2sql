@@ -156,6 +156,10 @@ dictionary:
             name: status
             data_type: varchar
             length: 32
+        - &title-col
+            name: title
+            data_type: varchar
+            comment: Title
     constraint:
         - &id_pkey-cst
             name: {table}_id_pkey
@@ -1396,6 +1400,9 @@ database: &bims_0.10
                         - &study-name-col
                             <<: *name-col
                             comment: Logical name of the study
+                        - &study-title-col
+                            <<: *title-col
+                            comment: Title of the study
                         <<: *def-log-tbl-col
                     constraint:
                         - &study-program_id-fkey-cst
@@ -1930,6 +1937,9 @@ database: &bims_0.10
                         - &study-name-col
                             <<: *name-col
                             comment: Logical name of the study
+                        - &study-title-col
+                            <<: *title-col
+                            comment: Title of the study
                         <<: *def-log-tbl-col
                     constraint:
                         - &study-program_id-fkey-cst
@@ -2534,4 +2544,5 @@ database: &bims_0.10
             ;
             
             -- ---------------------------------------------------
+            
 ...
