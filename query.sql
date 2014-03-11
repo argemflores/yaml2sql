@@ -331,3 +331,159 @@
             where
                 mv.variable_set is not null
             ;
+            
+            
+            insert into master.variable (
+                abbrev,
+                name,
+                data_type,
+                not_null,
+                type,
+                status,
+                display_name,
+                ontology_reference,
+                bibliographical_reference,
+                property_id,
+                method_id,
+                scale_id,
+                variable_set
+            )
+            select
+                (replace(
+                    (
+                        case
+                            when var.abbrev is null then
+                                -- var.name || '_' || substring(var.scale_type from 1 for 3)
+                                var.name || '_' || (
+                                    case when var.scale_type is null then ''
+                                    else substring(var.scale_type from 1 for 3) || '_' end
+                                ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
+                            when (
+                                select
+                                    count(iv.id)
+                                from
+                                    import.variable iv
+                                where
+                                    lower(trim(iv.abbrev)) = lower(trim(var.abbrev))
+                            ) >= 2 then
+                                -- var.abbrev || '_' || row_number() over (partition by lower(trim(var."name")))
+                                -- var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
+                                var.abbrev || '_' || (
+                                    case when var.scale_type is null then ''
+                                    else substring(var.scale_type from 1 for 3) || '_' end
+                                ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
+                            else
+                                var.abbrev
+                        end
+                    ),
+                ' ', '_')) abbrev,
+                var.name,
+                -- var.description,
+                (
+                    case
+                        when var.data_type is null then
+                            'varchar'
+                        else
+                            var.data_type
+                    end
+                ) data_type,
+                var.not_null::bool,
+                var.type,
+                var.status,
+                (
+                    case
+                        when var.display_name is null then
+                            initcap(var.name)
+                        else
+                            initcap(var.display_name)
+                    end
+                ) display_name,
+                var.ontology_reference,
+                var.bibliographical_reference,
+                
+                var.property_id,
+                var.method_id,
+                var.scale_id,
+                var.variable_set
+            from (
+                select
+                    iv.abbrev,
+                    iv.name,
+                    iv.description,
+                    iv.data_type,
+                    iv.not_null,
+                    iv.type,
+                    iv.status,
+                    iv.display_name,
+                    iv.ontology_reference,
+                    iv.bibliographical_reference,
+                    
+                    (
+                        select
+                            -- mp.name
+                            mp.id
+                        from
+                            master.property mp
+                        where
+                            mp.name = iv.name
+                    ) property_id,
+                    (
+                        select
+                            -- mm.name
+                            mm.id
+                        from
+                            master.method mm
+                        where
+                            mm.name = iv.name || ' ' || num
+                            -- and trim(mm.description) = iv.method
+                    ) method_id,
+                    (
+                        select
+                            -- ms.name
+                            ms.id
+                        from
+                            master.scale ms
+                        where
+                            ms.name = iv.name || ' ' || num
+                            -- and ms.description = iv.scale
+                    ) scale_id,
+                    (
+                        select
+                            -- ms.name
+                            ms.type
+                        from
+                            master.scale ms
+                        where
+                            ms.name = iv.name || ' ' || num
+                            -- and ms.description = iv.scale
+                    ) scale_type,
+                    
+                    iv.variable_set
+                from (
+                    select
+                        row_number() over (partition by lower(trim("name"))) num,
+                        
+                        lower(trim(iv.abbrev)) "abbrev",
+                        lower(trim(iv.name)) "name",
+                        trim(iv.description) description,
+                        lower(trim(iv.data_type)) data_type,
+                        lower(trim(iv.not_null)) not_null,
+                        lower(trim(iv.type)) "type",
+                        lower(trim(iv.status)) status,
+                        trim(iv.display_name) display_name,
+                        trim(iv.ontology_reference) ontology_reference,
+                        trim(iv.bibliographical_reference) bibliographical_reference,
+                        
+                        trim(iv.method) "method",
+                        trim(iv.scale) "scale",
+                        
+                        lower(trim(iv.variable_set)) variable_set
+                    from
+                        import.variable iv
+                ) iv
+                order by
+                    property_id,
+                    method_id,
+                    scale_id
+            ) var
+            ;
