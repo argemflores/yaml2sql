@@ -432,17 +432,17 @@ EOD
                             }
                         }
                         
-                        $tblOptsSql = '';
+                        $tblpostSql = '';
                         if (!empty($table->options)) {
                             $tblOpts = $table->options;
                             
                             if (!empty($tblOpts->append_sql)) {
-                                // $tblOptsSql .= "execute '" . pg_escape_string($tblOpts->append_sql) . "';";
-                                $tblOptsSql .= $tblOpts->append_sql;
+                                // $tblpostSql .= "execute '" . pg_escape_string($tblOpts->append_sql) . "';";
+                                $tblpostSql .= $tblOpts->append_sql;
                             }
                         }
                         
-                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $tblOptsSql;
+                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $tblpostSql;
                     }
                 }
                 
@@ -451,15 +451,46 @@ EOD
                     $tblSql = implode("\n\n-- ----------------\n\n", $tblSqlArr);
                 }
                 
+                $viewSqlArr = [];
+                $viewSql = '';
+                if (!empty($schema->view)) {
+                    $views = $schema->view;
+                    
+                    foreach ($views as $viewIdx => $view) {
+                        if (!empty($view->name)) {
+                            $viewName = '"' . $schName . '"."' . pg_escape_string($view->name) . '"';
+                            
+                            $viewSqlArr[$viewIdx] = strtr(
+<<<EOD
+create view {viewName} as
+{viewQuery}
+EOD
+                                , [
+                                    '{viewName}' => $viewName,
+                                    '{viewQuery}' => $view->query,
+                                ]
+                            );
+                        }
+                    }
+                }
+                
+                if (!empty($viewSqlArr)) {
+                    $viewSqlArr = array_map('trim', $viewSqlArr);
+                    $viewSql = implode("\n\n-- ----------------\n\n", $viewSqlArr);
+                }
+                
                 $schSqlArr[$schIdx] = strtr(
 <<<EOD
 create schema "{schName}";
 
 {tblSql}
+
+{viewSql}
 EOD
                     , [
                         '{schName}' => $schName,
                         '{tblSql}' => $tblSql,
+                        '{viewSql}' => $viewSql,
                     ]
                 );
             }
@@ -477,10 +508,16 @@ if (!empty($cmtSqlArr)) {
     $cmtSql = implode("\n\n", $cmtSqlArr);
 }
 
-$optsSql = '';
+$preSql = '';
+$postSql = '';
 
 if (!empty($database->options)) {
     $dbOpts = $database->options;
+    
+    if (isset($dbOpts->terminate_connections) and $dbOpts->terminate_connections == true) {
+        echo "select pg_terminate_backend(pid) from pg_stat_activity where datname='{$dbName}' and pid <> pg_backend_pid();",
+            "\n\n-- --------------------------------\n\n";
+    }
     
     if (isset($dbOpts->drop_schema) and $dbOpts->drop_schema == true) {
         $schemas = $database->schema;
@@ -514,7 +551,7 @@ EOD
     }
     
     if (!empty($dbOpts->append_sql)) {
-        $optsSql .= $dbOpts->append_sql;
+        $postSql .= $dbOpts->append_sql;
     }
 }
 
@@ -522,6 +559,6 @@ echo $dbSql, "\n\n-- --------------------------------\n\n",
     $schSql, "\n\n";
 // echo $cmtSql, "\n\n";
 echo "\n\n-- --------------------------------\n\n",
-    $optsSql, "\n\n";
+    $postSql, "\n\n";
 
 // var_dump(json_encode(Spyc::YAMLLoad($inputFile)));
