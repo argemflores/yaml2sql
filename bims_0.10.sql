@@ -2665,39 +2665,7 @@ create trigger "add_variable_column"
     after insert on "master"."variable"
     for each row execute procedure "master"."add_variable_column"();
 
-/*insert into "master"."property" (
-    "abbrev",
-    "name",
-    "description"
-) values (
-    'ht',
-    'plant height',
-    'Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]'
-);
-
-insert into "master"."method" (
-    "abbrev",
-    "name",
-    "description"
-) values (
-    'ht_measured',
-    'plant height measured',
-    'Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []'
-);
-
-insert into "master"."scale" (
-    "abbrev",
-    "name",
-    "description",
-    "unit",
-    "type"
-) values (
-    'ht_measured_continuous',
-    'plant height measured continuous',
-    '1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)',
-    'cm',
-    'continuous'
-);*/
+-- ---------------------------------------------------
 
 insert into
     master.property (
@@ -2731,6 +2699,8 @@ from (
 ) var
 ;
 
+-- ---------------------------------------------------
+
 insert into
     master.method (
         abbrev,
@@ -2752,6 +2722,8 @@ from (
         trim(iv.method) asc
 ) var
 ;
+
+-- ---------------------------------------------------
 
 insert into
     master.scale (
@@ -2783,6 +2755,8 @@ from (
         trim(iv.scale) asc
 ) var
 ;
+
+-- ---------------------------------------------------
 
 insert into master.variable (
     abbrev,
@@ -2919,6 +2893,8 @@ from (
 ) var
 ;
 
+-- ---------------------------------------------------
+
 insert into master.variable_set (
     abbrev,
     name,
@@ -2940,6 +2916,8 @@ from (
 where
     iv.variable_set is not null
 ;
+
+-- ---------------------------------------------------
 
 insert into master.variable_set_member (
     variable_set_id,
@@ -2964,4 +2942,6 @@ where
 order by
     mv.id
 ;
+
+-- ---------------------------------------------------
 
