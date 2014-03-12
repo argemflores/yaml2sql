@@ -6,16 +6,16 @@
  * Creation date: 2014-03-01 10:00
  */
 
-# require Spyc yaml loader/dumper
-require_once 'Spyc.php';
+if (!isset($argv[1]) or !file_exists($argv[1])) {
+    echo 'File ain\'t existing: ', $argv[1];
+    return 1;
+}
 
 # input yaml file
 $inputFile = $argv[1];
 
-if (!file_exists($inputFile)) {
-    echo 'File not exists: ', $inputFile;
-    return 1;
-}
+# require Spyc yaml loader/dumper
+require_once 'Spyc.php';
 
 # load input file and convert yaml contents to array, then to object
 $input = json_decode(json_encode(Spyc::YAMLLoad($inputFile)));
