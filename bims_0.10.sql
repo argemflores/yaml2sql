@@ -523,7 +523,6 @@ create table "master"."phase" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
-    "order_number" integer not null default '1',
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -2607,6 +2606,86 @@ insert into "master"."user" (
     'BIMS',
     'IRRI, BIMS',
     '1'
+);
+
+-- ---------------------------------------------------
+
+insert into "master"."program" (
+    "abbrev",
+    "name",
+    "description"
+) values (
+    'IRRSEA',
+    'Irrigated South-East Asia',
+    'Irrigated South-East Asia'
+);
+
+insert into "master"."place" (
+    "abbrev",
+    "name",
+    "description"
+) values (
+    'PHLB',
+    'Los Banos, Philippines',
+    'Los Banos, Philippines'
+);
+
+insert into "master"."phase" (
+    "abbrev",
+    "name",
+    "description"
+) values (
+    'OYT',
+    'Observation Yield Trial',
+    'Observation Yield Trial'
+), (
+    'RYT',
+    'Replicated Yield Trial',
+    'Replicated Yield Trial'
+), (
+    'AYT',
+    'Advanced Yield Trial',
+    'Advanced Yield Trial'
+), (
+    'MET',
+    'Multi-Environment Yield Trial',
+    'Multi-Environment Yield Trial'
+);
+
+insert into "master"."season" (
+    "abbrev",
+    "name",
+    "description"
+) values (
+    'DS',
+    'Dry',
+    'Dry season'
+), (
+    'WS',
+    'Wet',
+    'Wet season'
+), (
+    'CS',
+    'Custom',
+    'Custom season'
+);
+
+insert into "master"."place_season" (
+    "place_id",
+    "season_id",
+    "order_number"
+) values (
+    '1',
+    '1',
+    '1'
+), (
+    '1',
+    '2',
+    '2'
+), (
+    '1',
+    '3',
+    '3'
 );
 
 -- ---------------------------------------------------
