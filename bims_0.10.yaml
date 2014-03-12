@@ -394,7 +394,7 @@ dictionary:
                 <<: *def-ident-tbl-idx
                 <<: *def-log-tbl-idx
 database: &bims_0.10
-    name: bims_0.10_dev
+    name: bims_0.10
     comment: 'BIMS: Breeding Information Management System'
     encoding: UTF8
     lc-collate: C
@@ -2293,9 +2293,9 @@ database: &bims_0.10
                     import.variable iv
                 group by
                     lower(trim(iv."name"))
-                order by
-                    lower(trim(iv."name")) asc,
-                    count(iv.id) desc
+                -- order by
+                    -- lower(trim(iv."name")) asc,
+                    -- count(iv.id) desc
             ) var
             ;
             
@@ -2319,7 +2319,9 @@ database: &bims_0.10
                 from
                     import.variable iv
                 order by
-                    trim(iv.method) asc
+                    iv.id
+                -- order by
+                    -- trim(iv.method) asc
             ) var
             ;
             
@@ -2352,7 +2354,9 @@ database: &bims_0.10
                 from
                     import.variable iv
                 order by
-                    trim(iv.scale) asc
+                    iv.id
+                -- order by
+                    -- trim(iv.scale) asc
             ) var
             ;
             
@@ -2374,24 +2378,34 @@ database: &bims_0.10
                 variable_set
             )
             select
-                (
-                    case
-                        when var.abbrev is null then
-                            var.name || '_' || row_number() over (partition by lower(trim(var."name")))
-                        when (
-                            select
-                                count(iv.id)
-                            from
-                                import.variable iv
-                            where
-                                lower(trim(iv.abbrev)) = lower(trim(var.abbrev))
-                        ) >= 2 then
-                            -- var.abbrev || '_' || row_number() over (partition by lower(trim(var."name")))
-                            var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
-                        else
-                            var.abbrev
-                    end
-                ) abbrev,
+                (replace(
+                    (
+                        case
+                            when var.abbrev is null then
+                                -- var.name || '_' || substring(var.scale_type from 1 for 3)
+                                var.name || '_' || (
+                                    case when var.scale_type is null then ''
+                                    else substring(var.scale_type from 1 for 3) || '_' end
+                                ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
+                            when (
+                                select
+                                    count(iv.id)
+                                from
+                                    import.variable iv
+                                where
+                                    lower(trim(iv.abbrev)) = lower(trim(var.abbrev))
+                            ) >= 2 then
+                                -- var.abbrev || '_' || row_number() over (partition by lower(trim(var."name")))
+                                -- var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
+                                var.abbrev || '_' || (
+                                    case when var.scale_type is null then ''
+                                    else substring(var.scale_type from 1 for 3) || '_' end
+                                ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
+                            else
+                                var.abbrev
+                        end
+                    ),
+                ' ', '_')) abbrev,
                 var.name,
                 -- var.description,
                 (
@@ -2419,9 +2433,12 @@ database: &bims_0.10
                 var.property_id,
                 var.method_id,
                 var.scale_id,
+                
                 var.variable_set
             from (
                 select
+                    iv.iv_id,
+                    
                     iv.abbrev,
                     iv.name,
                     iv.description,
@@ -2462,10 +2479,21 @@ database: &bims_0.10
                             ms.name = iv.name || ' ' || num
                             -- and ms.description = iv.scale
                     ) scale_id,
+                    (
+                        select
+                            -- ms.name
+                            ms.type
+                        from
+                            master.scale ms
+                        where
+                            ms.name = iv.name || ' ' || num
+                            -- and ms.description = iv.scale
+                    ) scale_type,
                     
                     iv.variable_set
                 from (
                     select
+                        iv.id iv_id,
                         row_number() over (partition by lower(trim("name"))) num,
                         
                         lower(trim(iv.abbrev)) "abbrev",
@@ -2486,11 +2514,13 @@ database: &bims_0.10
                     from
                         import.variable iv
                 ) iv
-                order by
-                    property_id,
-                    method_id,
-                    scale_id
+                -- order by
+                    -- property_id,
+                    -- method_id,
+                    -- scale_id
             ) var
+            order by
+                var.iv_id
             ;
             
             -- ---------------------------------------------------
@@ -2544,5 +2574,4 @@ database: &bims_0.10
             ;
             
             -- ---------------------------------------------------
-            
 ...
