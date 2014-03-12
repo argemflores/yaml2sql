@@ -550,7 +550,7 @@ EOD
         );
     }
     
-    if (!empty($dbOpts->append_sql)) {
+    if (!empty($dbOpts->append_sql) and empty($database->options->skip_append_sql)) {
         $postSql .= $dbOpts->append_sql;
     }
 }

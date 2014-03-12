@@ -2189,6 +2189,7 @@ database: &bims_0.10
     options:
         drop_schema: true
         terminate_connections: true
+        skip_append_sql: false
         append_sql: |
             insert into "master"."user" (
                 "email",
