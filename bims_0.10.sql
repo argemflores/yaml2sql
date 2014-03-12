@@ -1,4 +1,4 @@
-select pg_terminate_backend(pid) from pg_stat_activity where datname='bims_0.10_dev' and pid <> pg_backend_pid();
+select pg_terminate_backend(pid) from pg_stat_activity where datname='bims_0.10' and pid <> pg_backend_pid();
 
 -- --------------------------------
 
@@ -12,7 +12,7 @@ drop schema if exists "warehouse" cascade;
 
 -- --------------------------------
 
--- create database "bims_0.10_dev"
+-- create database "bims_0.10"
     -- encoding = 'UTF8'
     -- lc_collate = 'C'
     -- lc_ctype = 'C';
@@ -1480,6 +1480,7 @@ create table "operational"."study" (
     "sequence_number" integer not null,
     "key" integer not null,
     "name" varchar(128) not null,
+    "title" varchar,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2350,6 +2351,7 @@ create table "warehouse"."study" (
     "sequence_number" integer not null,
     "key" integer not null,
     "name" varchar(128) not null,
+    "title" varchar,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2693,9 +2695,9 @@ from (
         import.variable iv
     group by
         lower(trim(iv."name"))
-    order by
-        lower(trim(iv."name")) asc,
-        count(iv.id) desc
+    -- order by
+        -- lower(trim(iv."name")) asc,
+        -- count(iv.id) desc
 ) var
 ;
 
@@ -2719,7 +2721,9 @@ from (
     from
         import.variable iv
     order by
-        trim(iv.method) asc
+        iv.id
+    -- order by
+        -- trim(iv.method) asc
 ) var
 ;
 
@@ -2752,7 +2756,9 @@ from (
     from
         import.variable iv
     order by
-        trim(iv.scale) asc
+        iv.id
+    -- order by
+        -- trim(iv.scale) asc
 ) var
 ;
 
@@ -2774,24 +2780,34 @@ insert into master.variable (
     variable_set
 )
 select
-    (
-        case
-            when var.abbrev is null then
-                var.name || '_' || row_number() over (partition by lower(trim(var."name")))
-            when (
-                select
-                    count(iv.id)
-                from
-                    import.variable iv
-                where
-                    lower(trim(iv.abbrev)) = lower(trim(var.abbrev))
-            ) >= 2 then
-                -- var.abbrev || '_' || row_number() over (partition by lower(trim(var."name")))
-                var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
-            else
-                var.abbrev
-        end
-    ) abbrev,
+    (replace(
+        (
+            case
+                when var.abbrev is null then
+                    -- var.name || '_' || substring(var.scale_type from 1 for 3)
+                    var.name || '_' || (
+                        case when var.scale_type is null then ''
+                        else substring(var.scale_type from 1 for 3) || '_' end
+                    ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
+                when (
+                    select
+                        count(iv.id)
+                    from
+                        import.variable iv
+                    where
+                        lower(trim(iv.abbrev)) = lower(trim(var.abbrev))
+                ) >= 2 then
+                    -- var.abbrev || '_' || row_number() over (partition by lower(trim(var."name")))
+                    -- var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
+                    var.abbrev || '_' || (
+                        case when var.scale_type is null then ''
+                        else substring(var.scale_type from 1 for 3) || '_' end
+                    ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
+                else
+                    var.abbrev
+            end
+        ),
+    ' ', '_')) abbrev,
     var.name,
     -- var.description,
     (
@@ -2819,9 +2835,12 @@ select
     var.property_id,
     var.method_id,
     var.scale_id,
+
     var.variable_set
 from (
     select
+        iv.iv_id,
+
         iv.abbrev,
         iv.name,
         iv.description,
@@ -2862,10 +2881,21 @@ from (
                 ms.name = iv.name || ' ' || num
                 -- and ms.description = iv.scale
         ) scale_id,
+        (
+            select
+                -- ms.name
+                ms.type
+            from
+                master.scale ms
+            where
+                ms.name = iv.name || ' ' || num
+                -- and ms.description = iv.scale
+        ) scale_type,
 
         iv.variable_set
     from (
         select
+            iv.id iv_id,
             row_number() over (partition by lower(trim("name"))) num,
 
             lower(trim(iv.abbrev)) "abbrev",
@@ -2886,11 +2916,13 @@ from (
         from
             import.variable iv
     ) iv
-    order by
-        property_id,
-        method_id,
-        scale_id
+    -- order by
+        -- property_id,
+        -- method_id,
+        -- scale_id
 ) var
+order by
+    var.iv_id
 ;
 
 -- ---------------------------------------------------
