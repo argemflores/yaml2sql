@@ -710,7 +710,7 @@ database: &bims_0.10
                             - Breeding hub
                             - Breeding location
                             - Facility
-                            - - Field
+                            - Field
                             - Farm
                             - Glasshouse
                             - Warehouse
@@ -718,11 +718,10 @@ database: &bims_0.10
                 - &master-phase-tbl
                     <<: *def-tbl
                     name: phase
-                    comment: Breeding phases
+                    comment: Breeding development phases
                     column:
                         <<: *def-id-tbl-col
                         <<: *def-meta-tbl-col
-                        - *order_number-col
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                 - &master-product-tbl
@@ -2205,6 +2204,86 @@ database: &bims_0.10
                 'BIMS',
                 'IRRI, BIMS',
                 '1'
+            );
+            
+            -- ---------------------------------------------------
+            
+            insert into "master"."program" (
+                "abbrev",
+                "name",
+                "description"
+            ) values (
+                'IRRSEA',
+                'Irrigated South-East Asia',
+                'Irrigated South-East Asia'
+            );
+            
+            insert into "master"."place" (
+                "abbrev",
+                "name",
+                "description"
+            ) values (
+                'PHLB',
+                'Los Banos, Philippines',
+                'Los Banos, Philippines'
+            );
+            
+            insert into "master"."phase" (
+                "abbrev",
+                "name",
+                "description"
+            ) values (
+                'OYT',
+                'Observation Yield Trial',
+                'Observation Yield Trial'
+            ), (
+                'RYT',
+                'Replicated Yield Trial',
+                'Replicated Yield Trial'
+            ), (
+                'AYT',
+                'Advanced Yield Trial',
+                'Advanced Yield Trial'
+            ), (
+                'MET',
+                'Multi-Environment Yield Trial',
+                'Multi-Environment Yield Trial'
+            );
+            
+            insert into "master"."season" (
+                "abbrev",
+                "name",
+                "description"
+            ) values (
+                'DS',
+                'Dry',
+                'Dry season'
+            ), (
+                'WS',
+                'Wet',
+                'Wet season'
+            ), (
+                'CS',
+                'Custom',
+                'Custom season'
+            );
+            
+            insert into "master"."place_season" (
+                "place_id",
+                "season_id",
+                "order_number"
+            ) values (
+                '1',
+                '1',
+                '1'
+            ), (
+                '1',
+                '2',
+                '2'
+            ), (
+                '1',
+                '3',
+                '3'
             );
             
             -- ---------------------------------------------------
