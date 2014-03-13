@@ -852,11 +852,19 @@ database: &bims_0.10
                         - &product_name-name_type-col
                             name: name_type
                             data_type: varchar
+                            not_null: true
                             comment: |
                                 derivative, fixed_line, cultivar, common
                         - &product_name-value-col
                             name: value
                             data_type: varchar
+                            not_null: true
+                        - &product_name-language_code-col
+                            name: language_code
+                            data_type: varchar
+                            not_null: true
+                            default_value: eng
+                        <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
                         - &product_name-product_id-fkey-cst
