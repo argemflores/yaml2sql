@@ -8,8 +8,6 @@ drop schema if exists "dictionary" cascade;
 
 drop schema if exists "operational" cascade;
 
-drop schema if exists "warehouse_terminal" cascade;
-
 drop schema if exists "warehouse" cascade;
 
 -- --------------------------------
@@ -73,7 +71,7 @@ create index "user_is_void_idx"
 create table "master"."property" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -147,7 +145,7 @@ create index "method_is_void_idx"
 create table "master"."scale" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "unit" varchar,
     "type" varchar,
     "level" varchar,
@@ -230,7 +228,7 @@ create index "scale_value_is_void_idx"
 create table "master"."variable" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "data_type" varchar,
     "not_null" boolean not null default false,
     "type" varchar(32),
@@ -297,7 +295,7 @@ create index "variable_is_void_idx"
 create table "master"."variable_set" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "display_name" varchar not null,
     "description" text,
     "remarks" text,
@@ -376,7 +374,7 @@ create index "variable_set_member_is_void_idx"
 create table "master"."pipeline" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -413,7 +411,7 @@ create index "pipeline_is_void_idx"
 create table "master"."crosscutting" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -450,7 +448,7 @@ create index "crosscutting_is_void_idx"
 create table "master"."program" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -487,7 +485,7 @@ create index "program_is_void_idx"
 create table "master"."place" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -524,7 +522,7 @@ create index "place_is_void_idx"
 create table "master"."phase" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -561,17 +559,17 @@ create index "phase_is_void_idx"
 create table "master"."product" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "program_id" integer not null,
     "designation" varchar not null,
     "name_type" varchar not null,
     "type" varchar not null,
     "year" integer not null,
     "season_id" integer,
-    "mta_status" varchar,
+    "mta_status" varchar not null,
     "parentage" varchar,
     "cross_id" integer,
-    "generation" integer,
+    "generation" varchar not null,
     "iris_preferred_id" varchar,
     "breeding_line_name" varchar,
     "derivative_name" varchar,
@@ -682,9 +680,6 @@ create index "product_name_product_id_idx"
 create index "product_name_name_type_idx"
   on "master"."product_name"
   using btree ("name_type");
-create unique index "product_name_abbrev_idx"
-  on "master"."product_name"
-  using btree ("abbrev");
 create index "product_name_is_void_idx"
   on "master"."product_name"
   using btree ("is_void");
@@ -730,7 +725,7 @@ create index "product_metadata_is_void_idx"
 create table "master"."season" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -811,7 +806,7 @@ create index "place_season_season_id_idx"
 create table "master"."cross_method" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -887,7 +882,7 @@ create schema "dictionary";
 create table "dictionary"."database" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "comment" text,
     "encoding" varchar not null default 'UTF8',
     "lc_collate" varchar not null default 'C',
@@ -927,7 +922,7 @@ create table "dictionary"."schema" (
     "id" serial not null,
     "database_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "comment" text,
     "description" text,
     "remarks" text,
@@ -971,7 +966,7 @@ create table "dictionary"."table" (
     "database_id" integer not null,
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "comment" text,
     "description" text,
     "remarks" text,
@@ -1020,7 +1015,7 @@ create table "dictionary"."column" (
     "schema_id" integer not null,
     "table_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "data_type" varchar(32) not null,
     "length" varchar(32),
     "not_null" boolean not null default false,
@@ -1075,7 +1070,7 @@ create table "dictionary"."constraint" (
     "schema_id" integer not null,
     "table_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "type" varchar,
     "column_id" integer not null,
     "command" text,
@@ -1140,7 +1135,7 @@ create table "dictionary"."index" (
     "schema_id" integer not null,
     "table_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "column_id" integer not null,
     "using" varchar,
     "unique" boolean not null default false,
@@ -1198,7 +1193,7 @@ create table "dictionary"."rule" (
     "database_id" integer not null,
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "event" varchar(16) not null default 'select',
     "execution" varchar(8) not null default 'also',
     "condition" text,
@@ -1248,7 +1243,7 @@ create table "dictionary"."trigger" (
     "database_id" integer not null,
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "enabled" boolean not null default true,
     "execution" varchar not null default 'before',
     "for_each" varchar not null default 'row',
@@ -1301,7 +1296,7 @@ create table "dictionary"."view" (
     "database_id" integer not null,
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "command" text,
     "comment" text,
     "creation_timestamp" timestamp not null default now(),
@@ -1348,7 +1343,7 @@ create table "dictionary"."sequence" (
     "database_id" integer not null,
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "value" integer not null default '1',
     "increment" integer not null default '1',
     "maximum_value" integer not null default '2147483647',
@@ -1400,7 +1395,7 @@ create table "dictionary"."function" (
     "database_id" integer not null,
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "cycle" varchar not null default 'single_value',
     "return_type" varchar not null default 'varchar',
     "language" varchar not null default 'plpgsql',
@@ -1452,7 +1447,7 @@ create table "dictionary"."domain" (
     "database_id" integer not null,
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "data_type" varchar,
     "not_null" boolean not null default false,
     "default_value" varchar,
@@ -1502,7 +1497,7 @@ create table "dictionary"."aggregate" (
     "database_id" integer not null,
     "schema_id" integer not null,
     "abbrev" varchar(128) not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "base_type" varchar not null default 'integer',
     "state_type" varchar not null default 'integer',
     "state_function_id" integer not null,
@@ -1567,7 +1562,7 @@ create table "operational"."study" (
     "season_id" integer not null,
     "sequence_number" integer not null,
     "key" integer not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "title" varchar,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -1693,7 +1688,7 @@ create table "operational"."entry" (
     "code" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
-    "product_name" varchar(128) not null,
+    "product_name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -2245,10 +2240,10 @@ create table "operational"."cross" (
     "study_id" integer not null,
     "female_entry_id" integer not null,
     "female_product_id" integer not null,
-    "female_product_name" varchar(128) not null,
+    "female_product_name" varchar(256) not null,
     "male_entry_id" integer not null,
     "male_product_id" integer not null,
-    "male_product_name" varchar(128) not null,
+    "male_product_name" varchar(256) not null,
     "cross_method_id" integer not null,
     "description" text,
     "remarks" text,
@@ -2425,23 +2420,20 @@ create index "cross_data_is_void_idx"
   on "operational"."cross_data"
   using btree ("is_void");
 
--- --------------------------------
+-- ----------------
 
-create schema "warehouse_terminal";
-
-create table "warehouse_terminal"."transaction" (
+create table "operational"."seed_storage" (
     "id" serial not null,
-    "type" varchar,
-    "actor_id" integer not null,
-    "start_action_timestamp" timestamp not null,
-    "end_action_timestamp" timestamp not null,
-    "total_file_count" integer not null,
-    "successful_file_count" integer not null,
-    "is_successful" boolean not null default false,
-    "transfer_timestamp" timestamp,
-    "transferrer_id" integer,
-    "data_source" varchar,
-    "remarks" text,
+    "product_id" integer not null,
+    "seed_lot_id" integer not null,
+    "key_type" varchar not null,
+    "seed_manager" varchar not null,
+    "gid" integer not null,
+    "volume" float not null,
+    "unit" varchar not null,
+    "harvest_date" date,
+    "label" varchar not null,
+    "original_storage_id" integer,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2452,31 +2444,89 @@ create table "warehouse_terminal"."transaction" (
     oids = false
 );
 
-alter table "warehouse_terminal"."transaction"
-  add constraint "transaction_actor_id_fkey"
-  foreign key ("actor_id") references "master"."user" ("id")
+alter table "operational"."seed_storage"
+  add constraint "seed_storage_product_id_fkey"
+  foreign key ("product_id") references "master"."product" ("id")
   match simple on update cascade on delete cascade;
-alter table "warehouse_terminal"."transaction"
-  add constraint "transaction_transferer_id_fkey"
-  foreign key ("transferer_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "warehouse_terminal"."transaction"
-  add constraint "transaction_id_pkey"
+alter table "operational"."seed_storage"
+  add constraint "seed_storage_id_pkey"
   primary key ("id");
-alter table "warehouse_terminal"."transaction"
-  add constraint "transaction_creator_id_fkey"
+alter table "operational"."seed_storage"
+  add constraint "seed_storage_creator_id_fkey"
   foreign key ("creator_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
-alter table "warehouse_terminal"."transaction"
-  add constraint "transaction_modifier_id_fkey"
+alter table "operational"."seed_storage"
+  add constraint "seed_storage_modifier_id_fkey"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "transaction_abbrev_idx"
-  on "warehouse_terminal"."transaction"
-  using btree ("abbrev");
-create index "transaction_is_void_idx"
-  on "warehouse_terminal"."transaction"
+create index "seed_storage_product_id_idx"
+  on "operational"."seed_storage"
+  using btree ("product_id");
+create unique index "seed_storage_seed_lot_id_idx"
+  on "operational"."seed_storage"
+  using btree ("seed_lot_id");
+create unique index "seed_storage_gid_idx"
+  on "operational"."seed_storage"
+  using btree ("gid");
+create index "seed_storage_original_storage_id_idx"
+  on "operational"."seed_storage"
+  using btree ("original_storage_id");
+create index "seed_storage_is_void_idx"
+  on "operational"."seed_storage"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "operational"."seed_storage_log" (
+    "id" serial not null,
+    "seed_storage_id" integer not null,
+    "encoder_id" integer not null,
+    "encode_timestamp" timestamp not null,
+    "transaction_type" varchar not null,
+    "volume" float not null,
+    "unit" varchar not null,
+    "event_timestamp" timestamp not null,
+    "sender" varchar,
+    "receiver" varchar,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "operational"."seed_storage_log"
+  add constraint "seed_storage_log_seed_storage_id_fkey"
+  foreign key ("seed_storage_id") references "operational"."seed_storage" ("id")
+  match simple on update cascade on delete cascade;
+alter table "operational"."seed_storage_log"
+  add constraint "seed_storage_log_encoder_id_fkey"
+  foreign key ("encoder_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "operational"."seed_storage_log"
+  add constraint "seed_storage_log_id_pkey"
+  primary key ("id");
+alter table "operational"."seed_storage_log"
+  add constraint "seed_storage_log_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "operational"."seed_storage_log"
+  add constraint "seed_storage_log_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "seed_storage_log_seed_storage_id_idx"
+  on "operational"."seed_storage_log"
+  using btree ("seed_storage_id");
+create index "seed_storage_transaction_type_idx"
+  on "operational"."seed_storage_log"
+  using btree ("transaction_type");
+create index "seed_storage_log_is_void_idx"
+  on "operational"."seed_storage_log"
   using btree ("is_void");
 
 -- --------------------------------
@@ -2492,7 +2542,7 @@ create table "warehouse"."study" (
     "season_id" integer not null,
     "sequence_number" integer not null,
     "key" integer not null,
-    "name" varchar(128) not null,
+    "name" varchar(256) not null,
     "title" varchar,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -2570,7 +2620,7 @@ create table "warehouse"."entry" (
     "code" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
-    "product_name" varchar(128) not null,
+    "product_name" varchar(256) not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -2730,6 +2780,3192 @@ create index "subplot_key_idx"
 create index "subplot_is_void_idx"
   on "warehouse"."subplot"
   using btree ("is_void");
+
+comment on database "bims_0.10"
+  is 'BIMS: Breeding Information Management System';
+
+comment on schema "master"
+  is 'Stores master data, which are absolutely correct data that does not change frequently';
+
+comment on table "master"."user"
+  is 'Users';
+
+comment on column "master"."user"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."user"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."user"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."user"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."user"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."user"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."user"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."user_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "user_creator_id_fkey" on "master"."user"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "user_modifier_id_fkey" on "master"."user"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."user_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."property"
+  is 'Property describes the context of the sampling unit and experimental material, or the trait being measured.';
+
+comment on column "master"."property"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."property"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."property"."name"
+  is 'Name identifier';
+
+comment on column "master"."property"."description"
+  is 'Description';
+
+comment on column "master"."property"."remarks"
+  is 'Additional details';
+
+comment on column "master"."property"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."property"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."property"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."property"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."property"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."property"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."property_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "property_creator_id_fkey" on "master"."property"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "property_modifier_id_fkey" on "master"."property"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."property_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."property_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."method"
+  is 'Method describes how the property is applied or the protocol by which a variable is measured.';
+
+comment on column "master"."method"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."method"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."method"."description"
+  is 'Description';
+
+comment on column "master"."method"."remarks"
+  is 'Additional details';
+
+comment on column "master"."method"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."method"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."method"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."method"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."method"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."method"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."method_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "method_creator_id_fkey" on "master"."method"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "method_modifier_id_fkey" on "master"."method"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."method_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."method_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."scale"
+  is 'Scale describes the units in which the variables are recorded.';
+
+comment on column "master"."scale"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."scale"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."scale"."name"
+  is 'Name identifier';
+
+comment on column "master"."scale"."type"
+  is 'categorical; continuous; discrete';
+
+comment on column "master"."scale"."level"
+  is 'nominal; ordinal; interval; ratio';
+
+comment on column "master"."scale"."description"
+  is 'Description';
+
+comment on column "master"."scale"."remarks"
+  is 'Additional details';
+
+comment on column "master"."scale"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."scale"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."scale"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."scale"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."scale"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."scale"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."scale_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "scale_creator_id_fkey" on "master"."scale"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "scale_modifier_id_fkey" on "master"."scale"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."scale_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."scale_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."scale_value"
+  is 'Discrete values a scale can have.';
+
+comment on column "master"."scale_value"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."scale_value"."description"
+  is 'Description';
+
+comment on column "master"."scale_value"."remarks"
+  is 'Additional details';
+
+comment on column "master"."scale_value"."order_number"
+  is 'Ordering number';
+
+comment on column "master"."scale_value"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."scale_value"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."scale_value"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."scale_value"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."scale_value"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."scale_value"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."scale_value_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "scale_value_creator_id_fkey" on "master"."scale_value"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "scale_value_modifier_id_fkey" on "master"."scale_value"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."scale_value_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."variable"
+  is 'Variables';
+
+comment on column "master"."variable"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."variable"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."variable"."name"
+  is 'Name identifier';
+
+comment on column "master"."variable"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."variable"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."variable"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."variable"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."variable"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."variable"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."variable_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "variable_creator_id_fkey" on "master"."variable"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "variable_modifier_id_fkey" on "master"."variable"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."variable_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."variable_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."variable_set"
+  is 'Groups of variables';
+
+comment on column "master"."variable_set"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."variable_set"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."variable_set"."name"
+  is 'Name identifier';
+
+comment on column "master"."variable_set"."description"
+  is 'Description';
+
+comment on column "master"."variable_set"."remarks"
+  is 'Additional details';
+
+comment on column "master"."variable_set"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."variable_set"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."variable_set"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."variable_set"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."variable_set"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."variable_set"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."variable_set_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "variable_set_creator_id_fkey" on "master"."variable_set"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "variable_set_modifier_id_fkey" on "master"."variable_set"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."variable_set_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."variable_set_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."variable_set_member"
+  is 'variables';
+
+comment on column "master"."variable_set_member"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."variable_set_member"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."variable_set_member"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."variable_set_member"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."variable_set_member"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."variable_set_member"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."variable_set_member"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."variable_set_member_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "variable_set_member_creator_id_fkey" on "master"."variable_set_member"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "variable_set_member_modifier_id_fkey" on "master"."variable_set_member"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."variable_set_member_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."pipeline"
+  is 'A product development schema designed to develop breeding products to a certain demand (market segment).
+At IRRI, VDPs are structured based on major regions and production ecologies
+  - Irrigated South East Asia (IR SEA)
+  - Rainfed lowland South East Asia (RF SEA)
+  - Irrigated South Asia (IR SA)
+  - Rainfed lowland South Asia (RF SA)
+  - Hybrid
+  - Eastern Southern Africa (ESA) - has Rainfed and Irrigated TVP''s,
+  - Japonica - has Temperate and Tropical TVP''s';
+
+comment on column "master"."pipeline"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."pipeline"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."pipeline"."name"
+  is 'Name identifier';
+
+comment on column "master"."pipeline"."description"
+  is 'Description';
+
+comment on column "master"."pipeline"."remarks"
+  is 'Additional details';
+
+comment on column "master"."pipeline"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."pipeline"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."pipeline"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."pipeline"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."pipeline"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."pipeline"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."pipeline_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "pipeline_creator_id_fkey" on "master"."pipeline"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "pipeline_modifier_id_fkey" on "master"."pipeline"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."pipeline_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."pipeline_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."crosscutting"
+  is 'Breeding process that provides expert service for the whole breeding operation of an organization.
+CCRD consists of a team of experts, the CCRD facility, and operational and capital resources.';
+
+comment on column "master"."crosscutting"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."crosscutting"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."crosscutting"."name"
+  is 'Name identifier';
+
+comment on column "master"."crosscutting"."description"
+  is 'Description';
+
+comment on column "master"."crosscutting"."remarks"
+  is 'Additional details';
+
+comment on column "master"."crosscutting"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."crosscutting"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."crosscutting"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."crosscutting"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."crosscutting"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."crosscutting"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."crosscutting_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "crosscutting_creator_id_fkey" on "master"."crosscutting"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "crosscutting_modifier_id_fkey" on "master"."crosscutting"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."crosscutting_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."crosscutting_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."program"
+  is 'Consist of variety development pipelines (VDPs), trait development teams and cross-cutting activities (CCRDs).
+Products of VDPs are varieties, breeding lines, parental lines and other genetic materials in different stages of a breeding scheme, and IP related to the genetic materials.
+Products of trait development are discovered trait donors, QTL''s and genes, and marker application for selection of those, and related IP.
+Trait development products work through different type IP-solutions than variety development.';
+
+comment on column "master"."program"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."program"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."program"."name"
+  is 'Name identifier';
+
+comment on column "master"."program"."description"
+  is 'Description';
+
+comment on column "master"."program"."remarks"
+  is 'Additional details';
+
+comment on column "master"."program"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."program"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."program"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."program"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."program"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."program"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."program_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "program_creator_id_fkey" on "master"."program"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "program_modifier_id_fkey" on "master"."program"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."program_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."program_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."place"
+  is 'Represents the physical places and their segmentations such as geographies, locations, areas, zones, etc.
+  - Breeding hub
+  - Breeding location
+  - Facility
+  - Field
+  - Farm
+  - Glasshouse
+  - Warehouse
+  - Storage';
+
+comment on column "master"."place"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."place"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."place"."name"
+  is 'Name identifier';
+
+comment on column "master"."place"."description"
+  is 'Description';
+
+comment on column "master"."place"."remarks"
+  is 'Additional details';
+
+comment on column "master"."place"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."place"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."place"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."place"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."place"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."place"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."place_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "place_creator_id_fkey" on "master"."place"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "place_modifier_id_fkey" on "master"."place"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."place_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."place_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."phase"
+  is 'Breeding development phases';
+
+comment on column "master"."phase"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."phase"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."phase"."name"
+  is 'Name identifier';
+
+comment on column "master"."phase"."description"
+  is 'Description';
+
+comment on column "master"."phase"."remarks"
+  is 'Additional details';
+
+comment on column "master"."phase"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."phase"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."phase"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."phase"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."phase"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."phase"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."phase_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "phase_creator_id_fkey" on "master"."phase"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "phase_modifier_id_fkey" on "master"."phase"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."phase_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."phase_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."product"
+  is 'Product catalog is a publicly accessible list of the products used and produced in product development programs.
+Every record has a unique key and unique product name. It contains the identity of a material.';
+
+comment on column "master"."product"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."product"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."product"."name"
+  is 'Name identifier';
+
+comment on column "master"."product"."program_id"
+  is 'Foreign key to the product development program table';
+
+comment on column "master"."product"."name_type"
+  is 'Name types: breeding_line, fixed_line, derivative, common, cultivar';
+
+comment on column "master"."product"."type"
+  is 'Product types: progeny, fixed_line';
+
+comment on column "master"."product"."mta_status"
+  is 'Refers to the set of defined terms to guide the legal use of material i.e. SMTA, CMTA, OMTA, Confidential';
+
+comment on column "master"."product"."generation"
+  is 'Generations: UNKNOWN, F1, BC1F1, BC2F1, BC3F1, F2, F3, F4, FIXED';
+
+comment on column "master"."product"."description"
+  is 'Description';
+
+comment on column "master"."product"."remarks"
+  is 'Additional details';
+
+comment on column "master"."product"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."product"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."product"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."product"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."product"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."product"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."product_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "product_creator_id_fkey" on "master"."product"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "product_modifier_id_fkey" on "master"."product"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."product_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."product_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."product_name"
+  is 'Names of a product';
+
+comment on column "master"."product_name"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."product_name"."name_type"
+  is 'derivative, fixed_line, cultivar, common';
+
+comment on column "master"."product_name"."language_code"
+  is 'Reference: http://www.loc.gov/standards/iso639-2/php/code_list.php';
+
+comment on column "master"."product_name"."description"
+  is 'Description';
+
+comment on column "master"."product_name"."remarks"
+  is 'Additional details';
+
+comment on column "master"."product_name"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."product_name"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."product_name"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."product_name"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."product_name"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."product_name"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."product_name_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "product_name_creator_id_fkey" on "master"."product_name"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "product_name_modifier_id_fkey" on "master"."product_name"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."product_name_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."product_metadata"
+  is 'Additional information about products';
+
+comment on column "master"."product_metadata"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."product_metadata"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."product_metadata"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."product_metadata"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."product_metadata"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."product_metadata"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."product_metadata"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."product_metadata_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "product_metadata_creator_id_fkey" on "master"."product_metadata"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "product_metadata_modifier_id_fkey" on "master"."product_metadata"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."product_metadata_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."season"
+  is 'List of seasons';
+
+comment on column "master"."season"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."season"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."season"."name"
+  is 'Name identifier';
+
+comment on column "master"."season"."description"
+  is 'Description';
+
+comment on column "master"."season"."remarks"
+  is 'Additional details';
+
+comment on column "master"."season"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."season"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."season"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."season"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."season"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."season"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."season_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "season_creator_id_fkey" on "master"."season"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "season_modifier_id_fkey" on "master"."season"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."season_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."season_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."place_season"
+  is 'List of seasons in a place';
+
+comment on column "master"."place_season"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."place_season"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."place_season"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."place_season"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."place_season"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."place_season"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."place_season"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."place_season_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "place_season_creator_id_fkey" on "master"."place_season"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "place_season_modifier_id_fkey" on "master"."place_season"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on table "master"."cross_method"
+  is 'Methods used in crossing studies';
+
+comment on column "master"."cross_method"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."cross_method"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "master"."cross_method"."name"
+  is 'Name identifier';
+
+comment on column "master"."cross_method"."description"
+  is 'Description';
+
+comment on column "master"."cross_method"."remarks"
+  is 'Additional details';
+
+comment on column "master"."cross_method"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."cross_method"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."cross_method"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."cross_method"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."cross_method"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."cross_method"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."cross_method_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "cross_method_creator_id_fkey" on "master"."cross_method"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "cross_method_modifier_id_fkey" on "master"."cross_method"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."cross_method_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."cross_method_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."database"
+  is 'Data sources';
+
+comment on column "dictionary"."database"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."database"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."database"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."database"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."database"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."database"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."database"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."database"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."database"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."database"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "dictionary"."database_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "database_creator_id_fkey" on "dictionary"."database"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "database_modifier_id_fkey" on "dictionary"."database"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."database_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."database_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."schema"
+  is 'Schemas in a database';
+
+comment on column "dictionary"."schema"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."schema"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."schema"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."schema"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."schema"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."schema"."description"
+  is 'Description';
+
+comment on column "dictionary"."schema"."remarks"
+  is 'Additional details';
+
+comment on column "dictionary"."schema"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."schema"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."schema"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."schema"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."schema"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."schema"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "schema_database_id_fkey" on "dictionary"."schema"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on index "dictionary"."schema_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "schema_creator_id_fkey" on "dictionary"."schema"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "schema_modifier_id_fkey" on "dictionary"."schema"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."schema_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."schema_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."table"
+  is 'Tables in a schema';
+
+comment on column "dictionary"."table"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."table"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."table"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."table"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."table"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."table"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."table"."description"
+  is 'Description';
+
+comment on column "dictionary"."table"."remarks"
+  is 'Additional details';
+
+comment on column "dictionary"."table"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."table"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."table"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."table"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."table"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."table"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "table_database_id_fkey" on "dictionary"."table"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "table-schema_id_fkey" on "dictionary"."table"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on index "dictionary"."table_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "table_creator_id_fkey" on "dictionary"."table"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "table_modifier_id_fkey" on "dictionary"."table"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."table_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."table_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."column"
+  is 'Columns of a table';
+
+comment on column "dictionary"."column"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."column"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."column"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."column"."table_id"
+  is 'ID of the table to use as reference key';
+
+comment on column "dictionary"."column"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."column"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."column"."data_type"
+  is 'Type of data the column can store';
+
+comment on column "dictionary"."column"."length"
+  is 'Maximum character size for text data types or precision for numeric data types';
+
+comment on column "dictionary"."column"."not_null"
+  is 'Whether the column will not allow null values';
+
+comment on column "dictionary"."column"."default_value"
+  is 'Default value to fill in the column if value is not explicitly provided';
+
+comment on column "dictionary"."column"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."column"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."column"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."column"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."column"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."column"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."column"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "column_database_id_fkey" on "dictionary"."column"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "column-schema_id_fkey" on "dictionary"."column"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on constraint "column_table_id_fkey" on "dictionary"."column"
+  is 'Foreign key constraint for the table_id column, which refers to the id column of the dictionary.table table';
+
+comment on index "dictionary"."column_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "column_creator_id_fkey" on "dictionary"."column"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "column_modifier_id_fkey" on "dictionary"."column"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."column_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."column_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."constraint"
+  is 'Constraints of table columns';
+
+comment on column "dictionary"."constraint"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."constraint"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."constraint"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."constraint"."table_id"
+  is 'ID of the table to use as reference key';
+
+comment on column "dictionary"."constraint"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."constraint"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."constraint"."type"
+  is 'Primary key (primary_key), foreign key (foreign_key), or check (check) constraint';
+
+comment on column "dictionary"."constraint"."column_id"
+  is 'Subject column of the constraint';
+
+comment on column "dictionary"."constraint"."command"
+  is 'SQL body command of the constraint';
+
+comment on column "dictionary"."constraint"."foreign_table_id"
+  is 'Reference table for foreign key constraint only';
+
+comment on column "dictionary"."constraint"."foreign_column_id"
+  is 'Column of the reference table for foreign key constraint only';
+
+comment on column "dictionary"."constraint"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."constraint"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."constraint"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."constraint"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."constraint"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."constraint"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."constraint"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "constraint_database_id_fkey" on "dictionary"."constraint"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "constraint-schema_id_fkey" on "dictionary"."constraint"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on constraint "constraint_table_id_fkey" on "dictionary"."constraint"
+  is 'Foreign key constraint for the table_id column, which refers to the id column of the dictionary.table table';
+
+comment on constraint "constraint-column_id_fkey" on "dictionary"."constraint"
+  is 'Foreign key constraint for the column_id column, which refers to the id column of the dictionary.column table';
+
+comment on index "dictionary"."constraint_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "constraint_creator_id_fkey" on "dictionary"."constraint"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "constraint_modifier_id_fkey" on "dictionary"."constraint"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."constraint_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."constraint_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."index"
+  is 'Indexes of table columns';
+
+comment on column "dictionary"."index"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."index"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."index"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."index"."table_id"
+  is 'ID of the table to use as reference key';
+
+comment on column "dictionary"."index"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."index"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."index"."column_id"
+  is 'Subject column of the index';
+
+comment on column "dictionary"."index"."using"
+  is 'Algorithm to use in indexing';
+
+comment on column "dictionary"."index"."unique"
+  is 'Whether the index is unique or not';
+
+comment on column "dictionary"."index"."concurrent"
+  is 'Whether the index is concurrent or not';
+
+comment on column "dictionary"."index"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."index"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."index"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."index"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."index"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."index"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."index"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "index_database_id_fkey" on "dictionary"."index"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "index-schema_id_fkey" on "dictionary"."index"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on constraint "index_table_id_fkey" on "dictionary"."index"
+  is 'Foreign key constraint for the table_id column, which refers to the id column of the dictionary.table table';
+
+comment on constraint "index-column_id_fkey" on "dictionary"."index"
+  is 'Foreign key constraint for the column_id column, which refers to the id column of the dictionary.column table';
+
+comment on index "dictionary"."index_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "index_creator_id_fkey" on "dictionary"."index"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "index_modifier_id_fkey" on "dictionary"."index"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."index_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."index_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."rule"
+  is 'Rules';
+
+comment on column "dictionary"."rule"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."rule"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."rule"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."rule"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."rule"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."rule"."event"
+  is 'At what event/s the rule will be applied';
+
+comment on column "dictionary"."rule"."execution"
+  is 'Execution type of the rule';
+
+comment on column "dictionary"."rule"."condition"
+  is 'Conditional expression of the rule';
+
+comment on column "dictionary"."rule"."command"
+  is 'SQL body command of the rule';
+
+comment on column "dictionary"."rule"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."rule"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."rule"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."rule"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."rule"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."rule"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."rule"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "rule_database_id_fkey" on "dictionary"."rule"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "rule-schema_id_fkey" on "dictionary"."rule"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on index "dictionary"."rule_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "rule_creator_id_fkey" on "dictionary"."rule"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "rule_modifier_id_fkey" on "dictionary"."rule"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."rule_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."rule_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."trigger"
+  is 'Triggers';
+
+comment on column "dictionary"."trigger"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."trigger"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."trigger"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."trigger"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."trigger"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."trigger"."enabled"
+  is 'Whether the trigger is enabled to execute or not';
+
+comment on column "dictionary"."trigger"."execution"
+  is 'Execution type of trigger';
+
+comment on column "dictionary"."trigger"."for_each"
+  is 'Apply trigger for each row or statement';
+
+comment on column "dictionary"."trigger"."event"
+  is 'At what event/s the trigger will be executed';
+
+comment on column "dictionary"."trigger"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."trigger"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."trigger"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."trigger"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."trigger"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."trigger"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."trigger"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "trigger_database_id_fkey" on "dictionary"."trigger"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "trigger-schema_id_fkey" on "dictionary"."trigger"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on index "dictionary"."trigger_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "trigger_creator_id_fkey" on "dictionary"."trigger"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "trigger_modifier_id_fkey" on "dictionary"."trigger"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."trigger_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."trigger_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."view"
+  is 'Views';
+
+comment on column "dictionary"."view"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."view"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."view"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."view"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."view"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."view"."command"
+  is 'SQL body command of the view';
+
+comment on column "dictionary"."view"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."view"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."view"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."view"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."view"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."view"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."view"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "view_database_id_fkey" on "dictionary"."view"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "view-schema_id_fkey" on "dictionary"."view"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on index "dictionary"."view_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "view_creator_id_fkey" on "dictionary"."view"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "view_modifier_id_fkey" on "dictionary"."view"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."view_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."view_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."sequence"
+  is 'Sequences';
+
+comment on column "dictionary"."sequence"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."sequence"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."sequence"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."sequence"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."sequence"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."sequence"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."sequence"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."sequence"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."sequence"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."sequence"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."sequence"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."sequence"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "sequence_database_id_fkey" on "dictionary"."sequence"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "sequence-schema_id_fkey" on "dictionary"."sequence"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on index "dictionary"."sequence_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "sequence_creator_id_fkey" on "dictionary"."sequence"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "sequence_modifier_id_fkey" on "dictionary"."sequence"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."sequence_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."sequence_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."function"
+  is 'Functions';
+
+comment on column "dictionary"."function"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."function"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."function"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."function"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."function"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."function"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."function"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."function"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."function"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."function"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."function"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."function"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "function_database_id_fkey" on "dictionary"."function"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "function-schema_id_fkey" on "dictionary"."function"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on index "dictionary"."function_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "function_creator_id_fkey" on "dictionary"."function"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "function_modifier_id_fkey" on "dictionary"."function"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."function_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."function_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."domain"
+  is 'Domains';
+
+comment on column "dictionary"."domain"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."domain"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."domain"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."domain"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."domain"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."domain"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."domain"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."domain"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."domain"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."domain"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."domain"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."domain"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "domain_database_id_fkey" on "dictionary"."domain"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "domain-schema_id_fkey" on "dictionary"."domain"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on index "dictionary"."domain_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "domain_creator_id_fkey" on "dictionary"."domain"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "domain_modifier_id_fkey" on "dictionary"."domain"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."domain_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."domain_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."aggregate"
+  is 'Aggregates';
+
+comment on column "dictionary"."aggregate"."id"
+  is 'Locally unique primary key';
+
+comment on column "dictionary"."aggregate"."database_id"
+  is 'ID of the database to use as reference key';
+
+comment on column "dictionary"."aggregate"."schema_id"
+  is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."aggregate"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "dictionary"."aggregate"."name"
+  is 'Name identifier';
+
+comment on column "dictionary"."aggregate"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."aggregate"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."aggregate"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."aggregate"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."aggregate"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."aggregate"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."aggregate"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "aggregate_database_id_fkey" on "dictionary"."aggregate"
+  is 'Foreign key constraint for the database_id column, which refers to the id column of the dictionary.database table';
+
+comment on constraint "aggregate-schema_id_fkey" on "dictionary"."aggregate"
+  is 'Foreign key constraint for the schema_id column, which refers to the id column of the dictionary.schema table';
+
+comment on constraint "aggregate_state_function_id_fkey" on "dictionary"."aggregate"
+  is 'Foreign key constraint for the state_function_id column, which refers to the id column of dictionary.function table';
+
+comment on constraint "aggregate_final_function_id_fkey" on "dictionary"."aggregate"
+  is 'Foreign key constraint for the final_function_id column, which refers to the id column of dictionary.function table';
+
+comment on index "dictionary"."aggregate_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "aggregate_creator_id_fkey" on "dictionary"."aggregate"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "aggregate_modifier_id_fkey" on "dictionary"."aggregate"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."aggregate_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "dictionary"."aggregate_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on schema "operational"
+  is 'Consist the basic study, entry, plot, and subplot data, the study meta, observation data and the audit data
+produced in day to day data production events (knowledge work) in the product development programs';
+
+comment on table "operational"."study"
+  is 'Studies';
+
+comment on column "operational"."study"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."study"."key"
+  is 'Logical key of the study';
+
+comment on column "operational"."study"."name"
+  is 'Logical name of the study';
+
+comment on column "operational"."study"."title"
+  is 'Title of the study';
+
+comment on column "operational"."study"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."study"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."study"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."study"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."study"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."study"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "operational"."study_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "study_creator_id_fkey" on "operational"."study"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "study_modifier_id_fkey" on "operational"."study"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."study_key_idx"
+  is 'Index for the key column';
+
+comment on index "operational"."study_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."study_metadata"
+  is 'Metadata of a study';
+
+comment on column "operational"."study_metadata"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."study_metadata"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."study_metadata"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."study_metadata"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."study_metadata"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."study_metadata"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."study_metadata"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."study_metadata"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."study_metadata"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."study_metadata"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "study_metadata_study_id_fkey" on "operational"."study_metadata"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "study_metadata_variable_id_fkey" on "operational"."study_metadata"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."study_metadata_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "study_metadata_creator_id_fkey" on "operational"."study_metadata"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "study_metadata_modifier_id_fkey" on "operational"."study_metadata"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."study_metadata_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."study_metadata_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."study_metadata_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."entry"
+  is 'Entries of a study';
+
+comment on column "operational"."entry"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."entry"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."entry"."number"
+  is 'Number of the entry within the study';
+
+comment on column "operational"."entry"."key"
+  is 'Logical key of the entry';
+
+comment on column "operational"."entry"."code"
+  is 'Code of the entry within the study';
+
+comment on column "operational"."entry"."product_id"
+  is 'ID of the product in the product table';
+
+comment on column "operational"."entry"."product_gid"
+  is 'ID of germplasm from the IRIS GMS database; related to the germplasm''s seed stocks';
+
+comment on column "operational"."entry"."product_name"
+  is 'Name or designation used for the product within the study';
+
+comment on column "operational"."entry"."description"
+  is 'Description';
+
+comment on column "operational"."entry"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."entry"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."entry"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."entry"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."entry"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."entry"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."entry"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "entry_study_id_fkey" on "operational"."entry"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "entry_product_id_fkey" on "operational"."entry"
+  is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
+
+comment on index "operational"."entry_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "entry_creator_id_fkey" on "operational"."entry"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "entry_modifier_id_fkey" on "operational"."entry"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."entry_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."entry_key_idx"
+  is 'Index for the key column';
+
+comment on index "operational"."entry_product_id_idx"
+  is 'Index for the product_id column';
+
+comment on index "operational"."entry_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."entry_metadata"
+  is 'Metadata of an entry';
+
+comment on column "operational"."entry_metadata"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."entry_metadata"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."entry_metadata"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "operational"."entry_metadata"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."entry_metadata"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."entry_metadata"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."entry_metadata"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."entry_metadata"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."entry_metadata"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."entry_metadata"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."entry_metadata"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "entry_metadata_study_id_fkey" on "operational"."entry_metadata"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "entry_metadata_entry_id_fkey" on "operational"."entry_metadata"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "entry_metadata_variable_id_fkey" on "operational"."entry_metadata"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."entry_metadata_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "entry_metadata_creator_id_fkey" on "operational"."entry_metadata"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "entry_metadata_modifier_id_fkey" on "operational"."entry_metadata"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."entry_metadata_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."entry_metadata_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "operational"."entry_metadata_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."entry_metadata_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."entry_data"
+  is 'Observational data of an entry';
+
+comment on column "operational"."entry_data"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."entry_data"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."entry_data"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "operational"."entry_data"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."entry_data"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."entry_data"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."entry_data"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."entry_data"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."entry_data"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."entry_data"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."entry_data"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "entry_data_study_id_fkey" on "operational"."entry_data"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "entry_data_entry_id_fkey" on "operational"."entry_data"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "entry_data_variable_id_fkey" on "operational"."entry_data"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."entry_data_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "entry_data_creator_id_fkey" on "operational"."entry_data"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "entry_data_modifier_id_fkey" on "operational"."entry_data"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."entry_data_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."entry_data_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "operational"."entry_data_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."entry_data_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."plot"
+  is 'Plot of a study entry';
+
+comment on column "operational"."plot"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."plot"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."plot"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "operational"."plot"."replication_number"
+  is 'Replication number of a plot';
+
+comment on column "operational"."plot"."key"
+  is 'Logical key of the plot';
+
+comment on column "operational"."plot"."code"
+  is 'Code of the plot within the study';
+
+comment on column "operational"."plot"."description"
+  is 'Description';
+
+comment on column "operational"."plot"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."plot"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."plot"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."plot"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."plot"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."plot"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."plot"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "plot_study_id_fkey" on "operational"."plot"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "plot_entry_id_fkey" on "operational"."plot"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on index "operational"."plot_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "plot_creator_id_fkey" on "operational"."plot"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "plot_modifier_id_fkey" on "operational"."plot"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."plot_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."plot_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "operational"."plot_key_idx"
+  is 'Index for the key column';
+
+comment on index "operational"."plot_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."plot_metadata"
+  is 'Metadata of a plot';
+
+comment on column "operational"."plot_metadata"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."plot_metadata"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."plot_metadata"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "operational"."plot_metadata"."plot_id"
+  is 'ID referring to plot';
+
+comment on column "operational"."plot_metadata"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."plot_metadata"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."plot_metadata"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."plot_metadata"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."plot_metadata"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."plot_metadata"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."plot_metadata"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."plot_metadata"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "plot_metadata_study_id_fkey" on "operational"."plot_metadata"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "plot_metadata_entry_id_fkey" on "operational"."plot_metadata"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "plot_metadata_plot_id_fkey" on "operational"."plot_metadata"
+  is 'Foreign key constraint for the plot_id column, which refers to the id column of the plot table';
+
+comment on constraint "plot_metadata_variable_id_fkey" on "operational"."plot_metadata"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."plot_metadata_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "plot_metadata_creator_id_fkey" on "operational"."plot_metadata"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "plot_metadata_modifier_id_fkey" on "operational"."plot_metadata"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."plot_metadata_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."plot_metadata_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "operational"."plot_metadata_plot_id_idx"
+  is 'Index for the plot_id column';
+
+comment on index "operational"."plot_metadata_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."plot_metadata_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."plot_data"
+  is 'Observational data of a plot';
+
+comment on column "operational"."plot_data"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."plot_data"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."plot_data"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "operational"."plot_data"."plot_id"
+  is 'ID referring to plot';
+
+comment on column "operational"."plot_data"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."plot_data"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."plot_data"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."plot_data"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."plot_data"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."plot_data"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."plot_data"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."plot_data"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "plot_data_study_id_fkey" on "operational"."plot_data"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "plot_data_entry_id_fkey" on "operational"."plot_data"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "plot_data_plot_id_fkey" on "operational"."plot_data"
+  is 'Foreign key constraint for the plot_id column, which refers to the id column of the plot table';
+
+comment on constraint "plot_data_variable_id_fkey" on "operational"."plot_data"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."plot_data_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "plot_data_creator_id_fkey" on "operational"."plot_data"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "plot_data_modifier_id_fkey" on "operational"."plot_data"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."plot_data_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."plot_data_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "operational"."plot_data_plot_id_idx"
+  is 'Index for the plot_id column';
+
+comment on index "operational"."plot_data_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."plot_data_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."subplot"
+  is 'Subplot of a study entry''s plot';
+
+comment on column "operational"."subplot"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."subplot"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."subplot"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "operational"."subplot"."plot_id"
+  is 'ID referring to plot';
+
+comment on column "operational"."subplot"."number"
+  is 'Number of the subplot within the plot';
+
+comment on column "operational"."subplot"."key"
+  is 'Logical key of the subplot';
+
+comment on column "operational"."subplot"."description"
+  is 'Description';
+
+comment on column "operational"."subplot"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."subplot"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."subplot"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."subplot"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."subplot"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."subplot"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."subplot"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "subplot_study_id_fkey" on "operational"."subplot"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "subplot_entry_id_fkey" on "operational"."subplot"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "subplot_plot_id_fkey" on "operational"."subplot"
+  is 'Foreign key constraint for the plot_id column, which refers to the id column of the plot table';
+
+comment on index "operational"."subplot_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "subplot_creator_id_fkey" on "operational"."subplot"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "subplot_modifier_id_fkey" on "operational"."subplot"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."subplot_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."subplot_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "operational"."subplot_plot_id_idx"
+  is 'Index for the plot_id column';
+
+comment on index "operational"."subplot_key_idx"
+  is 'Index for the key column';
+
+comment on index "operational"."subplot_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."subplot_metadata"
+  is 'Metadata of a subplot';
+
+comment on column "operational"."subplot_metadata"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."subplot_metadata"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."subplot_metadata"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "operational"."subplot_metadata"."plot_id"
+  is 'ID referring to plot';
+
+comment on column "operational"."subplot_metadata"."subplot_id"
+  is 'ID referring to subplot';
+
+comment on column "operational"."subplot_metadata"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."subplot_metadata"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."subplot_metadata"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."subplot_metadata"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."subplot_metadata"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."subplot_metadata"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."subplot_metadata"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."subplot_metadata"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "subplot_metadata_study_id_fkey" on "operational"."subplot_metadata"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "subplot_metadata_entry_id_fkey" on "operational"."subplot_metadata"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "subplot_metadata_plot_id_fkey" on "operational"."subplot_metadata"
+  is 'Foreign key constraint for the plot_id column, which refers to the id column of the plot table';
+
+comment on constraint "subplot_metadata_subplot_id_fkey" on "operational"."subplot_metadata"
+  is 'Foreign key constraint for the subplot_id column, which refers to the id column of the subplot table';
+
+comment on constraint "subplot_metadata_variable_id_fkey" on "operational"."subplot_metadata"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."subplot_metadata_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "subplot_metadata_creator_id_fkey" on "operational"."subplot_metadata"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "subplot_metadata_modifier_id_fkey" on "operational"."subplot_metadata"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."subplot_metadata_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."subplot_metadata_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "operational"."subplot_metadata_plot_id_idx"
+  is 'Index for the plot_id column';
+
+comment on index "operational"."subplot_metadata_subplot_id_idx"
+  is 'Index for the subplot_id column';
+
+comment on index "operational"."subplot_metadata_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."subplot_metadata_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."subplot_data"
+  is 'Observational data of a subplot';
+
+comment on column "operational"."subplot_data"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."subplot_data"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."subplot_data"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "operational"."subplot_data"."plot_id"
+  is 'ID referring to plot';
+
+comment on column "operational"."subplot_data"."subplot_id"
+  is 'ID referring to subplot';
+
+comment on column "operational"."subplot_data"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."subplot_data"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."subplot_data"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."subplot_data"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."subplot_data"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."subplot_data"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."subplot_data"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."subplot_data"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "subplot_data_study_id_fkey" on "operational"."subplot_data"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "subplot_data_entry_id_fkey" on "operational"."subplot_data"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "subplot_data_plot_id_fkey" on "operational"."subplot_data"
+  is 'Foreign key constraint for the plot_id column, which refers to the id column of the plot table';
+
+comment on constraint "subplot_data_subplot_id_fkey" on "operational"."subplot_data"
+  is 'Foreign key constraint for the subplot_id column, which refers to the id column of the subplot table';
+
+comment on constraint "subplot_data_variable_id_fkey" on "operational"."subplot_data"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."subplot_data_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "subplot_data_creator_id_fkey" on "operational"."subplot_data"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "subplot_data_modifier_id_fkey" on "operational"."subplot_data"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."subplot_data_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."subplot_data_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "operational"."subplot_data_plot_id_idx"
+  is 'Index for the plot_id column';
+
+comment on index "operational"."subplot_data_subplot_id_idx"
+  is 'Index for the subplot_id column';
+
+comment on index "operational"."subplot_data_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."subplot_data_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."cross"
+  is 'Crosses in a crossing study in the hybridization (HB) phase';
+
+comment on column "operational"."cross"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."cross"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."cross"."female_entry_id"
+  is 'ID of the female entry in the cross';
+
+comment on column "operational"."cross"."female_product_id"
+  is 'ID of the female product in the cross';
+
+comment on column "operational"."cross"."female_product_name"
+  is 'Name or designation used for the female product in the cross';
+
+comment on column "operational"."cross"."male_entry_id"
+  is 'ID of the male entry in the cross';
+
+comment on column "operational"."cross"."male_product_id"
+  is 'ID of the male product in the cross';
+
+comment on column "operational"."cross"."male_product_name"
+  is 'Name or designation used for the male product in the cross';
+
+comment on column "operational"."cross"."description"
+  is 'Description';
+
+comment on column "operational"."cross"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."cross"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."cross"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."cross"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."cross"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."cross"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."cross"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "cross_female_entry_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "cross_female_product_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
+
+comment on constraint "cross_male_entry_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "cross_male_product_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
+
+comment on constraint "cross_cross_method_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the cross_method_id column, which refers to the id column of the master.cross_method table';
+
+comment on index "operational"."cross_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "cross_creator_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "cross_modifier_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."cross_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."cross_female_entry_id_idx"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on index "operational"."cross_female_product_id_idx"
+  is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
+
+comment on index "operational"."cross_male_entry_id_idx"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on index "operational"."cross_male_product_id_idx"
+  is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
+
+comment on table "operational"."cross_metadata"
+  is 'Metadata about a cross';
+
+comment on column "operational"."cross_metadata"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."cross_metadata"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."cross_metadata"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."cross_metadata"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."cross_metadata"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."cross_metadata"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."cross_metadata"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."cross_metadata"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."cross_metadata"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."cross_metadata"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "cross_metadata_study_id_fkey" on "operational"."cross_metadata"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "cross_metadata_variable_id_fkey" on "operational"."cross_metadata"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."cross_metadata_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "cross_metadata_creator_id_fkey" on "operational"."cross_metadata"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "cross_metadata_modifier_id_fkey" on "operational"."cross_metadata"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."cross_metadata_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."cross_metadata_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."cross_metadata_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."cross_data"
+  is 'Observational data of a cross';
+
+comment on column "operational"."cross_data"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."cross_data"."study_id"
+  is 'ID referring to study';
+
+comment on column "operational"."cross_data"."value"
+  is 'Value of a variable';
+
+comment on column "operational"."cross_data"."remarks"
+  is 'Additional details';
+
+comment on column "operational"."cross_data"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."cross_data"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."cross_data"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."cross_data"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."cross_data"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."cross_data"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "cross_data_study_id_fkey" on "operational"."cross_data"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "cross_data_variable_id_fkey" on "operational"."cross_data"
+  is 'Foreign key constraint for the variable_id column, which refers to the id column of the master.variable table';
+
+comment on index "operational"."cross_data_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "cross_data_creator_id_fkey" on "operational"."cross_data"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "cross_data_modifier_id_fkey" on "operational"."cross_data"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."cross_data_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "operational"."cross_data_variable_id_idx"
+  is 'Index for the variable_id column';
+
+comment on index "operational"."cross_data_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."seed_storage"
+  is 'Seed storage contains the product storage units. This gives information
+on what material is available to be used in the product development programs.';
+
+comment on column "operational"."seed_storage"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."seed_storage"."product_id"
+  is 'Product where the seeds are harvested from';
+
+comment on column "operational"."seed_storage"."seed_lot_id"
+  is 'A unique identifier for the seed storage assigned by the data manager';
+
+comment on column "operational"."seed_storage"."key_type"
+  is 'family id, entry key, plot key, custom key, seed_lot_id';
+
+comment on column "operational"."seed_storage"."seed_manager"
+  is 'Refers to which product development programs has access to the seeds';
+
+comment on column "operational"."seed_storage"."label"
+  is 'Metadata about the seed storage';
+
+comment on column "operational"."seed_storage"."original_storage_id"
+  is 'Null except in special cases when a seed lot is divided into several seed lots,
+this contains the seed storage ID of the original seed lot that was divided';
+
+comment on column "operational"."seed_storage"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."seed_storage"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."seed_storage"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."seed_storage"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."seed_storage"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."seed_storage"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "operational"."seed_storage_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "seed_storage_creator_id_fkey" on "operational"."seed_storage"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "seed_storage_modifier_id_fkey" on "operational"."seed_storage"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."seed_storage_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "operational"."seed_storage_log"
+  is 'Transaction log contains the history of transactions made';
+
+comment on column "operational"."seed_storage_log"."id"
+  is 'Locally unique primary key';
+
+comment on column "operational"."seed_storage_log"."encoder_id"
+  is 'User who entered the record';
+
+comment on column "operational"."seed_storage_log"."encode_timestamp"
+  is 'Timestamp when the transaction was done';
+
+comment on column "operational"."seed_storage_log"."transaction_type"
+  is 'Deposit or withdraw';
+
+comment on column "operational"."seed_storage_log"."event_timestamp"
+  is 'Timestamp when the transaction was needed';
+
+comment on column "operational"."seed_storage_log"."sender"
+  is 'Where the deposited seeds come from';
+
+comment on column "operational"."seed_storage_log"."receiver"
+  is 'Where the withdrawn seeds will go to';
+
+comment on column "operational"."seed_storage_log"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "operational"."seed_storage_log"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "operational"."seed_storage_log"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "operational"."seed_storage_log"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "operational"."seed_storage_log"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "operational"."seed_storage_log"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "operational"."seed_storage_log_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "seed_storage_log_creator_id_fkey" on "operational"."seed_storage_log"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "seed_storage_log_modifier_id_fkey" on "operational"."seed_storage_log"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "operational"."seed_storage_log_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on schema "warehouse"
+  is 'Validated data from the operational schema';
+
+comment on table "warehouse"."study"
+  is 'Studies';
+
+comment on column "warehouse"."study"."id"
+  is 'Locally unique primary key';
+
+comment on column "warehouse"."study"."key"
+  is 'Logical key of the study';
+
+comment on column "warehouse"."study"."name"
+  is 'Logical name of the study';
+
+comment on column "warehouse"."study"."title"
+  is 'Title of the study';
+
+comment on column "warehouse"."study"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "warehouse"."study"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "warehouse"."study"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "warehouse"."study"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "warehouse"."study"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "warehouse"."study"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "warehouse"."study_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "study_creator_id_fkey" on "warehouse"."study"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "study_modifier_id_fkey" on "warehouse"."study"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "warehouse"."study_key_idx"
+  is 'Index for the key column';
+
+comment on index "warehouse"."study_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "warehouse"."entry"
+  is 'Entries of a study';
+
+comment on column "warehouse"."entry"."id"
+  is 'Locally unique primary key';
+
+comment on column "warehouse"."entry"."study_id"
+  is 'ID referring to study';
+
+comment on column "warehouse"."entry"."number"
+  is 'Number of the entry within the study';
+
+comment on column "warehouse"."entry"."key"
+  is 'Logical key of the entry';
+
+comment on column "warehouse"."entry"."code"
+  is 'Code of the entry within the study';
+
+comment on column "warehouse"."entry"."product_id"
+  is 'ID of the product in the product table';
+
+comment on column "warehouse"."entry"."product_gid"
+  is 'ID of germplasm from the IRIS GMS database; related to the germplasm''s seed stocks';
+
+comment on column "warehouse"."entry"."product_name"
+  is 'Name or designation used for the product within the study';
+
+comment on column "warehouse"."entry"."description"
+  is 'Description';
+
+comment on column "warehouse"."entry"."remarks"
+  is 'Additional details';
+
+comment on column "warehouse"."entry"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "warehouse"."entry"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "warehouse"."entry"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "warehouse"."entry"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "warehouse"."entry"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "warehouse"."entry"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "entry_study_id_fkey" on "warehouse"."entry"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "entry_product_id_fkey" on "warehouse"."entry"
+  is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
+
+comment on index "warehouse"."entry_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "entry_creator_id_fkey" on "warehouse"."entry"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "entry_modifier_id_fkey" on "warehouse"."entry"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "warehouse"."entry_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "warehouse"."entry_key_idx"
+  is 'Index for the key column';
+
+comment on index "warehouse"."entry_product_id_idx"
+  is 'Index for the product_id column';
+
+comment on index "warehouse"."entry_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "warehouse"."plot"
+  is 'Plot of a study entry';
+
+comment on column "warehouse"."plot"."id"
+  is 'Locally unique primary key';
+
+comment on column "warehouse"."plot"."study_id"
+  is 'ID referring to study';
+
+comment on column "warehouse"."plot"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "warehouse"."plot"."replication_number"
+  is 'Replication number of a plot';
+
+comment on column "warehouse"."plot"."key"
+  is 'Logical key of the plot';
+
+comment on column "warehouse"."plot"."code"
+  is 'Code of the plot within the study';
+
+comment on column "warehouse"."plot"."description"
+  is 'Description';
+
+comment on column "warehouse"."plot"."remarks"
+  is 'Additional details';
+
+comment on column "warehouse"."plot"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "warehouse"."plot"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "warehouse"."plot"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "warehouse"."plot"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "warehouse"."plot"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "warehouse"."plot"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "plot_study_id_fkey" on "warehouse"."plot"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "plot_entry_id_fkey" on "warehouse"."plot"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on index "warehouse"."plot_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "plot_creator_id_fkey" on "warehouse"."plot"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "plot_modifier_id_fkey" on "warehouse"."plot"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "warehouse"."plot_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "warehouse"."plot_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "warehouse"."plot_key_idx"
+  is 'Index for the key column';
+
+comment on index "warehouse"."plot_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "warehouse"."subplot"
+  is 'Subplot of a study entry''s plot';
+
+comment on column "warehouse"."subplot"."id"
+  is 'Locally unique primary key';
+
+comment on column "warehouse"."subplot"."study_id"
+  is 'ID referring to study';
+
+comment on column "warehouse"."subplot"."entry_id"
+  is 'ID referring to entry';
+
+comment on column "warehouse"."subplot"."plot_id"
+  is 'ID referring to plot';
+
+comment on column "warehouse"."subplot"."number"
+  is 'Number of the subplot within the plot';
+
+comment on column "warehouse"."subplot"."key"
+  is 'Logical key of the subplot';
+
+comment on column "warehouse"."subplot"."description"
+  is 'Description';
+
+comment on column "warehouse"."subplot"."remarks"
+  is 'Additional details';
+
+comment on column "warehouse"."subplot"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "warehouse"."subplot"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "warehouse"."subplot"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "warehouse"."subplot"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "warehouse"."subplot"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "warehouse"."subplot"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "subplot_study_id_fkey" on "warehouse"."subplot"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "subplot_entry_id_fkey" on "warehouse"."subplot"
+  is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
+
+comment on constraint "subplot_plot_id_fkey" on "warehouse"."subplot"
+  is 'Foreign key constraint for the plot_id column, which refers to the id column of the plot table';
+
+comment on index "warehouse"."subplot_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "subplot_creator_id_fkey" on "warehouse"."subplot"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "subplot_modifier_id_fkey" on "warehouse"."subplot"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "warehouse"."subplot_study_id_idx"
+  is 'Index for the study_id column';
+
+comment on index "warehouse"."subplot_entry_id_idx"
+  is 'Index for the entry_id column';
+
+comment on index "warehouse"."subplot_plot_id_idx"
+  is 'Index for the plot_id column';
+
+comment on index "warehouse"."subplot_key_idx"
+  is 'Index for the key column';
+
+comment on index "warehouse"."subplot_is_void_idx"
+  is 'Index for the is_void column';
 
 
 
