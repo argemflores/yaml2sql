@@ -727,22 +727,48 @@ database: &bims_0.10
                 - &master-product-tbl
                     <<: *def-tbl
                     name: product
-                    comment: 'A progeny or a fixed line'
+                    comment: |
+                        Product catalog is a publicly accessible list of the products used and produced in product development programs.
+                        Every record has a unique key and unique product name. It contains the identity of a material.'
                     column:
                         <<: *def-id-tbl-col
                         <<: *def-meta-tbl-col
-                        - &product-gid-col
-                            name: gid
+                        - &product-program_id-col
+                            name: program_id
                             data_type: integer
                             not_null: true
+                        - &product-designation-col
+                            name: designation
+                            data_type: varchar
+                            not_null: true
+                        - &product-name_type-col
+                            name: name_type
+                            data_type: varchar
+                            not_null: true
+                            comment: |
+                                Name types: breeding_line, fixed_line, derivative, common, cultivar
                         - &product-type-col
                             name: type
                             data_type: varchar
                             not_null: true
-                        - &product-authority-col
-                            name: authority
-                            data_type: varchar
+                            comment: |
+                                Product types: progeny, fixed_line
+                        - &product-year-col
+                            name: year
+                            data_type: integer
                             not_null: true
+                        - &product-season_id-col
+                            name: season_id
+                            data_type: integer
+                        - &product-mta_status-col
+                            name: mta_status
+                            data_type: varchar
+                        - &product-parentage-col
+                            name: parentage
+                            data_type: varchar
+                        - &product-cross_id-col
+                            name: cross_id
+                            data_type: integer
                         - &product-generation-col
                             name: generation
                             data_type: integer
@@ -753,17 +779,103 @@ database: &bims_0.10
                         - &product-breeding_line_name-col
                             name: breeding_line_name
                             data_type: varchar
+                        - &product-derivative_name-col
+                            name: derivative_name
+                            data_type: varchar
                         - &product-fixed_line_name-col
                             name: fixed_line_name
                             data_type: varchar
-                        - &product-common_name-col
-                            name: common_name
-                            data_type: varchar
-                        - &product-cultivar_name-col
-                            name: cultivar_name
+                        # - &product-common_name-col
+                        #     name: common_name
+                        #     data_type: varchar
+                        # - &product-cultivar_name-col
+                        #     name: cultivar_name
+                        #     data_type: varchar
+                        - &product-selection_method-col
+                            name: selection_method
                             data_type: varchar
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
+                    constraint:
+                        - &product-program_id-fkey-cst
+                            name: product_program_id_fkey
+                            type: foreign_key
+                            column: program_id
+                            other_attributes:
+                                foreign_table: master.program
+                                foreign_column: id
+                        - &product-cross_id-fkey-cst
+                            name: product_cross_id_fkey
+                            type: foreign_key
+                            column: cross_id
+                            other_attributes:
+                                foreign_table: operational.cross
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        - &product-program_id-idx
+                            name: product_program_id_idx
+                            column: program_id
+                        - &product-designation-idx
+                            name: product_designation_idx
+                            column: designation
+                        - &product-name_type-idx
+                            name: product_name_type_idx
+                            column: name_type
+                        - &product-type-idx
+                            name: product_type_idx
+                            column: type
+                        - &product-year-idx
+                            name: product_year_idx
+                            column: year
+                        - &product-season_id-idx
+                            name: product_season_id_idx
+                            column: season_id
+                        - &product-cross_id-idx
+                            name: product_cross_id_idx
+                            column: cross_id
+                        - &product-generation-idx
+                            name: product_generation_idx
+                            column: generation
+                        <<: *def-ident-tbl-idx
+                        <<: *def-log-tbl-idx
+                - &master-product_name-tbl
+                    <<: *def-tbl
+                    name: product_name
+                    comment: Names of a product
+                    column:
+                        <<: *def-id-tbl-col
+                        - &product_name-product_id-col
+                            name: product_id
+                            data_type: integer
+                            not_null: true
+                        - &product_name-name_type-col
+                            name: name_type
+                            data_type: varchar
+                            comment: |
+                                derivative, fixed_line, cultivar, common
+                        - &product_name-value-col
+                            name: value
+                            data_type: varchar
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &product_name-product_id-fkey-cst
+                            name: product_name_product_id_fkey
+                            type: foreign_key
+                            column: product_id
+                            other_attributes:
+                                foreign_table: master.product
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        - &product_name-product_id-idx
+                            name: product_name_product_id_idx
+                            column: product_id
+                        - &product_name-name_type-idx
+                            name: product_name_name_type_idx
+                            column: name_type
+                        <<: *def-ident-tbl-idx
+                        <<: *def-log-tbl-idx
                 - &master-product_metadata-tbl
                     <<: *def-tbl
                     name: product_metadata
