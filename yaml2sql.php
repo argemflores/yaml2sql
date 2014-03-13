@@ -557,7 +557,7 @@ EOD
 
 echo $dbSql, "\n\n-- --------------------------------\n\n",
     $schSql, "\n\n";
-// echo $cmtSql, "\n\n";
+echo $cmtSql, "\n\n";
 echo "\n\n-- --------------------------------\n\n",
     $postSql, "\n\n";
 
