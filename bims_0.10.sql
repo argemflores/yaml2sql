@@ -8,6 +8,8 @@ drop schema if exists "dictionary" cascade;
 
 drop schema if exists "operational" cascade;
 
+drop schema if exists "warehouse_terminal" cascade;
+
 drop schema if exists "warehouse" cascade;
 
 -- --------------------------------
@@ -560,15 +562,21 @@ create table "master"."product" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
     "name" varchar(128) not null,
-    "gid" integer not null,
+    "program_id" integer not null,
+    "designation" varchar not null,
+    "name_type" varchar not null,
     "type" varchar not null,
-    "authority" varchar not null,
+    "year" integer not null,
+    "season_id" integer,
+    "mta_status" varchar,
+    "parentage" varchar,
+    "cross_id" integer,
     "generation" integer,
     "iris_preferred_id" varchar,
     "breeding_line_name" varchar,
+    "derivative_name" varchar,
     "fixed_line_name" varchar,
-    "common_name" varchar,
-    "cultivar_name" varchar,
+    "selection_method" varchar,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -582,6 +590,14 @@ create table "master"."product" (
 );
 
 alter table "master"."product"
+  add constraint "product_program_id_fkey"
+  foreign key ("program_id") references "master"."program" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."product"
+  add constraint "product_cross_id_fkey"
+  foreign key ("cross_id") references "operational"."cross" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."product"
   add constraint "product_id_pkey"
   primary key ("id");
 alter table "master"."product"
@@ -593,11 +609,84 @@ alter table "master"."product"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "product_program_id_idx"
+  on "master"."product"
+  using btree ("program_id");
+create index "product_designation_idx"
+  on "master"."product"
+  using btree ("designation");
+create index "product_name_type_idx"
+  on "master"."product"
+  using btree ("name_type");
+create index "product_type_idx"
+  on "master"."product"
+  using btree ("type");
+create index "product_year_idx"
+  on "master"."product"
+  using btree ("year");
+create index "product_season_id_idx"
+  on "master"."product"
+  using btree ("season_id");
+create index "product_cross_id_idx"
+  on "master"."product"
+  using btree ("cross_id");
+create index "product_generation_idx"
+  on "master"."product"
+  using btree ("generation");
 create unique index "product_abbrev_idx"
   on "master"."product"
   using btree ("abbrev");
 create index "product_is_void_idx"
   on "master"."product"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "master"."product_name" (
+    "id" serial not null,
+    "product_id" integer not null,
+    "name_type" varchar not null,
+    "value" varchar not null,
+    "language_code" varchar not null default 'eng',
+    "description" text,
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."product_name"
+  add constraint "product_name_product_id_fkey"
+  foreign key ("product_id") references "master"."product" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."product_name"
+  add constraint "product_name_id_pkey"
+  primary key ("id");
+alter table "master"."product_name"
+  add constraint "product_name_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."product_name"
+  add constraint "product_name_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "product_name_product_id_idx"
+  on "master"."product_name"
+  using btree ("product_id");
+create index "product_name_name_type_idx"
+  on "master"."product_name"
+  using btree ("name_type");
+create unique index "product_name_abbrev_idx"
+  on "master"."product_name"
+  using btree ("abbrev");
+create index "product_name_is_void_idx"
+  on "master"."product_name"
   using btree ("is_void");
 
 -- ----------------
@@ -2334,6 +2423,60 @@ create index "cross_data_variable_id_idx"
   using btree ("variable_id");
 create index "cross_data_is_void_idx"
   on "operational"."cross_data"
+  using btree ("is_void");
+
+-- --------------------------------
+
+create schema "warehouse_terminal";
+
+create table "warehouse_terminal"."transaction" (
+    "id" serial not null,
+    "type" varchar,
+    "actor_id" integer not null,
+    "start_action_timestamp" timestamp not null,
+    "end_action_timestamp" timestamp not null,
+    "total_file_count" integer not null,
+    "successful_file_count" integer not null,
+    "is_successful" boolean not null default false,
+    "transfer_timestamp" timestamp,
+    "transferrer_id" integer,
+    "data_source" varchar,
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "warehouse_terminal"."transaction"
+  add constraint "transaction_actor_id_fkey"
+  foreign key ("actor_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse_terminal"."transaction"
+  add constraint "transaction_transferer_id_fkey"
+  foreign key ("transferer_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse_terminal"."transaction"
+  add constraint "transaction_id_pkey"
+  primary key ("id");
+alter table "warehouse_terminal"."transaction"
+  add constraint "transaction_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "warehouse_terminal"."transaction"
+  add constraint "transaction_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "transaction_abbrev_idx"
+  on "warehouse_terminal"."transaction"
+  using btree ("abbrev");
+create index "transaction_is_void_idx"
+  on "warehouse_terminal"."transaction"
   using btree ("is_void");
 
 -- --------------------------------
