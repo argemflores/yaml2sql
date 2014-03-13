@@ -15,7 +15,7 @@ dictionary:
         - &name-col
             name: name
             data_type: varchar
-            length: 128
+            length: 256
             not_null: true
             comment: Name identifier
         - &description-col
@@ -729,7 +729,7 @@ database: &bims_0.10
                     name: product
                     comment: |
                         Product catalog is a publicly accessible list of the products used and produced in product development programs.
-                        Every record has a unique key and unique product name. It contains the identity of a material.'
+                        Every record has a unique key and unique product name. It contains the identity of a material.
                     column:
                         <<: *def-id-tbl-col
                         <<: *def-meta-tbl-col
@@ -737,6 +737,8 @@ database: &bims_0.10
                             name: program_id
                             data_type: integer
                             not_null: true
+                            comment: |
+                                Foreign key to the product development program table
                         - &product-designation-col
                             name: designation
                             data_type: varchar
@@ -763,6 +765,9 @@ database: &bims_0.10
                         - &product-mta_status-col
                             name: mta_status
                             data_type: varchar
+                            not_null: true
+                            comment: |
+                                Refers to the set of defined terms to guide the legal use of material i.e. SMTA, CMTA, OMTA, Confidential
                         - &product-parentage-col
                             name: parentage
                             data_type: varchar
@@ -771,8 +776,10 @@ database: &bims_0.10
                             data_type: integer
                         - &product-generation-col
                             name: generation
-                            data_type: integer
-                            comment: Null if type is fixed line
+                            data_type: varchar
+                            not_null: true
+                            comment: |
+                                Generations: UNKNOWN, F1, BC1F1, BC2F1, BC3F1, F2, F3, F4, FIXED
                         - &product-iris_preferred_id-col
                             name: iris_preferred_id
                             data_type: varchar
@@ -864,6 +871,8 @@ database: &bims_0.10
                             data_type: varchar
                             not_null: true
                             default_value: eng
+                            comment: |
+                                Reference: http://www.loc.gov/standards/iso639-2/php/code_list.php
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
@@ -882,7 +891,6 @@ database: &bims_0.10
                         - &product_name-name_type-idx
                             name: product_name_name_type_idx
                             column: name_type
-                        <<: *def-ident-tbl-idx
                         <<: *def-log-tbl-idx
                 - &master-product_metadata-tbl
                     <<: *def-tbl
@@ -909,6 +917,160 @@ database: &bims_0.10
                                 foreign_column: id
                         <<: *def-tbl-cst
                     index:
+                        <<: *def-log-tbl-idx
+                - &master-seed_storage-tbl
+                    <<: *def-tbl
+                    name: seed_storage
+                    comment: |
+                        Seed storage contains the product storage units. This gives information
+                        on what material is available to be used in the product development programs.
+                    column:
+                        <<: *def-id-tbl-col
+                        - &seed_storage-product_id-col
+                            name: product_id
+                            data_type: integer
+                            not_null: true
+                            comment: Product where the seeds are harvested from
+                        - &seed_storage-seed_lot_id-col
+                            name: seed_lot_id
+                            data_type: integer
+                            not_null: true
+                            comment: |
+                                A unique identifier for the seed storage assigned by the data manager
+                        - &seed_storage-key_type-col
+                            name: key_type
+                            data_type: varchar
+                            not_null: true
+                            comment: |
+                                family id, entry key, plot key, custom key, seed_lot_id
+                        - &seed_storage-seed_manager-col
+                            name: seed_manager
+                            data_type: varchar
+                            not_null: true
+                            comment: |
+                                Refers to which product development programs has access to the seeds
+                        - &seed_storage-gid-col
+                            name: gid
+                            data_type: integer
+                            not_null: true
+                        - &seed_storage-volume-col
+                            name: volume
+                            data_type: float
+                            not_null: true
+                        - &seed_storage-unit-col
+                            name: unit
+                            data_type: varchar
+                            not_null: true
+                        - &seed_storage-harvest_date-col
+                            name: harvest_date
+                            data_type: date
+                        - &seed_storage-label-col
+                            name: label
+                            data_type: varchar
+                            not_null: true
+                            comment: Metadata about the seed storage
+                        - &seed_storage-original_storage_id-col
+                            name: original_storage_id
+                            data_type: integer
+                            comment: |
+                                Null except in special cases when a seed lot is divided into several seed lots,
+                                this contains the seed storage ID of the original seed lot that was divided
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &seed_storage-product_id-fkey-cst
+                            name: seed_storage_product_id_fkey
+                            type: foreign_key
+                            column: product_id
+                            other_attributes:
+                                foreign_table: master.product
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        - &seed_storage-product_id-idx
+                            name: seed_storage_product_id_idx
+                            column: product_id
+                        - &seed_storage-seed_lot_id-idx
+                            name: seed_storage_seed_lot_id_idx
+                            column: seed_lot_id
+                            unique: true
+                        - &seed_storage-gid-idx
+                            name: seed_storage_gid_idx
+                            column: gid
+                            unique: true
+                        - &seed_storage-original_storage_id-idx
+                            name: seed_storage_original_storage_id_idx
+                            column: original_storage_id
+                        <<: *def-log-tbl-idx
+                - &master-seed_storage_log-tbl
+                    <<: *def-tbl
+                    name: seed_storage_log
+                    comment: Transaction log contains the history of transactions made
+                    column:
+                        <<: *def-id-tbl-col
+                        - &seed_storage_log-seed_storage_id-col
+                            name: seed_storage_id
+                            data_type: integer
+                            not_null: true
+                        - &seed_storage_log-encoder_id-col
+                            name: encoder_id
+                            data_type: integer
+                            not_null: true
+                            comment: User who entered the record
+                        - &seed_storage_log-encode_timestamp-col
+                            name: encode_timestamp
+                            data_type: timestamp
+                            not_null: true
+                            comment: Timestamp when the transaction was done
+                        - &seed_storage_log-transaction_type-col
+                            name: transaction_type
+                            data_type: varchar
+                            not_null: true
+                            comment: Deposit or withdraw
+                        - &seed_storage_log-volume-col
+                            name: volume
+                            data_type: float
+                            not_null: true
+                        - &seed_storage_log-unit-col
+                            name: unit
+                            data_type: varchar
+                            not_null: true
+                        - &seed_storage_log-event_timestamp-col
+                            name: event_timestamp
+                            data_type: timestamp
+                            not_null: true
+                            comment: Timestamp when the transaction was needed
+                        - &seed_storage_log-sender-col
+                            name: sender
+                            data_type: varchar
+                            comment: Where the deposited seeds come from
+                        - &seed_storage_log-receiver-col
+                            name: receiver
+                            data_type: varchar
+                            comment: Where the withdrawn seeds will go to
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &seed_storage_log-seed_storage_id-fkey-cst
+                            name: seed_storage_log_seed_storage_id_fkey
+                            type: foreign_key
+                            column: seed_storage_id
+                            other_attributes:
+                                foreign_table: operational.seed_storage
+                                foreign_column: id
+                        - &seed_storage_log-encoder_id-fkey-cst
+                            name: seed_storage_log_encoder_id_fkey
+                            type: foreign_key
+                            column: encoder_id
+                            other_attributes:
+                                foreign_table: master.user
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        - &seed_storage_log-seed_storage_id-idx
+                            name: seed_storage_log_seed_storage_id_idx
+                            column: seed_storage_id
+                        - &seed_storage-transaction_type-idx
+                            name: seed_storage_transaction_type_idx
+                            column: transaction_type
                         <<: *def-log-tbl-idx
                 - &master-season-tbl
                     <<: *def-tbl
