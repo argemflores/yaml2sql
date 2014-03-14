@@ -111,6 +111,12 @@ dictionary:
             data_type: integer
             not_null: true
             comment: ID of germplasm from the IRIS GMS database; related to the germplasm's seed stocks
+        - &replication_number-col
+            name: replication_number
+            data_type: integer
+            not_null: true
+            default_value: 1
+            comment: Replication number of an entry in the plot
         - &study_id-col
             name: study_id
             data_type: integer
@@ -160,6 +166,11 @@ dictionary:
             name: title
             data_type: varchar
             comment: Title
+        - &transaction_id-col
+            name: transaction_id
+            data_type: integer
+            not_null: true
+            comment: ID of the transaction made in the terminal
     constraint:
         - &id_pkey-cst
             name: {table}_id_pkey
@@ -286,6 +297,14 @@ dictionary:
             other_attributes:
                 foreign_table: {schema}.subplot
                 foreign_column: id
+        - &transaction_id-fkey-cst
+            name: {table}_transaction_id_fkey
+            type: foreign_key
+            column: transaction_id
+            comment: 'Foreign key constraint for the transaction_id column, which refers to the id column of the transaction table'
+            other_attributes:
+                foreign_table: {schema}.transaction
+                foreign_column: id
     index:
         - &abbrev-idx
             name: {table}_abbrev_idx
@@ -352,6 +371,10 @@ dictionary:
             name: {table}_subplot_id_idx
             column: variable_id
             comment: Index for the subplot_id column
+        - &transaction_id-idx
+            name: {table}_transaction_id_idx
+            column: transaction_id
+            comment: Index for the transaction_id column
     set:
         column:
             - &def-id-tbl-col
@@ -2023,7 +2046,7 @@ database: &bims_0.10
                             column: cross_id
                         - *variable_id-idx
                         <<: *def-log-tbl-idx
-                - &master-seed_storage-tbl
+                - &operational-seed_storage-tbl
                     <<: *def-tbl
                     name: seed_storage
                     comment: |
@@ -2106,7 +2129,7 @@ database: &bims_0.10
                             name: seed_storage_original_storage_id_idx
                             column: original_storage_id
                         <<: *def-log-tbl-idx
-                - &master-seed_storage_log-tbl
+                - &operational-seed_storage_log-tbl
                     <<: *def-tbl
                     name: seed_storage_log
                     comment: Transaction log contains the history of transactions made
@@ -2177,6 +2200,577 @@ database: &bims_0.10
                             name: seed_storage_transaction_type_idx
                             column: transaction_type
                         <<: *def-log-tbl-idx
+        - &warehouse_terminal-sch
+            name: warehouse_terminal
+            comment: Terminal to warehouse data
+            table:
+                - &warehouse_terminal-transaction-tbl
+                    <<: *def-tbl
+                    name: transaction
+                    comment: |
+                        Transactions store events related to upload from imported data and commit to warehouse data.
+                    column:
+                        <<: *def-id-tbl-col
+                        - &transaction-type-col
+                            name: type
+                            data_type: varchar
+                            comment: |
+                                Type of transaction 'upload': data source files to terminal; 'commit': terminal to data warehouse
+                        - &transaction-actor_id-col
+                            name: actor_id
+                            data_type: integer
+                            not_null: true
+                            comment: |
+                                User who performed the upload or commit action
+                        - &transaction-start_action_timestamp-col
+                            name: start_action_timestamp
+                            data_type: timestamp
+                            not_null: true
+                            comment: |
+                                Timestamp when the action started; starts from upload, reading contents, initial data validation, to saving to data warehouse terminal tables (study-, entry-, plot-level data)
+                        - &transaction-end_action_timestamp-col
+                            name: end_action_timestamp
+                            data_type: timestamp
+                            not_null: true
+                            comment: |
+                                Timestamp when the action ended; starts from upload, reading contents, initial data validation, to saving to data warehouse terminal tables (study-, entry-, plot-level data)
+                        - &transaction-total_file_count-col
+                            name: total_file_count
+                            data_type: integer
+                            not_null: true
+                            comment: |
+                                Total number of files uploaded or committed
+                        - &transaction-successful_file_count-col
+                            name: successful_file_count
+                            data_type: integer
+                            not_null: true
+                            comment: |
+                                Number of files that were successfully uploaded to data warehouse terminal or committed to data warehouse
+                        - &transaction-is_successful-col
+                            name: is_successful
+                            data_type: boolean
+                            not_null: true
+                            default_value: false
+                            comment: |
+                                Whether upload or commit action is successfully done or not; successful meaning total_file_count is equal to successful_file_count
+                        - &transaction-transfer_timestamp-col
+                            name: transfer_timestamp
+                            data_type: timestamp
+                        - &transaction-transferer_id-col
+                            name: transferer_id
+                            data_type: integer
+                        - &transaction-data_source-col
+                            name: data_source
+                            data_type: varchar
+                        - &transaction-remarks-col
+                            <<: *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &transaction-actor_id-fkey-cst
+                            name: transaction_actor_id_fkey
+                            type: foreign_key
+                            column: actor_id
+                            other_attributes:
+                                foreign_table: master.user
+                                foreign_column: id
+                        - &transaction-transferer_id-fkey-cst
+                            name: transaction_transferer_id_fkey
+                            type: foreign_key
+                            column: transferer_id
+                            other_attributes:
+                                foreign_table: master.user
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        - &transaction-type-idx
+                            name: transaction_type_idx
+                            column: type
+                        - &transaction-actor_id-idx
+                            name: transaction_actor_id_idx
+                            column: actor_id
+                        - &transaction-is_successful-idx
+                            name: transaction_is_successful_idx
+                            column: is_successful
+                        - &transaction-transferer_id-idx
+                            name: transaction_transferer_id_idx
+                            column: transferer_id
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-transaction_file-tbl
+                    <<: *def-tbl
+                    name: transaction_file
+                    comment: Files uploaded or committed in a transaction
+                    column:
+                        <<: *def-id-tbl-col
+                        - &transaction_file-transaction_id-col
+                            name: transaction_id
+                            data_type: integer
+                            not_null: not_null
+                            comment: Transaction where the file belongs to
+                        - &transaction_file-data_level-col
+                            name: data_level
+                            data_type: varchar
+                            not_null: true
+                            comment: |
+                                Data level where the file is supposed to be inserted to.
+                                Possible values are study, entry, or plot.
+                        - &transaction_file-name-col
+                            name: name
+                            data_type: varchar
+                            not_null: true
+                            comment: Name of the file
+                        - &transaction_file-extension-col
+                            name: extension
+                            data_type: varchar
+                            not_null: true
+                            comment: Extension of the file
+                        - &transaction_file-type-col
+                            name: type
+                            data_type: varchar
+                            not_null: true
+                            comment: Mimetype of the file
+                        - &transaction_file-size-col
+                            name: size
+                            data_type: varchar
+                            not_null: true
+                            comment: Size of the file in bytes
+                        - &transaction_file-contents-col
+                            name: contents
+                            data_type: text
+                            not_null: true
+                            comment: Contents of the file
+                        - &transaction_file-remarks-col
+                            <<: *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - &transaction_file-transaction_id-fkey-cst
+                            name: transaction_file_transaction_id_fkey
+                            type: foreign_key
+                            column: transaction_id
+                            other_attributes:
+                                foreign_table: warehouse_terminal.transaction
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        - &transaction_file-transaction_id-idx
+                            name: transaction_file_transaction_id_fkey
+                            column: transaction_id
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-study-tbl
+                    <<: *def-tbl
+                    name: study
+                    comment: Studies
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - &study-program_name-col
+                            name: program_name
+                            data_type: varchar
+                            not_null: true
+                            comment: Abbreviation of the program where the study belongs to
+                        - &study-place_name-col
+                            name: place_name
+                            data_type: varchar
+                            not_null: true
+                            comment: Abbreviation of the place where the study is conducted
+                        - &study-phase_name-col
+                            name: phase_name
+                            data_type: varchar
+                            not_null: true
+                            comment: Abbreviation of the breeding stage or special experiment of the study (collectively referred to as phase)
+                        - &study-year-col
+                            name: year
+                            data_type: varchar
+                            not_null: true
+                            comment: Year when the study was conducted
+                        - &study-season-col
+                            name: season
+                            data_type: varchar
+                            not_null: true
+                            comment: Abbreviation of the season when the study is conducted
+                        - &study-name-col
+                            <<: *name-col
+                            comment: Historical name of the study
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - &study-program_name-idx
+                            name: study_program_name_idx
+                            column: program_name
+                        - &study-place_name-idx
+                            name: study_place_name_idx
+                            column: place_name
+                        - &study-phase_name-idx
+                            name: study_phase_name_idx
+                            column: phase_name
+                        - &study-year-idx
+                            name: study_year_idx
+                            column: year
+                        - &study-season-idx
+                            name: study_season_idx
+                            column: season
+                        - &study-name-idx
+                            name: study_name_idx
+                            column: name
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-study_metadata-tbl
+                    <<: *def-tbl
+                    name: study_metadata
+                    comment: Metadata of a study
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - *study_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *study_id-fkey-cst
+                        - *variable_id-fkey-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *study_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-study_variable-tbl
+                    <<: *def-tbl
+                    name: study_variable
+                    comment: Variables in a study
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - *study_id-col
+                        - &study_variable-data_level-col
+                            name: data_level
+                            data_type: varchar
+                            not_null: true
+                            comment: |
+                                Data level where the variable is found; can be study, entry, plot
+                        - *variable_id-col
+                        - *order_number-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *study_id-fkey-cst
+                        - *variable_id-fkey-cst
+                        <<: *def-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *study_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-entry-tbl
+                    <<: *def-tbl
+                    name: entry
+                    comment: Entries of a study
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - *study_id-col
+                        - &entry-study_name-col
+                            name: study_name
+                            data_type: varchar
+                            not_null: true
+                        - &entry-entry_number-col
+                            name: entry_number
+                            data_type: varchar
+                            not_null: true
+                        - &entry-product_gid-col
+                            <<: *gid-col
+                            name: product_gid
+                            data_type: varchar
+                            not_null: true
+                        - &entry-product_name-col
+                            <<: *name-col
+                            name: product_name
+                            comment: Name of the product in the study
+                            not_null: true
+                        - &entry-seed_source_name-col
+                            <<: *name-col
+                            name: seed_source_name
+                            comment: Source of seeds
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *study_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *study_id-idx
+                        - &entry-study_name-idx
+                            name: entry_study_name_idx
+                            column: study_name
+                        - &entry-entry_number-idx
+                            name: entry_entry_number_idx
+                            column: entry_number
+                        - &entry-product_gid-idx
+                            name: entry_product_gid_idx
+                            column: product_gid
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-entry_metadata-tbl
+                    <<: *def-tbl
+                    name: entry_metadata
+                    comment: 
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *variable_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-entry_data-tbl
+                    <<: *def-tbl
+                    name: entry_data
+                    comment: 
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *variable_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-entry_summary-tbl
+                    <<: *def-tbl
+                    name: entry_summary
+                    comment: 
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - &entry_summary-trait-col
+                            name: trait
+                            data_type: varchar
+                        - &entry_summary-observations-col
+                            name: observations
+                            data_type: varchar
+                        - &entry_summary-min-col
+                            name: min
+                            data_type: varchar
+                        - &entry_summary-max-col
+                            name: max
+                            data_type: varchar
+                        - &entry_summary-average-col
+                            name: average
+                            data_type: varchar
+                        - &entry_summary-study_name-col
+                            name: study_name
+                            data_type: varchar
+                        # - *study_id-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        # - *study_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - &entry_summary-study_name-idx
+                            name: entry_summary_study_name_idx
+                            column: study_name
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-plot-tbl
+                    <<: *def-tbl
+                    name: plot
+                    comment: Plot observations of entries in a study
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - *study_id-col
+                        - &plot-study_name-col
+                            name: study_name
+                            data_type: varchar
+                            not_null: true
+                        - &plot-entry_number-col
+                            name: entry_number
+                            data_type: varchar
+                            not_null: true
+                        - &plot-product_gid-col
+                            <<: *gid-col
+                            name: product_gid
+                            data_type: varchar
+                            not_null: true
+                        - &plot-product_name-col
+                            <<: *name-col
+                            name: product_name
+                            not_null: true
+                            comment: Name of the product in the study
+                        - &plot-seed_source_name-col
+                            <<: *name-col
+                            name: seed_source_name
+                            comment: Source of seeds
+                        - &plot-replication_number-col
+                            <<: *replication_number-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *study_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *study_id-idx
+                        - &plot-study_name-idx
+                            name: plot_study_name_idx
+                            column: study_name
+                        - &plot-entry_number-idx
+                            name: plot_entry_number_idx
+                            column: entry_number
+                        - &plot-product_gid-idx
+                            name: plot_product_gid_idx
+                            column: product_gid
+                        - &plot-replication_number-idx
+                            name: plot_replication_number_idx
+                            column: replication_number
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-plot_metadata-tbl
+                    <<: *def-tbl
+                    name: plot_metadata
+                    comment: 
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *plot_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *plot_id-fkey-cst
+                        - *variable_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *plot_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-plot_data-tbl
+                    <<: *def-tbl
+                    name: plot_data
+                    comment: 
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - *study_id-col
+                        - *entry_id-col
+                        - *plot_id-col
+                        - *variable_id-col
+                        - *value-col
+                        - *remarks-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *study_id-fkey-cst
+                        - *entry_id-fkey-cst
+                        - *plot_id-fkey-cst
+                        - *variable_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *study_id-idx
+                        - *entry_id-idx
+                        - *plot_id-idx
+                        - *variable_id-idx
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-plot_summary-tbl
+                    <<: *def-tbl
+                    name: plot_summary
+                    comment: 
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - &plot_summary-trait-col
+                            name: trait
+                            data_type: varchar
+                        - &plot_summary-observations-col
+                            name: observations
+                            data_type: varchar
+                        - &plot_summary-min-col
+                            name: min
+                            data_type: varchar
+                        - &plot_summary-max-col
+                            name: max
+                            data_type: varchar
+                        - &plot_summary-average-col
+                            name: average
+                            data_type: varchar
+                        - &plot_summary-study_name-col
+                            name: study_name
+                            data_type: varchar
+                        # - *study_id-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        # - *study_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - &plot_summary-study_name-idx
+                            name: plot_summary_study_name_idx
+                            column: study_name
+                        <<: *def-log-tbl-idx
+                - &warehouse_terminal-temporary_data_upload-tbl
+                    <<: *def-tbl
+                    name: temporary_data_upload
+                    comment: 
+                    column:
+                        <<: *def-id-tbl-col
+                        - *transaction_id-col
+                        - &temporary_data_upload-variable_name-col
+                            name: variable_name
+                            data_type: varchar
+                        - &temporary_data_upload-variable_value-col
+                            name: variable_value
+                            data_type: varchar
+                        - *user_id-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *transaction_id-fkey-cst
+                        - *user_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *transaction_id-idx
+                        - *user_id-idx
+                        <<: *def-log-tbl-idx
         - &warehouse-sch
             name: warehouse
             comment: |
@@ -2208,8 +2802,8 @@ database: &bims_0.10
                             name: season_id
                             data_type: integer
                             not_null: true
-                        - &study-sequence_number-col
-                            name: sequence_number
+                        - &study-number-col
+                            name: number
                             data_type: integer
                             not_null: true
                         - &study-key-col
