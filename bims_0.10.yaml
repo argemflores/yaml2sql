@@ -417,7 +417,6 @@ dictionary:
                 <<: *def-ident-tbl-idx
                 <<: *def-log-tbl-idx
 database: &bims_0.10
-    abbrev: bims
     name: bims_0.10
     comment: 'BIMS: Breeding Information Management System'
     encoding: UTF8
@@ -425,13 +424,11 @@ database: &bims_0.10
     lc_ctype: C
     schema:
         - &master-sch
-            abbrev: ms
             name: master
             comment: 'Stores master data, which are absolutely correct data that does not change frequently'
             table:
                 - &master-user-tbl
                     <<: *def-tbl
-                    abbrev: usr
                     name: user
                     comment: Users
                     column:
@@ -497,12 +494,10 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &master-property-tbl
                     <<: *def-tbl
-                    abbrev: prop
                     name: property
                     comment: 'Property describes the context of the sampling unit and experimental material, or the trait being measured.'
                 - &master-method-tbl
                     <<: *def-tbl
-                    abbrev: meth
                     name: method
                     comment: 'Method describes how the property is applied or the protocol by which a variable is measured.'
                     column:
@@ -516,7 +511,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                 - &master-scale-tbl
                     <<: *def-tbl
-                    abbrev: scale
                     name: scale
                     comment: 'Scale describes the units in which the variables are recorded.'
                     column:
@@ -538,7 +532,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                 - &master-scale_value-tbl
                     <<: *def-tbl
-                    abbrev: scaleval
                     name: scale_value
                     comment: Discrete values a scale can have.
                     column:
@@ -573,7 +566,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &master-variable-tbl
                     <<: *def-tbl
-                    abbrev: var
                     name: variable
                     comment: Variables
                     column:
@@ -657,7 +649,6 @@ database: &bims_0.10
                         <<: *def-tbl-idx
                 - &master-variable_set-tbl
                     <<: *def-tbl
-                    abbrev: varset
                     name: variable_set
                     comment: Groups of variables
                     column:
@@ -671,7 +662,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                 - &master-variable_set_member-tbl
                     <<: *def-tbl
-                    abbrev: varsetmem
                     name: variable_set_member
                     comment: variables
                     column:
@@ -710,7 +700,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &master-pipeline-tbl
                     <<: *def-tbl
-                    abbrev: pipe
                     name: pipeline
                     comment: |
                         A product development schema designed to develop breeding products to a certain demand (market segment).
@@ -724,14 +713,12 @@ database: &bims_0.10
                             - Japonica - has Temperate and Tropical TVP's
                 - &master-crosscutting-tbl
                     <<: *def-tbl
-                    abbrev: ccut
                     name: crosscutting
                     comment: |
                         Breeding process that provides expert service for the whole breeding operation of an organization.
                         CCRD consists of a team of experts, the CCRD facility, and operational and capital resources.
                 - &master-program-tbl
                     <<: *def-tbl
-                    abbrev: prog
                     name: program
                     comment: |
                         Consist of variety development pipelines (VDPs), trait development teams and cross-cutting activities (CCRDs).
@@ -740,7 +727,6 @@ database: &bims_0.10
                         Trait development products work through different type IP-solutions than variety development.
                 - &master-place-tbl
                     <<: *def-tbl
-                    abbrev: place
                     name: place
                     comment: |
                         Represents the physical places and their segmentations such as geographies, locations, areas, zones, etc. 
@@ -754,7 +740,6 @@ database: &bims_0.10
                             - Storage
                 - &master-phase-tbl
                     <<: *def-tbl
-                    abbrev: phase
                     name: phase
                     comment: Breeding development phases
                     column:
@@ -764,7 +749,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                 - &master-product-tbl
                     <<: *def-tbl
-                    abbrev: prod
                     name: product
                     comment: |
                         Product catalog is a publicly accessible list of the products used and produced in product development programs.
@@ -887,7 +871,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &master-product_name-tbl
                     <<: *def-tbl
-                    abbrev: prodname
                     name: product_name
                     comment: Names of a product
                     column:
@@ -934,7 +917,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &master-product_metadata-tbl
                     <<: *def-tbl
-                    abbrev: prodmeta
                     name: product_metadata
                     comment: Additional information about products
                     column:
@@ -961,12 +943,10 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &master-season-tbl
                     <<: *def-tbl
-                    abbrev: seas
                     name: season
                     comment: List of seasons
                 - &master-place_season-tbl
                     <<: *def-tbl
-                    abbrev: placeseas
                     name: place_season
                     comment: List of seasons in a place
                     column:
@@ -1010,12 +990,10 @@ database: &bims_0.10
                             column: season_id
                 - &master-cross_method-tbl
                     <<: *def-tbl
-                    abbrev: crossmeth
                     name: cross_method
                     comment: Methods used in crossing studies
             view:
                 - &master-variable_list-view
-                    abbrev: varlistview
                     name: variable_list
                     query: |
                         select
@@ -1054,13 +1032,11 @@ database: &bims_0.10
                             and mv.scale_id = ms.id
                         ;
         - &dictionary-sch
-            abbrev: dc
             name: dictionary
             comment:
             table:
                 - &dictionary-database-tbl
                     <<: *def-tbl
-                    abbrev: dbase
                     name: database
                     comment: Data sources
                     column:
@@ -1085,7 +1061,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-col
                 - &dictionary-schema-tbl
                     <<: *def-tbl
-                    abbrev: sch
                     name: schema
                     comment: Schemas in a database
                     column:
@@ -1100,7 +1075,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-table-tbl
                     <<: *def-tbl
-                    abbrev: tbl
                     name: table
                     comment: Tables in a schema
                     column:
@@ -1117,7 +1091,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-column-tbl
                     <<: *def-tbl
-                    abbrev: col
                     name: column
                     comment: Columns of a table
                     column:
@@ -1156,7 +1129,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-constraint-tbl
                     <<: *def-tbl
-                    abbrev: cst
                     name: constraint
                     comment: Constraints of table columns
                     column:
@@ -1222,7 +1194,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-index-tbl
                     <<: *def-tbl
-                    abbrev: idx
                     name: index
                     comment: Indexes of table columns
                     column:
@@ -1263,7 +1234,6 @@ database: &bims_0.10
                     cons
                 - &dictionary-rule-tbl
                     <<: *def-tbl
-                    abbrev: rule
                     name: rule
                     comment: Rules
                     column:
@@ -1301,7 +1271,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-trigger-tbl
                     <<: *def-tbl
-                    abbrev: trg
                     name: trigger
                     comment: Triggers
                     column:
@@ -1350,7 +1319,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-view-tbl
                     <<: *def-tbl
-                    abbrev: view
                     name: view
                     comment: Views
                     column:
@@ -1370,7 +1338,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-sequence-tbl
                     <<: *def-tbl
-                    abbrev: seq
                     name: sequence
                     comment: Sequences
                     column:
@@ -1416,7 +1383,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-function-tbl
                     <<: *def-tbl
-                    abbrev: func
                     name: function
                     comment: Functions
                     column:
@@ -1462,7 +1428,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-domain-tbl
                     <<: *def-tbl
-                    abbrev: dom
                     name: domain
                     comment: Domains
                     column:
@@ -1494,7 +1459,6 @@ database: &bims_0.10
                         <<: *def-tbl-cst
                 - &dictionary-aggregate-tbl
                     <<: *def-tbl
-                    abbrev: agg
                     name: aggregate
                     comment: Aggregates
                     column:
@@ -1545,7 +1509,6 @@ database: &bims_0.10
                                 foreign_column: id
                         <<: *def-tbl-cst
         - &operational-sch
-            abbrev: op
             name: operational
             comment: |
                 Consist the basic study, entry, plot, and subplot data, the study meta, observation data and the audit data
@@ -1553,7 +1516,6 @@ database: &bims_0.10
             table:
                 - &operational-study-tbl
                     <<: *def-tbl
-                    abbrev: std
                     name: study
                     comment: Studies
                     column:
@@ -1651,7 +1613,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-study_metadata-tbl
                     <<: *def-tbl
-                    abbrev: stdmeta
                     name: study_metadata
                     comment: Metadata of a study
                     column:
@@ -1671,7 +1632,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-entry-tbl
                     <<: *def-tbl
-                    abbrev: ent
                     name: entry
                     comment: Entries of a study
                     column:
@@ -1715,7 +1675,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-entry_metadata-tbl
                     <<: *def-tbl
-                    abbrev: entmeta
                     name: entry_metadata
                     comment: Metadata of an entry
                     column:
@@ -1738,7 +1697,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-entry_data-tbl
                     <<: *def-tbl
-                    abbrev: entdata
                     name: entry_data
                     comment: Observational data of an entry
                     column:
@@ -1761,7 +1719,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-plot-tbl
                     <<: *def-tbl
-                    abbrev: plot
                     name: plot
                     comment: Plot of a study entry
                     column:
@@ -1796,7 +1753,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-plot_metadata-tbl
                     <<: *def-tbl
-                    abbrev: plptmeta
                     name: plot_metadata
                     comment: Metadata of a plot
                     column:
@@ -1822,7 +1778,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-plot_data-tbl
                     <<: *def-tbl
-                    abbrev: plotdata
                     name: plot_data
                     comment: Observational data of a plot
                     column:
@@ -1848,7 +1803,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-subplot-tbl
                     <<: *def-tbl
-                    abbrev: splot
                     name: subplot
                     comment: Subplot of a study entry's plot
                     column:
@@ -1884,7 +1838,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-subplot_metadata-tbl
                     <<: *def-tbl
-                    abbrev: splotmeta
                     name: subplot_metadata
                     comment: Metadata of a subplot
                     column:
@@ -1913,7 +1866,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-subplot_data-tbl
                     <<: *def-tbl
-                    abbrev: splotdata
                     name: subplot_data
                     comment: Observational data of a subplot
                     column:
@@ -1942,7 +1894,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-cross-tbl
                     <<: *def-tbl
-                    abbrev: cross
                     name: cross
                     comment: Crosses in a crossing study in the hybridization (HB) phase
                     column:
@@ -2031,7 +1982,6 @@ database: &bims_0.10
                             column: cross_method_id
                 - &operational-cross_metadata-tbl
                     <<: *def-tbl
-                    abbrev: crossmeta
                     name: cross_metadata
                     comment: Metadata about a cross
                     column:
@@ -2065,7 +2015,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-cross_data-tbl
                     <<: *def-tbl
-                    abbrev: crossdata
                     name: cross_data
                     comment: Observational data of a cross
                     column:
@@ -2099,7 +2048,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-seed_storage-tbl
                     <<: *def-tbl
-                    abbrev: sstrg
                     name: seed_storage
                     comment: |
                         Seed storage contains the product storage units. This gives information
@@ -2183,7 +2131,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &operational-seed_storage_log-tbl
                     <<: *def-tbl
-                    abbrev: sstrglog
                     name: seed_storage_log
                     comment: Transaction log contains the history of transactions made
                     column:
@@ -2254,13 +2201,11 @@ database: &bims_0.10
                             column: transaction_type
                         <<: *def-log-tbl-idx
         - &warehouse_terminal-sch
-            abbrev: wht
             name: warehouse_terminal
             comment: Terminal to warehouse data
             table:
                 - &warehouse_terminal-transaction-tbl
                     <<: *def-tbl
-                    abbrev: tran
                     name: transaction
                     comment: |
                         Transactions store events related to upload from imported data and commit to warehouse data.
@@ -2352,7 +2297,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-transaction_file-tbl
                     <<: *def-tbl
-                    abbrev: tranfile
                     name: transaction_file
                     comment: Files uploaded or committed in a transaction
                     column:
@@ -2413,7 +2357,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-study-tbl
                     <<: *def-tbl
-                    abbrev: std
                     name: study
                     comment: Studies
                     column:
@@ -2475,7 +2418,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-study_metadata-tbl
                     <<: *def-tbl
-                    abbrev: stdmeta
                     name: study_metadata
                     comment: Metadata of a study
                     column:
@@ -2498,7 +2440,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-study_variable-tbl
                     <<: *def-tbl
-                    abbrev: stdvar
                     name: study_variable
                     comment: Variables in a study
                     column:
@@ -2526,7 +2467,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-entry-tbl
                     <<: *def-tbl
-                    abbrev: ent
                     name: entry
                     comment: Entries of a study
                     column:
@@ -2576,7 +2516,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-entry_metadata-tbl
                     <<: *def-tbl
-                    abbrev: entmeta
                     name: entry_metadata
                     comment: 
                     column:
@@ -2602,7 +2541,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-entry_data-tbl
                     <<: *def-tbl
-                    abbrev: entdata
                     name: entry_data
                     comment: 
                     column:
@@ -2628,7 +2566,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-entry_summary-tbl
                     <<: *def-tbl
-                    abbrev: entsumm
                     name: entry_summary
                     comment: 
                     column:
@@ -2666,7 +2603,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-plot-tbl
                     <<: *def-tbl
-                    abbrev: plot
                     name: plot
                     comment: Plot observations of entries in a study
                     column:
@@ -2721,7 +2657,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-plot_metadata-tbl
                     <<: *def-tbl
-                    abbrev: plotmeta
                     name: plot_metadata
                     comment: 
                     column:
@@ -2750,7 +2685,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-plot_data-tbl
                     <<: *def-tbl
-                    abbrev: plotdata
                     name: plot_data
                     comment: 
                     column:
@@ -2779,7 +2713,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-plot_summary-tbl
                     <<: *def-tbl
-                    abbrev: plotsumm
                     name: plot_summary
                     comment: 
                     column:
@@ -2817,7 +2750,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse_terminal-temporary_data_upload-tbl
                     <<: *def-tbl
-                    abbrev: tempdata
                     name: temporary_data_upload
                     comment: 
                     column:
@@ -2840,14 +2772,12 @@ database: &bims_0.10
                         - *user_id-idx
                         <<: *def-log-tbl-idx
         - &warehouse-sch
-            abbrev: wh
             name: warehouse
             comment: |
                 Validated data from the operational schema
             table:
                 - &warehouse-study-tbl
                     <<: *def-tbl
-                    abbrev: std
                     name: study
                     comment: Studies
                     column:
@@ -2945,7 +2875,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse-entry-tbl
                     <<: *def-tbl
-                    abbrev: ent
                     name: entry
                     comment: Entries of a study
                     column:
@@ -2989,7 +2918,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse-plot-tbl
                     <<: *def-tbl
-                    abbrev: plot
                     name: plot
                     comment: Plot of a study entry
                     column:
@@ -3024,7 +2952,6 @@ database: &bims_0.10
                         <<: *def-log-tbl-idx
                 - &warehouse-subplot-tbl
                     <<: *def-tbl
-                    abbrev: splot
                     name: subplot
                     comment: Subplot of a study entry's plot
                     column:
@@ -3059,12 +2986,10 @@ database: &bims_0.10
                             <<: *key-idx
                         <<: *def-log-tbl-idx
         - &import-sch
-            abbrev: im
             name: import
             table:
                 - &import-variable-tbl
                     <<: *def-tbl
-                    abbrev: var
                     name: variable
                     comment: Variable list by the data managers
                     column:
