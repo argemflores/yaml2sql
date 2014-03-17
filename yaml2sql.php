@@ -21,7 +21,7 @@ require_once 'Spyc.php';
 $input = json_decode(json_encode(Spyc::YAMLLoad($inputFile)));
 
 $sql = '';
-
+$dictArr = [];
 $cmtSqlArr = [];
 
 if (!empty($input->database)) {
@@ -209,6 +209,12 @@ EOD
                                             $cstType = 'primary key';
                                             $cstSuffix = 'pkey';
                                             $objType = 'index';
+                                            break;
+                                        
+                                        case 'unique':
+                                            $cstType = 'unique';
+                                            $cstSuffix = 'ukey';
+                                            $objType = 'constraint';
                                             break;
                                         
                                         case 'foreign_key':
