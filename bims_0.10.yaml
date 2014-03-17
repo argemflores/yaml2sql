@@ -171,6 +171,23 @@ dictionary:
             data_type: integer
             not_null: true
             comment: ID of the transaction made in the terminal
+        - &program_id-col
+            name: program_id
+            data_type: integer
+            not_null: true
+        - &place_id-col
+            name: place_id
+            data_type: integer
+            not_null: true
+        - &phase_id-col
+            name: phase_id
+            data_type: integer
+            not_null: true
+        - &display_name-col
+            name: display_name
+            data_type: varchar
+            length: 256
+            comment: Name to display to users
     constraint:
         - &id_pkey-cst
             name: {table}_id_pkey
@@ -405,7 +422,7 @@ dictionary:
     table:
         - &def-tbl
             name: {table}
-            comment: {table}
+            comment: '{table}'
             column: &def-tbl-col
                 <<: *def-id-tbl-col
                 <<: *def-meta-tbl-col
@@ -992,6 +1009,468 @@ database: &bims_0.10
                     <<: *def-tbl
                     name: cross_method
                     comment: Methods used in crossing studies
+                - &master-country-tbl
+                    <<: *def-tbl
+                    name: country
+                - &master-family-tbl
+                    <<: *def-tbl
+                    name: family
+                    column:
+                        <<: *def-id-tbl-col
+                        - *program_id-col
+                        - *place_id-col
+                        - *phase_id-col
+                        - &family-female_product_id-col
+                            name: female_product_id
+                            data_type: integer
+                            not_null: true
+                        - &family-male_product_id-col
+                            name: male_product_id
+                            data_type: integer
+                            not_null: true
+                        - *study_id-col
+                        - &family-cross_id-col
+                            name: cross_id
+                            data_type: integer
+                            not_null: true
+                        - &family-female_entry_id-col
+                            name: female_entry_id
+                            data_type: integer
+                            not_null: true
+                        - &family-male_entry_id-col
+                            name: male_entry_id
+                            data_type: integer
+                            not_null: true
+                        <<: *def-log-tbl-col
+                    constraint:
+                        <<: *def-log-tbl-cst
+                    index:
+                        <<: *def-log-tbl-idx
+            # system tables
+                - &master-audit-tbl
+                    <<: *def-tbl
+                    name: audit
+                    column:
+                        <<: *def-id-tbl-col
+                        - &audit-schema_name-col
+                            name: schema_name
+                            data_type: varchar
+                            not_null: true
+                        - &audit-table_name-col
+                            name: table_name
+                            data_type: varchar
+                        - &audit-column_name-col
+                            name: column_name
+                            data_type: varchar
+                        - &audit-action_type-col
+                            name: action_type
+                            data_type: varchar
+                        - &audit-record_id-col
+                            name: record_id
+                            data_type: bigint
+                        - &audit-old_value-col
+                            name: old_value
+                            data_type: varchar
+                        - &audit-new_value-col
+                            name: new_value
+                            data_type: varchar
+                        - &audit-actor_id-col
+                            name: actor_id
+                            data_type: integer
+                        - &audit-action_timestamp-col
+                            name: action_timestamp
+                            data_type: timestamp
+                        - *description-col
+                        - *status-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: audit_actor_id_fkey
+                            type: foreign_key
+                            column: actor_id
+                            other_attributes:
+                                foreign_table: master.user
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        -
+                            name: audit_actor_id_idx
+                            column: actor_id
+                        <<: *def-log-tbl-idx
+                - &master-change_log-tbl
+                    <<: *def-tbl
+                    name: change_log
+                    column:
+                        <<: *def-id-tbl-col
+                        - *name-col
+                        - *description-col
+                        -
+                            name: key_person_id
+                            data_type: integer
+                            not_null: true
+                        -
+                            name: date_done
+                            data_type: date
+                            not_null: true
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: change_log_key_person_id_fkey
+                            type: foreign_key
+                            column: key_person_id
+                            other_attributes:
+                                foreign_table: master.user
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        -
+                            name: change_log_key_person_id_idx
+                            column: key_person_id
+                        <<: *def-log-tbl-idx
+                - &master-instruction-tbl
+                    <<: *def-tbl
+                    name: instruction
+                    column:
+                        <<: *def-id-tbl-col
+                        - *name-col
+                        - *value-col
+                        - *description-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: instruction_name_ukey
+                            type: unique
+                            column: name
+                        <<: *def-log-tbl-col
+                    index:
+                        -
+                            name: instruction_name_idx
+                            column: name
+                            unique: true
+                        <<: *def-log-tbl-idx
+                - &master-role-tbl
+                    <<: *def-tbl
+                    name: role
+                    column:
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        -
+                            name: rank
+                            data_type: smallint
+                            default_value: -1
+                            comment: '0: System admin; >0: Other users; <0: Guest/undefined'
+                        - *display_name-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        <<: *def-log-tbl-cst
+                    index:
+                        <<: *def-log-tbl-idx
+                - &master-item-tbl
+                    <<: *def-tbl
+                    name: item
+                - &master-item_relation-tbl
+                    <<: *def-tbl
+                    name: item_relation
+                    column:
+                        <<: *def-id-tbl-col
+                        -
+                            name: parent_item_id
+                            data_type: integer
+                            not_null: true
+                        -
+                            name: child_item_id
+                            data_type: integer
+                            not_null: true
+                        -
+                            name: order_number
+                            data_type: integer
+                            not_null: true
+                            default_value: 1
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: item_relation_parent_item_id_fkey
+                            type: foreign_key
+                            column: parent_item_id
+                            other_attributes:
+                                foreign_table: master.item
+                                foreign_column: id
+                        -
+                            name: item_relation_child_item_id_fkey
+                            type: foreign_key
+                            column: child_item_id
+                            other_attributes:
+                                foreign_table: master.item
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        -
+                            name: item_relation_parent_item_id_idx
+                            column: parent_item_id
+                        -
+                            name: item_relation_child_item_id_idx
+                            column: child_item_id
+                        <<: *def-log-tbl-idx
+                - &master-item_action-tbl
+                    <<: *def-tbl
+                    name: item_action
+                    column:
+                        <<: *def-id-tbl-col
+                        -
+                            name: item_id
+                            data_type: integer
+                            not_null: true
+                        -
+                            name: module
+                            data_type: varchar
+                        -
+                            name: controller
+                            data_type: varchar
+                            not_null: true
+                        -
+                            name: action
+                            data_type: varchar
+                            not_null: true
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: item_action_item_id_fkey
+                            type: foreign_key
+                            column: item_id
+                            other_attributes:
+                                foreign_table: master.item
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        <<: *def-log-tbl-idx
+                - &master-item_role-tbl
+                    <<: *def-tbl
+                    name: item_role
+                    column:
+                        <<: *def-id-tbl-col
+                        -
+                            name: item_id
+                            data_type: integer
+                            not_null: true
+                        -
+                            name: role_id
+                            data_type: integer
+                            not_null: true
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: item_role_item_id_fkey
+                            type: foreign_key
+                            column: item_id
+                            other_attributes:
+                                foreign_table: master.item
+                                foreign_column: id
+                        -
+                            name: item_role_role_id_fkey
+                            type: foreign_key
+                            column: role_id
+                            other_attributes:
+                                foreign_table: master.role
+                                foreign_column: id
+                        <<: *def-log-tbl-col
+                    index:
+                        -
+                            name: item_role_item_id_idx
+                            column: item_id
+                        -
+                            name: item_role_role_id_idx
+                            column: role_id
+                        <<: *def-log-tbl-idx
+                - &master-tooltip-tbl
+                    <<: *def-tbl
+                    name: tooltip
+                    column:
+                        <<: *def-id-tbl-col
+                        - *name-col
+                        - *value-col
+                        - *description-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: tooltip_name_ukey
+                            type: unique
+                            column: name
+                        <<: *def-log-tbl-col
+                    index:
+                        -
+                            name: tooltip_name_idx
+                            column: name
+                            unique: true
+                        <<: *def-log-tbl-idx
+                - &master-user_item-tbl
+                    <<: *def-tbl
+                    name: user_item
+                    column:
+                        <<: *def-id-tbl-col
+                        - *user_id-col
+                        -
+                            name: item_id
+                            data_type: integer
+                            not_null: true
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *user_id-fkey-cst
+                        -
+                            name: user_item_item_id_fkey
+                            type: foreign_key
+                            column: item_id
+                            other_attributes:
+                                foreign_table: master.item
+                                foreign_column: id
+                        <<: *def-log-tbl-col
+                    index:
+                        - *user_id-idx
+                        -
+                            name: user_item_item_id_idx
+                            column: item_id
+                        <<: *def-log-tbl-idx
+                - &master-user_role-tbl
+                    <<: *def-tbl
+                    name: user_role
+                    column:
+                        <<: *def-id-tbl-col
+                        - *user_id-col
+                        -
+                            name: role_id
+                            data_type: integer
+                            not_null: true
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *user_id-fkey-cst
+                        -
+                            name: user_role_item_id_fkey
+                            type: foreign_key
+                            column: role_id
+                            other_attributes:
+                                foreign_table: master.role
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *user_id-idx
+                        -
+                            name: user_role_role_id_idx
+                            column: role_id
+                        <<: *def-log-tbl-idx
+                - &master-user_session-tbl
+                    <<: *def-tbl
+                    name: user_session
+                    column:
+                        <<: *def-id-tbl-col
+                        - *user_id-col
+                        -
+                            name: data
+                            data_type: json
+                        -
+                            name: selected_pipeline_id
+                            data_type: integer
+                        -
+                            name: last_visited_url
+                            data_type: varchar
+                        -
+                            name: is_default_redirect_yes
+                            data_type: boolean
+                            default_value: false
+                        -
+                            name: is_default_redirect_no
+                            data_type: boolean
+                            default_value: false
+                        <<: *def-log-tbl-col
+                    constraint:
+                        - *user_id-fkey-cst
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *user_id-idx
+                        <<: *def-log-tbl-idx
+                - &master-team-tbl
+                    <<: *def-tbl
+                    name: team
+                    column:
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        -
+                            name: leader_id
+                            data_type: integer
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: team_leader_id_fkey
+                            type: foreign_key
+                            column: leader_id
+                            other_attributes:
+                                foreign_table: master.user
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                - &master-team_member-tbl
+                    <<: *def-tbl
+                    name: team_member
+                    column:
+                        <<: *def-id-tbl-col
+                        -
+                            name: team_id
+                            data_type: integer
+                            not_null: true
+                        -
+                            name: member_id
+                            data_type: integer
+                            not_null: true
+                        -
+                            name: role_id
+                            data_type: integer
+                            not_null: true
+                        -
+                            name: user_role_id
+                            data_type: integer
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: team_member_team_id_fkey
+                            type: foreign_key
+                            column: team_id
+                            other_attributes:
+                                foreign_table: master.team
+                                foreign_column: id
+                        -
+                            name: team_member_member_id_fkey
+                            type: foreign_key
+                            column: member_id
+                            other_attributes:
+                                foreign_table: master.user
+                                foreign_column: id
+                        -
+                            name: team_member_role_id_fkey
+                            type: foreign_key
+                            column: role_id
+                            other_attributes:
+                                foreign_table: master.role
+                                foreign_column: id
+                        -
+                            name: team_member_user_role_id_fkey
+                            type: foreign_key
+                            column: user_role_id
+                            other_attributes:
+                                foreign_table: master.user_role
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        -
+                            name: team_member_team_id_idx
+                            column: team_id
+                        -
+                            name: team_member_member_id_idx
+                            column: member_id
+                        -
+                            name: team_member_role_id_idx
+                            column: role_id
+                        -
+                            name: team_member_user_role_id_idx
+                            column: user_role_id
+                        <<: *def-log-tbl-idx
             view:
                 - &master-variable_list-view
                     name: variable_list
@@ -3057,6 +3536,16 @@ database: &bims_0.10
                             data_type: varchar
                         <<: *def-id-tbl-col
                         <<: *def-log-tbl-col
+                    index:
+                        <<: *def-log-tbl-idx
+                - &import-hb_data-tbl
+                    <<: *def-tbl
+                    name: hb_data
+                    column:
+                        <<: *def-id-tbl-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        <<: *def-log-tbl-cst
                     index:
                         <<: *def-log-tbl-idx
             options:
