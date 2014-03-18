@@ -12,6 +12,8 @@ drop schema if exists "warehouse_terminal" cascade;
 
 drop schema if exists "warehouse" cascade;
 
+drop schema if exists "import" cascade;
+
 -- --------------------------------
 
 -- create database "bims_0.10"
@@ -4245,6 +4247,148 @@ create index "subplot_key_idx"
 create index "subplot_is_void_idx"
   on "warehouse"."subplot"
   using btree ("is_void");
+
+-- --------------------------------
+
+create schema "import";
+
+create table "import"."variable" (
+    "abbrev" varchar(128),
+    "name" varchar(256),
+    "description" varchar,
+    "data_type" varchar,
+    "not_null" varchar,
+    "type" varchar,
+    "status" varchar(32),
+    "display_name" varchar,
+    "ontology_reference" varchar,
+    "bibliographical_reference" varchar,
+    "method" varchar,
+    "scale" varchar,
+    "scale_unit" varchar,
+    "scale_type" varchar,
+    "scale_level" varchar,
+    "default_value" varchar,
+    "minimum_value" varchar,
+    "maximum_value" varchar,
+    "variable_set" varchar,
+    "synonym" varchar,
+    "entry_message" varchar,
+    "id" serial not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "import"."variable"
+  add constraint "variable_id_pkey"
+  primary key ("id");
+alter table "import"."variable"
+  add constraint "variable_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "import"."variable"
+  add constraint "variable_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "variable_is_void_idx"
+  on "import"."variable"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "import"."hb_data" (
+    "year" varchar,
+    "season" varchar,
+    "gid" varchar,
+    "designation" varchar,
+    "seed_source_name" varchar,
+    "cross_preferred_name" varchar,
+    "cross_unique_id" varchar,
+    "female_gid" varchar,
+    "female_preferred_name" varchar,
+    "female_line_name" varchar,
+    "male_gid" varchar,
+    "male_preferred_name" varchar,
+    "male_line_name" varchar,
+    "breeding_method_name" varchar,
+    "study_name" varchar,
+    "entry_code" varchar
+) with (
+    oids = false
+);
+
+-- ----------------
+
+create table "import"."f1_data" (
+    "year" varchar,
+    "season" varchar,
+    "gid" varchar,
+    "designation" varchar,
+    "female_gid" varchar,
+    "female_preferred_name" varchar,
+    "female_designation" varchar,
+    "female_seed_source_name" varchar,
+    "male_gid" varchar,
+    "male_preferred_name" varchar,
+    "male_designation" varchar,
+    "male_seed_source_name" varchar,
+    "plot_number" varchar,
+    "seed_number" varchar,
+    "breeder" varchar,
+    "program_name" varchar,
+    "ecosystem_program_name" varchar,
+    "trait_team" varchar,
+    "research_group" varchar,
+    "division" varchar
+) with (
+    oids = false
+);
+
+-- ----------------
+
+create table "import"."rga_data" (
+    "year" varchar,
+    "season" varchar,
+    "family_gid" varchar,
+    "family_designation" varchar,
+    "gid" varchar,
+    "derivative_name" varchar,
+    "code" varchar,
+    "purpose" varchar,
+    "pedigree_name" varchar,
+    "current_generation" varchar,
+    "seeding_date" varchar,
+    "seed_number" varchar,
+    "transplanting_date" varchar,
+    "transplanting_seed_number" varchar,
+    "recommended_rate" varchar,
+    "time_of_application_1" varchar,
+    "t1_fertilizer_type" varchar,
+    "days_after_seeding_1" varchar,
+    "t1_fertilizer_date" varchar,
+    "t1_fertilizer_amount" varchar,
+    "time_of_application_2" varchar,
+    "t2_fertilizer_type" varchar,
+    "days_after_seeding_2" varchar,
+    "t2_fertilizer_date" varchar,
+    "t2_fertilizer_amount" varchar,
+    "harvest_date" varchar,
+    "plant_number" varchar,
+    "germination_date" varchar,
+    "flowering_date" varchar,
+    "flowering_date_earliest" varchar,
+    "flowering_date_latest" varchar,
+    "remarks" varchar
+) with (
+    oids = false
+);
 
 comment on database "bims_0.10"
   is 'BIMS: Breeding Information Management System';
@@ -8984,105 +9128,153 @@ comment on index "warehouse"."subplot_key_idx"
 comment on index "warehouse"."subplot_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "import"."variable"
+  is 'Variable list by the data managers';
+
+comment on column "import"."variable"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "import"."variable"."name"
+  is 'Name identifier';
+
+comment on column "import"."variable"."id"
+  is 'Locally unique primary key';
+
+comment on column "import"."variable"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "import"."variable"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "import"."variable"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "import"."variable"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "import"."variable"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "import"."variable"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "import"."variable_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "variable_creator_id_fkey" on "import"."variable"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "variable_modifier_id_fkey" on "import"."variable"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "import"."variable_is_void_idx"
+  is 'Index for the is_void column';
+
 
 
 -- --------------------------------
 
-insert into "master"."user" (
+/*copy ""."" (
+
+) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;*/
+
+copy "master"."user" (
     "email",
     "username",
     "last_name",
     "first_name",
     "display_name",
     "user_type"
-) values (
-    'bims.irri@gmail.com',
-    'bims.irri',
-    'IRRI',
-    'BIMS',
-    'IRRI, BIMS',
-    '1'
-);
+) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.user.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
 -- ---------------------------------------------------
 
-insert into "master"."program" (
+copy "master"."program" (
     "abbrev",
     "name",
     "description"
-) values (
-    'IRRSEA',
-    'Irrigated South-East Asia',
-    'Irrigated South-East Asia'
-);
+) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.program.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
-insert into "master"."place" (
+-- ---------------------------------------------------
+
+copy "master"."place" (
     "abbrev",
     "name",
     "description"
-) values (
-    'PHLB',
-    'Los Banos, Philippines',
-    'Los Banos, Philippines'
-);
+) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.place.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
-insert into "master"."phase" (
+-- ---------------------------------------------------
+
+copy "master"."phase" (
     "abbrev",
     "name",
     "description"
-) values (
-    'OYT',
-    'Observation Yield Trial',
-    'Observation Yield Trial'
-), (
-    'RYT',
-    'Replicated Yield Trial',
-    'Replicated Yield Trial'
-), (
-    'AYT',
-    'Advanced Yield Trial',
-    'Advanced Yield Trial'
-), (
-    'MET',
-    'Multi-Environment Yield Trial',
-    'Multi-Environment Yield Trial'
-);
+) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.phase.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
-insert into "master"."season" (
+-- ---------------------------------------------------
+
+copy "master"."season" (
     "abbrev",
     "name",
     "description"
-) values (
-    'DS',
-    'Dry',
-    'Dry season'
-), (
-    'WS',
-    'Wet',
-    'Wet season'
-), (
-    'CS',
-    'Custom',
-    'Custom season'
-);
+) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.season.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
-insert into "master"."place_season" (
+-- ---------------------------------------------------
+
+copy "master"."place_season" (
     "place_id",
     "season_id",
     "order_number"
-) values (
-    '1',
-    '1',
-    '1'
-), (
-    '1',
-    '2',
-    '2'
-), (
-    '1',
-    '3',
-    '3'
-);
+) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.place_season.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
 -- ---------------------------------------------------
 
@@ -9141,6 +9333,39 @@ $add_var_col$ language plpgsql;
 create trigger "add_variable_column"
     after insert on "master"."variable"
     for each row execute procedure "master"."add_variable_column"();
+
+-- ---------------------------------------------------
+
+copy "import"."variable" (
+    "abbrev",
+    "name",
+    "description",
+    "data_type",
+    "not_null",
+    "type",
+    "status",
+    "display_name",
+    "ontology_reference",
+    "bibliographical_reference",
+    "method",
+    "scale",
+    "scale_unit",
+    "scale_type",
+    "scale_level",
+    "default_value",
+    "minimum_value",
+    "maximum_value",
+    "variable_set",
+    "synonym",
+    "entry_message"
+) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.variable.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
 -- ---------------------------------------------------
 
@@ -9451,4 +9676,34 @@ order by
 ;
 
 -- ---------------------------------------------------
+
+copy "import"."hb_data"
+from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.hb_data.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
+copy "import"."f1_data"
+from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.f1_data.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
+copy "import"."rga_data"
+from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.rga_data.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null 'NULL'
+;
 
