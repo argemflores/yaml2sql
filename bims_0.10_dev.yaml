@@ -393,6 +393,23 @@ dictionary:
             name: {table}_transaction_id_idx
             column: transaction_id
             comment: Index for the transaction_id column
+    value:
+        - &copy-val
+            column:
+            from: |
+                '{curdir}\/{schema}.{table}.csv'
+            option: &copy-option-val
+                format: csv
+                header: header
+                list:
+                    delimiter: |
+                        ';'
+                    quote: |
+                        '"'
+                    escape: |
+                        e'\\'
+                    null: |
+                        ''
     set:
         column:
             - &def-id-tbl-col
@@ -510,10 +527,24 @@ database: &bims_0.10_dev-db
                             column: username
                             unique: true
                         <<: *def-log-tbl-idx
+                    copy:
+                        <<: *copy-val
+                        column:
+                            - email
+                            - username
+                            - last_name
+                            - first_name
+                            - display_name
+                            - user_type
                 - &master-property-tbl
                     <<: *def-tbl
                     name: property
                     comment: 'Property describes the context of the sampling unit and experimental material, or the trait being measured.'
+                    index:
+                        -
+                            <<: *abbrev-idx
+                            unique: false
+                        <<: *def-log-tbl-idx
                 - &master-method-tbl
                     <<: *def-tbl
                     name: method
@@ -590,8 +621,15 @@ database: &bims_0.10_dev-db
                         <<: *def-id-tbl-col
                         - &variable-abbrev-col
                             <<: *abbrev-col
+                            comment: Abbrev of the property of the variable
+                        - &variable-column_name-col
+                            name: column_name
+                            data_type: varchar
+                            length: 128
+                            comment: Column name of the variable in the warehouse tables
                         - &variable-name-col
                             <<: *name-col
+                            comment: Name of the variable's property
                         - &variable-data_type-col
                             name: data_type
                             data_type: varchar
@@ -630,6 +668,9 @@ database: &bims_0.10_dev-db
                         - &variable-variable_set-col
                             name: variable_set
                             data_type: varchar
+                        - &variable-synonym-col
+                            name: synonym
+                            data_type: varchar
                         <<: *def-log-tbl-col
                     constraint:
                         - &variable-property_id-fkey-cst
@@ -664,7 +705,14 @@ database: &bims_0.10_dev-db
                         - &variable-scale_id-idx
                             name: variable_scale_id_idx
                             column: scale_id
-                        <<: *def-tbl-idx
+                        -
+                            <<: *abbrev-idx
+                            unique: false
+                        -
+                            name: variable_column_name_idx
+                            column: column_name
+                            unique: true
+                        <<: *def-log-tbl-idx
                 - &master-variable_set-tbl
                     <<: *def-tbl
                     name: variable_set
@@ -754,6 +802,13 @@ database: &bims_0.10_dev-db
                     index:
                         - *key-idx
                         <<: *def-log-tbl-idx
+                    copy:
+                        <<: *copy-val
+                        column:
+                            - key
+                            - abbrev
+                            - name
+                            - description
                 - &master-place-tbl
                     <<: *def-tbl
                     name: place
@@ -778,6 +833,13 @@ database: &bims_0.10_dev-db
                     index:
                         - *key-idx
                         <<: *def-log-tbl-idx
+                    copy:
+                        <<: *copy-val
+                        column:
+                            - key
+                            - abbrev
+                            - name
+                            - description
                 - &master-phase-tbl
                     <<: *def-tbl
                     name: phase
@@ -793,6 +855,13 @@ database: &bims_0.10_dev-db
                     index:
                         - *key-idx
                         <<: *def-log-tbl-idx
+                    copy:
+                        <<: *copy-val
+                        column:
+                            - key
+                            - abbrev
+                            - name
+                            - description
                 - &master-product-tbl
                     <<: *def-tbl
                     name: product
@@ -1002,6 +1071,13 @@ database: &bims_0.10_dev-db
                     index:
                         - *key-idx
                         <<: *def-log-tbl-idx
+                    copy:
+                        <<: *copy-val
+                        column:
+                            - key
+                            - abbrev
+                            - name
+                            - description
                 - &master-place_season-tbl
                     <<: *def-tbl
                     name: place_season
@@ -1045,6 +1121,12 @@ database: &bims_0.10_dev-db
                         - &place_season-season_id-idx
                             name: place_season_season_id_idx
                             column: season_id
+                    copy:
+                        <<: *copy-val
+                        column:
+                            - place_id
+                            - season_id
+                            - order_number
                 - &master-cross_method-tbl
                     <<: *def-tbl
                     name: cross_method
@@ -1517,6 +1599,7 @@ database: &bims_0.10_dev-db
                     query: |
                         select
                             mv.abbrev,
+                            mv.column_name,
                             mv.name,
                             mv.data_type,
                             mv.not_null,
@@ -3301,6 +3384,9 @@ database: &bims_0.10_dev-db
                     comment: Studies
                     column:
                         <<: *def-id-tbl-col
+                        - &study-key-col
+                            <<: *key-col
+                            comment: Logical key of the study
                         - &study-program_id-col
                             name: program_id
                             data_type: integer
@@ -3325,9 +3411,7 @@ database: &bims_0.10_dev-db
                             name: number
                             data_type: integer
                             not_null: true
-                        - &study-key-col
-                            <<: *key-col
-                            comment: Logical key of the study
+                            comment: Sequence number of the study
                         - &study-name-col
                             <<: *name-col
                             comment: Logical name of the study
@@ -3398,13 +3482,13 @@ database: &bims_0.10_dev-db
                     comment: Entries of a study
                     column:
                         <<: *def-id-tbl-col
+                        - &entry-key-col
+                            <<: *key-col
+                            comment: Logical key of the entry
                         - *study_id-col
                         - &entry-number-col
                             <<: *number-col
                             comment: Number of the entry within the study
-                        - &entry-key-col
-                            <<: *key-col
-                            comment: Logical key of the entry
                         - &entry-code-col
                             <<: *code-col
                             comment: Code of the entry within the study
@@ -3441,15 +3525,15 @@ database: &bims_0.10_dev-db
                     comment: Plot of a study entry
                     column:
                         <<: *def-id-tbl-col
+                        - &plot-key-col
+                            <<: *key-col
+                            comment: Logical key of the plot
                         - *study_id-col
                         - *entry_id-col
                         - &plot-replication_number-col
                             name: replication_number
                             data_type: integer
                             comment: Replication number of a plot
-                        - &plot-key-col
-                            <<: *key-col
-                            comment: Logical key of the plot
                         - &plot-code-col
                             <<: *code-col
                             comment: Code of the plot within the study
@@ -3475,15 +3559,15 @@ database: &bims_0.10_dev-db
                     comment: Subplot of a study entry's plot
                     column:
                         <<: *def-id-tbl-col
+                        - &subplot-key-col
+                            <<: *key-col
+                            comment: Logical key of the subplot
                         - *study_id-col
                         - *entry_id-col
                         - *plot_id-col
                         - &subplot-number-col
                             <<: *number-col
                             comment: Number of the subplot within the plot
-                        - &subplot-key-col
-                            <<: *key-col
-                            comment: Logical key of the subplot
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
@@ -3516,7 +3600,12 @@ database: &bims_0.10_dev-db
                             <<: *abbrev-col
                             not_null: false
                         -
-                            <<: *name-col
+                            name: column_name
+                            data_type: varchar
+                            not_null: false
+                        -
+                            name: name
+                            data_type: varchar
                             not_null: false
                         -
                             name: description
@@ -3574,10 +3663,39 @@ database: &bims_0.10_dev-db
                         -
                             name: entry_message
                             data_type: varchar
+                        -
+                            name: coded_values
+                            data_type: varchar
                         <<: *def-id-tbl-col
                         <<: *def-log-tbl-col
                     index:
                         <<: *def-log-tbl-idx
+                    copy:
+                        <<: *copy-val
+                        column:
+                            - abbrev
+                            - column_name
+                            - name
+                            - description
+                            - data_type
+                            - not_null
+                            - type
+                            - status
+                            - display_name
+                            - ontology_reference
+                            - bibliographical_reference
+                            - method
+                            - scale
+                            - scale_unit
+                            - scale_type
+                            - scale_level
+                            - default_value
+                            - minimum_value
+                            - maximum_value
+                            - variable_set
+                            - synonym
+                            - entry_message
+                            - coded_values
                 - &import-hb_data-tbl
                     name: hb_data
                     column:
@@ -3629,6 +3747,8 @@ database: &bims_0.10_dev-db
                         -
                             name: entry_code
                             data_type: varchar
+                    copy:
+                        <<: *copy-val
                 - &import-f1_data-tbl
                     name: f1_data
                     column:
@@ -3692,6 +3812,8 @@ database: &bims_0.10_dev-db
                         -
                             name: division
                             data_type: varchar
+                    copy:
+                        <<: *copy-val
                 - &import-rga_data-tbl
                     name: rga_data
                     column:
@@ -3791,6 +3913,8 @@ database: &bims_0.10_dev-db
                         -
                             name: remarks
                             data_type: varchar
+                    copy:
+                        <<: *copy-val
             options:
                 skip_drop: false
                 skip: false
@@ -3799,112 +3923,6 @@ database: &bims_0.10_dev-db
         terminate_connections: true
         skip_append_sql: false
         append_sql: |
-            /*copy ""."" (
-                
-            ) from e'{curdir}\/.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;*/
-            
-            copy "master"."user" (
-                "email",
-                "username",
-                "last_name",
-                "first_name",
-                "display_name",
-                "user_type"
-            ) from e'{curdir}\/master.user.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
-            -- ---------------------------------------------------
-            
-            copy "master"."program" (
-                "key",
-                "abbrev",
-                "name",
-                "description"
-            ) from e'{curdir}\/master.program.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
-            -- ---------------------------------------------------
-            
-            copy "master"."place" (
-                "key",
-                "abbrev",
-                "name",
-                "description"
-            ) from e'{curdir}\/master.place.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
-            -- ---------------------------------------------------
-            
-            copy "master"."phase" (
-                "key",
-                "abbrev",
-                "name",
-                "description"
-            ) from e'{curdir}\/master.phase.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
-            -- ---------------------------------------------------
-            
-            copy "master"."season" (
-                "key",
-                "abbrev",
-                "name",
-                "description"
-            ) from e'{curdir}\/master.season.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
-            -- ---------------------------------------------------
-            
-            copy "master"."place_season" (
-                "place_id",
-                "season_id",
-                "order_number"
-            ) from e'{curdir}\/master.place_season.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
             -- ---------------------------------------------------
             
             -- DROP TRIGGER add_variable_column ON master."variable";
@@ -3921,10 +3939,10 @@ database: &bims_0.10_dev-db
                 -- if (upper(new."type") = 'METADATA' or upper(new."type") = 'OBSERVATION') then
                 if (upper(new."type") = 'OBSERVATION') then
                     -- column name
-                    if (new."abbrev" is null or trim(new.abbrev) = '') then
+                    if (new."column_name" is null or trim(new."column_name") = '') then
                         column_name := '"' || lower(new."name") || '"';
                     else
-                        column_name := '"' || lower(new."abbrev") || '"';
+                        column_name := '"' || lower(new."column_name") || '"';
                     end if;
                     
                     -- data type
@@ -3965,39 +3983,7 @@ database: &bims_0.10_dev-db
             
             -- ---------------------------------------------------
             
-            copy "import"."variable" (
-                "abbrev",
-                "name",
-                "description",
-                "data_type",
-                "not_null",
-                "type",
-                "status",
-                "display_name",
-                "ontology_reference",
-                "bibliographical_reference",
-                "method",
-                "scale",
-                "scale_unit",
-                "scale_type",
-                "scale_level",
-                "default_value",
-                "minimum_value",
-                "maximum_value",
-                "variable_set",
-                "synonym",
-                "entry_message"
-            ) from e'{curdir}\/master.variable.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
-            -- ---------------------------------------------------
-            
+            -- /*
             insert into
                 master.property (
                     abbrev,
@@ -4005,20 +3991,50 @@ database: &bims_0.10_dev-db
                     description
                 )
             select
-                lower(replace(trim(var."name"), ' ', '_')) abbrev,
-                lower(trim(var."name")) "name",
                 (
+                    select
+                        iv1.abbrev
+                    from (
+                        select
+                            (
+                                case
+                                    when iv.abbrev is null
+                                        then (
+                                            case
+                                                when iv.column_name is null
+                                                    then upper(replace(trim(iv.name), ' ', '_'))
+                                                else
+                                                    upper(replace(trim(iv.column_name), ' ', '_'))
+                                            end
+                                        )
+                                    else
+                                        upper(replace(trim(iv.abbrev), ' ', '_'))
+                                end
+                            ) "abbrev"
+                        from
+                            import.variable iv
+                        where
+                            id = any(var.id_arr)
+                    ) iv1
+                    order by
+                        char_length(iv1.abbrev) asc
+                    limit 1
+                ) "abbrev",
+                lower(trim(var."name")) "name",
+                /*(
                     select
                         description
                     from
                         import.variable
                     where
                         id = id_arr[1]
-                ) description
+                ) description*/
+                array_to_string(var.description_arr, '\n') description
             from (
                 select
                     lower(trim(iv."name")) "name",
                     count(iv.id) id_count,
+                    array_agg(iv.description order by iv.id) description_arr,
                     array_agg(iv.id) id_arr
                 from
                     import.variable iv
@@ -4039,12 +4055,21 @@ database: &bims_0.10_dev-db
                     description
                 )
             select
-                lower(replace(trim(var."name"), ' ', '_')) || '_method_'
-                    || row_number() over (partition by lower(trim("name"))) abbrev,
-                var.name || ' ' || row_number() over (partition by lower(trim("name"))) abbrev,
+                upper(replace(trim(var."abbrev"), ' ', '_')) || '_METH_'
+                    || row_number() over (partition by upper(trim("abbrev"))) "abbrev",
+                var.name || ' ' || row_number() over (partition by lower(trim("name"))) "name",
                 trim(var.method) description
             from (
                 select
+                    -- upper(trim(iv."abbrev")) "abbrev",
+                    (
+                        case
+                            when iv.abbrev is null
+                                then upper(replace(trim(iv.name), ' ', '_'))
+                            else
+                                upper(replace(trim(iv.abbrev), ' ', '_'))
+                        end
+                    ) "abbrev",
                     trim(iv.method) method,
                     lower(trim(iv."name")) "name"
                 from
@@ -4068,15 +4093,24 @@ database: &bims_0.10_dev-db
                     level
                 )
             select
-                lower(replace(trim(var."name"), ' ', '_')) || '_scale_'
-                    || row_number() over (partition by lower(trim("name"))) abbrev,
-                var.name || ' ' || row_number() over (partition by lower(trim("name"))) abbrev,
+                upper(replace(trim(var."abbrev"), ' ', '_')) || '_SCALE_'
+                    || row_number() over (partition by upper(trim("abbrev"))) "abbrev",
+                var.name || ' ' || row_number() over (partition by lower(trim("name"))) "name",
                 var.scale description,
                 var.unit,
                 var.type,
                 var.level
             from (
                 select
+                    -- upper(trim(iv."abbrev")) "abbrev",
+                    (
+                        case
+                            when iv.abbrev is null
+                                then upper(replace(trim(iv.name), ' ', '_'))
+                            else
+                                upper(replace(trim(iv.abbrev), ' ', '_'))
+                        end
+                    ) "abbrev",
                     trim(iv.scale) scale,
                     lower(trim(iv.name)) "name",
                     trim(iv.scale_unit) unit,
@@ -4095,6 +4129,7 @@ database: &bims_0.10_dev-db
             
             insert into master.variable (
                 abbrev,
+                column_name,
                 name,
                 data_type,
                 not_null,
@@ -4109,146 +4144,205 @@ database: &bims_0.10_dev-db
                 variable_set
             )
             select
-                (replace(
-                    (
-                        case
-                            when var.abbrev is null then
-                                -- var.name || '_' || substring(var.scale_type from 1 for 3)
-                                var.name || '_' || (
-                                    case when var.scale_type is null then ''
-                                    else substring(var.scale_type from 1 for 3) || '_' end
-                                ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
-                            when (
-                                select
-                                    count(iv.id)
-                                from
-                                    import.variable iv
-                                where
-                                    lower(trim(iv.abbrev)) = lower(trim(var.abbrev))
-                            ) >= 2 then
-                                -- var.abbrev || '_' || row_number() over (partition by lower(trim(var."name")))
-                                -- var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
-                                var.abbrev || '_' || (
-                                    case when var.scale_type is null then ''
-                                    else substring(var.scale_type from 1 for 3) || '_' end
-                                ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
-                            else
-                                var.abbrev
-                        end
-                    ),
-                ' ', '_')) abbrev,
-                var.name,
-                -- var.description,
+                var.abbrev,
                 (
                     case
-                        when var.data_type is null then
-                            'varchar'
+                        when var.column_name is null
+                            then case
+                                when (
+                                    select
+                                        count(iv.id)
+                                    from
+                                        import.variable iv
+                                    where
+                                        upper(trim(iv.name)) = upper(trim(var.name))
+                                ) >= 2 then
+                                    var.abbrev || '_' || (
+                                        case when var.scale_type is null then ''
+                                        else upper(substring(var.scale_type from 1 for 3)) || '_' end
+                                    ) || row_number() over (partition by upper(trim(var.name)), upper(trim(substring(var.scale_type from 1 for 3))))
+                                else
+                                    var.abbrev
+                            end
                         else
-                            var.data_type
+                            var.column_name
                     end
-                ) data_type,
-                var.not_null::bool,
+                ) column_name,
+                var.name,
+                var.data_type,
+                var.not_null,
                 var.type,
                 var.status,
-                (
-                    case
-                        when var.display_name is null then
-                            initcap(var.name)
-                        else
-                            initcap(var.display_name)
-                    end
-                ) display_name,
+                var.display_name,
                 var.ontology_reference,
                 var.bibliographical_reference,
-                
                 var.property_id,
                 var.method_id,
                 var.scale_id,
-                
                 var.variable_set
             from (
                 select
-                    iv.iv_id,
+                    upper(replace(
+                        (
+                            case
+                                when var.abbrev is null
+                                    then var.property_abbrev
+                                    -- var.name || '_' || upper(substring(var.scale_type from 1 for 3))
+                                    /*var.name || '_' || (
+                                        case when var.scale_type is null then ''
+                                        else substring(var.scale_type from 1 for 3) || '_' end
+                                    ) || row_number() over (partition by upper(trim(var.name)), upper(substring(var.scale_type from 1 for 3)))*/
+                                /*
+                                when (
+                                    select
+                                        count(iv.id)
+                                    from
+                                        import.variable iv
+                                    where
+                                        upper(trim(iv.abbrev)) = upper(trim(var.abbrev))
+                                ) >= 2 then
+                                    -- var.abbrev || '_' || row_number() over (partition by upper(trim(var."name")))
+                                    -- var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
+                                    var.abbrev || '_' || (
+                                        case when var.scale_type is null then ''
+                                        else substring(var.scale_type from 1 for 3) || '_' end
+                                    ) || row_number() over (partition by upper(trim(var.name)), substring(var.scale_type from 1 for 3))
+                                */
+                                else
+                                    var.abbrev
+                            end
+                        ),
+                    ' ', '_')) abbrev,
+                    var.column_name,
+                    var.name,
+                    -- var.description,
+                    (
+                        case
+                            when var.data_type is null then
+                                'varchar'
+                            else
+                                var.data_type
+                        end
+                    ) data_type,
+                    var.not_null::bool,
+                    var.type,
+                    var.status,
+                    (
+                        case
+                            when var.display_name is null then
+                                initcap(var.name)
+                            else
+                                initcap(var.display_name)
+                        end
+                    ) display_name,
+                    var.ontology_reference,
+                    var.bibliographical_reference,
                     
-                    iv.abbrev,
-                    iv.name,
-                    iv.description,
-                    iv.data_type,
-                    iv.not_null,
-                    iv.type,
-                    iv.status,
-                    iv.display_name,
-                    iv.ontology_reference,
-                    iv.bibliographical_reference,
+                    var.property_id,
+                    var.method_id,
+                    var.scale_id,
                     
-                    (
-                        select
-                            -- mp.name
-                            mp.id
-                        from
-                            master.property mp
-                        where
-                            mp.name = iv.name
-                    ) property_id,
-                    (
-                        select
-                            -- mm.name
-                            mm.id
-                        from
-                            master.method mm
-                        where
-                            mm.name = iv.name || ' ' || num
-                            -- and trim(mm.description) = iv.method
-                    ) method_id,
-                    (
-                        select
-                            -- ms.name
-                            ms.id
-                        from
-                            master.scale ms
-                        where
-                            ms.name = iv.name || ' ' || num
-                            -- and ms.description = iv.scale
-                    ) scale_id,
-                    (
-                        select
-                            -- ms.name
-                            ms.type
-                        from
-                            master.scale ms
-                        where
-                            ms.name = iv.name || ' ' || num
-                            -- and ms.description = iv.scale
-                    ) scale_type,
+                    var.scale_type,
+                    var.iv_id,
                     
-                    iv.variable_set
+                    var.variable_set
                 from (
                     select
-                        iv.id iv_id,
-                        row_number() over (partition by lower(trim("name"))) num,
+                        iv.iv_id,
                         
-                        lower(trim(iv.abbrev)) "abbrev",
-                        lower(trim(iv.name)) "name",
-                        trim(iv.description) description,
-                        lower(trim(iv.data_type)) data_type,
-                        lower(trim(iv.not_null)) not_null,
-                        lower(trim(iv.type)) "type",
-                        lower(trim(iv.status)) status,
-                        trim(iv.display_name) display_name,
-                        trim(iv.ontology_reference) ontology_reference,
-                        trim(iv.bibliographical_reference) bibliographical_reference,
+                        iv.abbrev,
+                        iv.column_name,
+                        iv.name,
+                        iv.description,
+                        iv.data_type,
+                        iv.not_null,
+                        iv.type,
+                        iv.status,
+                        iv.display_name,
+                        iv.ontology_reference,
+                        iv.bibliographical_reference,
                         
-                        trim(iv.method) "method",
-                        trim(iv.scale) "scale",
+                        (
+                            select
+                                -- mp.name
+                                mp.id
+                            from
+                                master.property mp
+                            where
+                                mp.name = iv.name
+                        ) property_id,
+                        (
+                            select
+                                -- mm.name
+                                mm.id
+                            from
+                                master.method mm
+                            where
+                                mm.name = iv.name || ' ' || num
+                                -- and trim(mm.description) = iv.method
+                        ) method_id,
+                        (
+                            select
+                                -- ms.name
+                                ms.id
+                            from
+                                master.scale ms
+                            where
+                                ms.name = iv.name || ' ' || num
+                                -- and ms.description = iv.scale
+                        ) scale_id,
+                        (
+                            select
+                                -- ms.name
+                                ms.type
+                            from
+                                master.scale ms
+                            where
+                                ms.name = iv.name || ' ' || num
+                                -- and ms.description = iv.scale
+                        ) scale_type,
                         
-                        lower(trim(iv.variable_set)) variable_set
-                    from
-                        import.variable iv
-                ) iv
-                -- order by
-                    -- property_id,
-                    -- method_id,
-                    -- scale_id
+                        iv.variable_set,
+                        
+                        (
+                            select
+                                mp.abbrev
+                            from
+                                master.property mp
+                            where
+                                mp.name = iv.name
+                        ) property_abbrev
+                    from (
+                        select
+                            iv.id iv_id,
+                            row_number() over (partition by lower(trim("name"))) num,
+                            
+                            upper(trim(iv.column_name)) column_name,
+                            upper(trim(iv.abbrev)) "abbrev",
+                            lower(trim(iv.name)) "name",
+                            trim(iv.description) description,
+                            lower(trim(iv.data_type)) data_type,
+                            lower(trim(iv.not_null)) not_null,
+                            lower(trim(iv.type)) "type",
+                            lower(trim(iv.status)) status,
+                            trim(iv.display_name) display_name,
+                            trim(iv.ontology_reference) ontology_reference,
+                            trim(iv.bibliographical_reference) bibliographical_reference,
+                            
+                            trim(iv.method) "method",
+                            trim(iv.scale) "scale",
+                            
+                            lower(trim(iv.variable_set)) variable_set
+                        from
+                            import.variable iv
+                    ) iv
+                    -- order by
+                        -- property_id,
+                        -- method_id,
+                        -- scale_id
+                ) var
+                order by
+                    var.iv_id
             ) var
             order by
                 var.iv_id
@@ -4265,8 +4359,8 @@ database: &bims_0.10_dev-db
                 distinct on (
                     iv.variable_set
                 )
-                iv.variable_set abbrev,
-                iv.variable_set "name",
+                upper(replace(iv.variable_set, ' ', '_')) abbrev,
+                lower(trim(iv.variable_set)) "name",
                 initcap(iv.variable_set) display_name
             from (
                 select
@@ -4292,10 +4386,10 @@ database: &bims_0.10_dev-db
                     from
                         master.variable_set mvs
                     where
-                        mvs.name = mv.variable_set
+                        upper(trim(mvs.name)) = upper(trim(mv.variable_set))
                 ) variable_set_id,
                 id variable_id,
-                row_number() over (partition by mv.variable_set) order_number
+                row_number() over (partition by upper(trim(mv.variable_set))) order_number
             from
                 master.variable mv
             where
@@ -4303,36 +4397,5 @@ database: &bims_0.10_dev-db
             order by
                 mv.id
             ;
-            
-            -- ---------------------------------------------------
-            
-            copy "import"."hb_data"
-            from e'{curdir}\/import.hb_data.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
-            copy "import"."f1_data"
-            from e'{curdir}\/import.f1_data.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null ''
-            ;
-            
-            copy "import"."rga_data"
-            from e'{curdir}\/import.rga_data.csv'
-                csv
-                header
-                delimiter ';'
-                quote '"'
-                escape e'\\'
-                null 'NULL'
-            ;
+            -- */
 ...
