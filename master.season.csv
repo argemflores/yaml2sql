@@ -1,4 +1,4 @@
-"abbrev";"name";"description"
-"DS";"Dry";"Dry season"
-"WS";"Wet";"Wet season"
-"CS";"Custom";"Custom season"
+"key";"abbrev";"name";"description"
+11;"DS";"Dry";"Dry season"
+12;"WS";"Wet";"Wet season"
+13;"CS";"Custom";"Custom season"
