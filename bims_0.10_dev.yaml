@@ -397,8 +397,9 @@ dictionary:
         - &copy-val
             column:
             from: |
-                '{curdir}\/{schema}.{table}.csv'
+                {curdir}\\{schema}.{table}.csv
             option: &copy-option-val
+                stdin: true
                 format: csv
                 header: header
                 list:
