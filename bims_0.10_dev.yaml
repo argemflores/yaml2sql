@@ -371,6 +371,7 @@ dictionary:
         - &key-idx
             name: {table}_key_idx
             column: key
+            unique: true
             comment: Index for the key column
         - &study_id-idx
             name: {table}_study_id_idx
@@ -742,6 +743,17 @@ database: &bims_0.10_dev-db
                         Products of VDPs are varieties, breeding lines, parental lines and other genetic materials in different stages of a breeding scheme, and IP related to the genetic materials.
                         Products of trait development are discovered trait donors, QTL's and genes, and marker application for selection of those, and related IP.
                         Trait development products work through different type IP-solutions than variety development.
+                    column:
+                        <<: *def-id-tbl-col
+                        -
+                            <<: *key-col
+                            default_value: 100
+                        <<: *def-meta-tbl-col
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    index:
+                        - *key-idx
+                        <<: *def-log-tbl-idx
                 - &master-place-tbl
                     <<: *def-tbl
                     name: place
@@ -755,15 +767,32 @@ database: &bims_0.10_dev-db
                             - Glasshouse
                             - Warehouse
                             - Storage
+                    column:
+                        <<: *def-id-tbl-col
+                        -
+                            <<: *key-col
+                            default_value: 10000
+                        <<: *def-meta-tbl-col
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    index:
+                        - *key-idx
+                        <<: *def-log-tbl-idx
                 - &master-phase-tbl
                     <<: *def-tbl
                     name: phase
                     comment: Breeding development phases
                     column:
                         <<: *def-id-tbl-col
+                        -
+                            <<: *key-col
+                            default_value: 100
                         <<: *def-meta-tbl-col
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
+                    index:
+                        - *key-idx
+                        <<: *def-log-tbl-idx
                 - &master-product-tbl
                     <<: *def-tbl
                     name: product
@@ -962,6 +991,17 @@ database: &bims_0.10_dev-db
                     <<: *def-tbl
                     name: season
                     comment: List of seasons
+                    column:
+                        <<: *def-id-tbl-col
+                        -
+                            <<: *key-col
+                            default_value: 10
+                        <<: *def-meta-tbl-col
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    index:
+                        - *key-idx
+                        <<: *def-log-tbl-idx
                 - &master-place_season-tbl
                     <<: *def-tbl
                     name: place_season
@@ -2549,7 +2589,7 @@ database: &bims_0.10_dev-db
                             data_type: varchar
                             not_null: true
                             comment: |
-                                family id, entry key, plot key, custom key, seed_lot_id
+                                family_id, entry_key, plot_key, custom_key, seed_lot_id, dummy_key
                         - &seed_storage-seed_manager-col
                             name: seed_manager
                             data_type: varchar
@@ -3789,6 +3829,7 @@ database: &bims_0.10_dev-db
             -- ---------------------------------------------------
             
             copy "master"."program" (
+                "key",
                 "abbrev",
                 "name",
                 "description"
@@ -3804,6 +3845,7 @@ database: &bims_0.10_dev-db
             -- ---------------------------------------------------
             
             copy "master"."place" (
+                "key",
                 "abbrev",
                 "name",
                 "description"
@@ -3819,6 +3861,7 @@ database: &bims_0.10_dev-db
             -- ---------------------------------------------------
             
             copy "master"."phase" (
+                "key",
                 "abbrev",
                 "name",
                 "description"
@@ -3834,6 +3877,7 @@ database: &bims_0.10_dev-db
             -- ---------------------------------------------------
             
             copy "master"."season" (
+                "key",
                 "abbrev",
                 "name",
                 "description"
