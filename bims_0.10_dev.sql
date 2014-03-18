@@ -63,6 +63,23 @@ create index "user_is_void_idx"
   on "master"."user"
   using btree ("is_void");
 
+copy "master"."user" (
+    "email",
+    "username",
+    "last_name",
+    "first_name",
+    "display_name",
+    "user_type"
+)
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.user.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
 -- ----------------
 
 create table "master"."property" (
@@ -93,7 +110,7 @@ alter table "master"."property"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "property_abbrev_idx"
+create index "property_abbrev_idx"
   on "master"."property"
   using btree ("abbrev");
 create index "property_is_void_idx"
@@ -225,6 +242,7 @@ create index "scale_value_is_void_idx"
 create table "master"."variable" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
+    "column_name" varchar(128),
     "name" varchar(256) not null,
     "data_type" varchar,
     "not_null" boolean not null default false,
@@ -237,6 +255,7 @@ create table "master"."variable" (
     "method_id" integer,
     "scale_id" integer,
     "variable_set" varchar,
+    "synonym" varchar,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -280,9 +299,12 @@ create index "variable_method_id_idx"
 create index "variable_scale_id_idx"
   on "master"."variable"
   using btree ("scale_id");
-create unique index "variable_abbrev_idx"
+create index "variable_abbrev_idx"
   on "master"."variable"
   using btree ("abbrev");
+create unique index "variable_column_name_idx"
+  on "master"."variable"
+  using btree ("column_name");
 create index "variable_is_void_idx"
   on "master"."variable"
   using btree ("is_void");
@@ -478,6 +500,21 @@ create index "program_is_void_idx"
   on "master"."program"
   using btree ("is_void");
 
+copy "master"."program" (
+    "key",
+    "abbrev",
+    "name",
+    "description"
+)
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.program.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
 -- ----------------
 
 create table "master"."place" (
@@ -516,6 +553,21 @@ create index "place_is_void_idx"
   on "master"."place"
   using btree ("is_void");
 
+copy "master"."place" (
+    "key",
+    "abbrev",
+    "name",
+    "description"
+)
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.place.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
 -- ----------------
 
 create table "master"."phase" (
@@ -553,6 +605,21 @@ create unique index "phase_key_idx"
 create index "phase_is_void_idx"
   on "master"."phase"
   using btree ("is_void");
+
+copy "master"."phase" (
+    "key",
+    "abbrev",
+    "name",
+    "description"
+)
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.phase.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
 -- ----------------
 
@@ -758,6 +825,21 @@ create index "season_is_void_idx"
   on "master"."season"
   using btree ("is_void");
 
+copy "master"."season" (
+    "key",
+    "abbrev",
+    "name",
+    "description"
+)
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.season.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
 -- ----------------
 
 create table "master"."place_season" (
@@ -801,6 +883,20 @@ create index "place_season_place_id_idx"
 create index "place_season_season_id_idx"
   on "master"."place_season"
   using btree ("season_id");
+
+copy "master"."place_season" (
+    "place_id",
+    "season_id",
+    "order_number"
+)
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.place_season.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
 -- ----------------
 
@@ -1482,6 +1578,7 @@ create index "team_member_is_void_idx"
 create view "master"."variable_list" as
 select
     mv.abbrev,
+    mv.column_name,
     mv.name,
     mv.data_type,
     mv.not_null,
@@ -3999,13 +4096,13 @@ create schema "warehouse";
 
 create table "warehouse"."study" (
     "id" serial not null,
+    "key" integer not null,
     "program_id" integer not null,
     "place_id" integer not null,
     "phase_id" integer not null,
     "year" integer not null,
     "season_id" integer not null,
     "number" integer not null,
-    "key" integer not null,
     "name" varchar(256) not null,
     "title" varchar,
     "creation_timestamp" timestamp not null default now(),
@@ -4078,9 +4175,9 @@ create index "study_is_void_idx"
 
 create table "warehouse"."entry" (
     "id" serial not null,
+    "key" integer not null,
     "study_id" integer not null,
     "number" integer not null default '1',
-    "key" integer not null,
     "code" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
@@ -4134,10 +4231,10 @@ create index "entry_is_void_idx"
 
 create table "warehouse"."plot" (
     "id" serial not null,
+    "key" integer not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "replication_number" integer,
-    "key" integer not null,
     "code" varchar,
     "description" text,
     "remarks" text,
@@ -4188,11 +4285,11 @@ create index "plot_is_void_idx"
 
 create table "warehouse"."subplot" (
     "id" serial not null,
+    "key" integer not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "plot_id" integer not null,
     "number" integer not null default '1',
-    "key" integer not null,
     "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -4251,7 +4348,8 @@ create schema "import";
 
 create table "import"."variable" (
     "abbrev" varchar(128),
-    "name" varchar(256),
+    "column_name" varchar,
+    "name" varchar,
     "description" varchar,
     "data_type" varchar,
     "not_null" varchar,
@@ -4271,6 +4369,7 @@ create table "import"."variable" (
     "variable_set" varchar,
     "synonym" varchar,
     "entry_message" varchar,
+    "coded_values" varchar,
     "id" serial not null,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -4298,6 +4397,40 @@ create index "variable_is_void_idx"
   on "import"."variable"
   using btree ("is_void");
 
+copy "import"."variable" (
+    "abbrev",
+    "column_name",
+    "name",
+    "description",
+    "data_type",
+    "not_null",
+    "type",
+    "status",
+    "display_name",
+    "ontology_reference",
+    "bibliographical_reference",
+    "method",
+    "scale",
+    "scale_unit",
+    "scale_type",
+    "scale_level",
+    "default_value",
+    "minimum_value",
+    "maximum_value",
+    "variable_set",
+    "synonym",
+    "entry_message",
+    "coded_values"
+)
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.variable.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
 -- ----------------
 
 create table "import"."hb_data" (
@@ -4320,6 +4453,20 @@ create table "import"."hb_data" (
 ) with (
     oids = false
 );
+
+
+
+
+
+copy "import"."hb_data" 
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.hb_data.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
 -- ----------------
 
@@ -4347,6 +4494,20 @@ create table "import"."f1_data" (
 ) with (
     oids = false
 );
+
+
+
+
+
+copy "import"."f1_data" 
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.f1_data.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
 -- ----------------
 
@@ -4386,6 +4547,32 @@ create table "import"."rga_data" (
 ) with (
     oids = false
 );
+
+
+
+
+
+copy "import"."rga_data" 
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.rga_data.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
+
+
+copy "import"."rga_data" 
+from 'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.rga_data.csv'
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
 
 comment on database "bims_0.10_dev"
   is 'BIMS: Breeding Information Management System';
@@ -4637,10 +4824,13 @@ comment on column "master"."variable"."id"
   is 'Locally unique primary key';
 
 comment on column "master"."variable"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Abbrev of the property of the variable';
+
+comment on column "master"."variable"."column_name"
+  is 'Column name of the variable in the warehouse tables';
 
 comment on column "master"."variable"."name"
-  is 'Name identifier';
+  is 'Name of the variable''s property';
 
 comment on column "master"."variable"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -7852,7 +8042,7 @@ comment on column "operational"."seed_storage"."seed_lot_id"
   is 'A unique identifier for the seed storage assigned by the data manager';
 
 comment on column "operational"."seed_storage"."key_type"
-  is 'family id, entry key, plot key, custom key, seed_lot_id';
+  is 'family_id, entry_key, plot_key, custom_key, seed_lot_id, dummy_key';
 
 comment on column "operational"."seed_storage"."seed_manager"
   is 'Refers to which product development programs has access to the seeds';
@@ -8858,6 +9048,9 @@ comment on column "warehouse"."study"."id"
 comment on column "warehouse"."study"."key"
   is 'Logical key of the study';
 
+comment on column "warehouse"."study"."number"
+  is 'Sequence number of the study';
+
 comment on column "warehouse"."study"."name"
   is 'Logical name of the study';
 
@@ -8903,14 +9096,14 @@ comment on table "warehouse"."entry"
 comment on column "warehouse"."entry"."id"
   is 'Locally unique primary key';
 
+comment on column "warehouse"."entry"."key"
+  is 'Logical key of the entry';
+
 comment on column "warehouse"."entry"."study_id"
   is 'ID referring to study';
 
 comment on column "warehouse"."entry"."number"
   is 'Number of the entry within the study';
-
-comment on column "warehouse"."entry"."key"
-  is 'Logical key of the entry';
 
 comment on column "warehouse"."entry"."code"
   is 'Code of the entry within the study';
@@ -8981,6 +9174,9 @@ comment on table "warehouse"."plot"
 comment on column "warehouse"."plot"."id"
   is 'Locally unique primary key';
 
+comment on column "warehouse"."plot"."key"
+  is 'Logical key of the plot';
+
 comment on column "warehouse"."plot"."study_id"
   is 'ID referring to study';
 
@@ -8989,9 +9185,6 @@ comment on column "warehouse"."plot"."entry_id"
 
 comment on column "warehouse"."plot"."replication_number"
   is 'Replication number of a plot';
-
-comment on column "warehouse"."plot"."key"
-  is 'Logical key of the plot';
 
 comment on column "warehouse"."plot"."code"
   is 'Code of the plot within the study';
@@ -9053,6 +9246,9 @@ comment on table "warehouse"."subplot"
 comment on column "warehouse"."subplot"."id"
   is 'Locally unique primary key';
 
+comment on column "warehouse"."subplot"."key"
+  is 'Logical key of the subplot';
+
 comment on column "warehouse"."subplot"."study_id"
   is 'ID referring to study';
 
@@ -9064,9 +9260,6 @@ comment on column "warehouse"."subplot"."plot_id"
 
 comment on column "warehouse"."subplot"."number"
   is 'Number of the subplot within the plot';
-
-comment on column "warehouse"."subplot"."key"
-  is 'Logical key of the subplot';
 
 comment on column "warehouse"."subplot"."description"
   is 'Description';
@@ -9131,9 +9324,6 @@ comment on table "import"."variable"
 comment on column "import"."variable"."abbrev"
   is 'Short name identifier or abbreviation';
 
-comment on column "import"."variable"."name"
-  is 'Name identifier';
-
 comment on column "import"."variable"."id"
   is 'Locally unique primary key';
 
@@ -9171,112 +9361,6 @@ comment on index "import"."variable_is_void_idx"
 
 -- --------------------------------
 
-/*copy ""."" (
-
-) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;*/
-
-copy "master"."user" (
-    "email",
-    "username",
-    "last_name",
-    "first_name",
-    "display_name",
-    "user_type"
-) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.user.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
--- ---------------------------------------------------
-
-copy "master"."program" (
-    "key",
-    "abbrev",
-    "name",
-    "description"
-) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.program.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
--- ---------------------------------------------------
-
-copy "master"."place" (
-    "key",
-    "abbrev",
-    "name",
-    "description"
-) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.place.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
--- ---------------------------------------------------
-
-copy "master"."phase" (
-    "key",
-    "abbrev",
-    "name",
-    "description"
-) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.phase.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
--- ---------------------------------------------------
-
-copy "master"."season" (
-    "key",
-    "abbrev",
-    "name",
-    "description"
-) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.season.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
--- ---------------------------------------------------
-
-copy "master"."place_season" (
-    "place_id",
-    "season_id",
-    "order_number"
-) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.place_season.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
 -- ---------------------------------------------------
 
 -- DROP TRIGGER add_variable_column ON master."variable";
@@ -9293,10 +9377,10 @@ begin
     -- if (upper(new."type") = 'METADATA' or upper(new."type") = 'OBSERVATION') then
     if (upper(new."type") = 'OBSERVATION') then
         -- column name
-        if (new."abbrev" is null or trim(new.abbrev) = '') then
+        if (new."column_name" is null or trim(new."column_name") = '') then
             column_name := '"' || lower(new."name") || '"';
         else
-            column_name := '"' || lower(new."abbrev") || '"';
+            column_name := '"' || lower(new."column_name") || '"';
         end if;
 
         -- data type
@@ -9337,39 +9421,7 @@ create trigger "add_variable_column"
 
 -- ---------------------------------------------------
 
-copy "import"."variable" (
-    "abbrev",
-    "name",
-    "description",
-    "data_type",
-    "not_null",
-    "type",
-    "status",
-    "display_name",
-    "ontology_reference",
-    "bibliographical_reference",
-    "method",
-    "scale",
-    "scale_unit",
-    "scale_type",
-    "scale_level",
-    "default_value",
-    "minimum_value",
-    "maximum_value",
-    "variable_set",
-    "synonym",
-    "entry_message"
-) from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/master.variable.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
--- ---------------------------------------------------
-
+-- /*
 insert into
     master.property (
         abbrev,
@@ -9377,20 +9429,50 @@ insert into
         description
     )
 select
-    lower(replace(trim(var."name"), ' ', '_')) abbrev,
-    lower(trim(var."name")) "name",
     (
+        select
+            iv1.abbrev
+        from (
+            select
+                (
+                    case
+                        when iv.abbrev is null
+                            then (
+                                case
+                                    when iv.column_name is null
+                                        then upper(replace(trim(iv.name), ' ', '_'))
+                                    else
+                                        upper(replace(trim(iv.column_name), ' ', '_'))
+                                end
+                            )
+                        else
+                            upper(replace(trim(iv.abbrev), ' ', '_'))
+                    end
+                ) "abbrev"
+            from
+                import.variable iv
+            where
+                id = any(var.id_arr)
+        ) iv1
+        order by
+            char_length(iv1.abbrev) asc
+        limit 1
+    ) "abbrev",
+    lower(trim(var."name")) "name",
+    /*(
         select
             description
         from
             import.variable
         where
             id = id_arr[1]
-    ) description
+    ) description*/
+    array_to_string(var.description_arr, '\n') description
 from (
     select
         lower(trim(iv."name")) "name",
         count(iv.id) id_count,
+        array_agg(iv.description order by iv.id) description_arr,
         array_agg(iv.id) id_arr
     from
         import.variable iv
@@ -9411,12 +9493,21 @@ insert into
         description
     )
 select
-    lower(replace(trim(var."name"), ' ', '_')) || '_method_'
-        || row_number() over (partition by lower(trim("name"))) abbrev,
-    var.name || ' ' || row_number() over (partition by lower(trim("name"))) abbrev,
+    upper(replace(trim(var."abbrev"), ' ', '_')) || '_METH_'
+        || row_number() over (partition by upper(trim("abbrev"))) "abbrev",
+    var.name || ' ' || row_number() over (partition by lower(trim("name"))) "name",
     trim(var.method) description
 from (
     select
+        -- upper(trim(iv."abbrev")) "abbrev",
+        (
+            case
+                when iv.abbrev is null
+                    then upper(replace(trim(iv.name), ' ', '_'))
+                else
+                    upper(replace(trim(iv.abbrev), ' ', '_'))
+            end
+        ) "abbrev",
         trim(iv.method) method,
         lower(trim(iv."name")) "name"
     from
@@ -9440,15 +9531,24 @@ insert into
         level
     )
 select
-    lower(replace(trim(var."name"), ' ', '_')) || '_scale_'
-        || row_number() over (partition by lower(trim("name"))) abbrev,
-    var.name || ' ' || row_number() over (partition by lower(trim("name"))) abbrev,
+    upper(replace(trim(var."abbrev"), ' ', '_')) || '_SCALE_'
+        || row_number() over (partition by upper(trim("abbrev"))) "abbrev",
+    var.name || ' ' || row_number() over (partition by lower(trim("name"))) "name",
     var.scale description,
     var.unit,
     var.type,
     var.level
 from (
     select
+        -- upper(trim(iv."abbrev")) "abbrev",
+        (
+            case
+                when iv.abbrev is null
+                    then upper(replace(trim(iv.name), ' ', '_'))
+                else
+                    upper(replace(trim(iv.abbrev), ' ', '_'))
+            end
+        ) "abbrev",
         trim(iv.scale) scale,
         lower(trim(iv.name)) "name",
         trim(iv.scale_unit) unit,
@@ -9467,6 +9567,7 @@ from (
 
 insert into master.variable (
     abbrev,
+    column_name,
     name,
     data_type,
     not_null,
@@ -9481,146 +9582,205 @@ insert into master.variable (
     variable_set
 )
 select
-    (replace(
-        (
-            case
-                when var.abbrev is null then
-                    -- var.name || '_' || substring(var.scale_type from 1 for 3)
-                    var.name || '_' || (
-                        case when var.scale_type is null then ''
-                        else substring(var.scale_type from 1 for 3) || '_' end
-                    ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
-                when (
-                    select
-                        count(iv.id)
-                    from
-                        import.variable iv
-                    where
-                        lower(trim(iv.abbrev)) = lower(trim(var.abbrev))
-                ) >= 2 then
-                    -- var.abbrev || '_' || row_number() over (partition by lower(trim(var."name")))
-                    -- var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
-                    var.abbrev || '_' || (
-                        case when var.scale_type is null then ''
-                        else substring(var.scale_type from 1 for 3) || '_' end
-                    ) || row_number() over (partition by lower(trim(var.name)), substring(var.scale_type from 1 for 3))
-                else
-                    var.abbrev
-            end
-        ),
-    ' ', '_')) abbrev,
-    var.name,
-    -- var.description,
+    var.abbrev,
     (
         case
-            when var.data_type is null then
-                'varchar'
+            when var.column_name is null
+                then case
+                    when (
+                        select
+                            count(iv.id)
+                        from
+                            import.variable iv
+                        where
+                            upper(trim(iv.name)) = upper(trim(var.name))
+                    ) >= 2 then
+                        var.abbrev || '_' || (
+                            case when var.scale_type is null then ''
+                            else upper(substring(var.scale_type from 1 for 3)) || '_' end
+                        ) || row_number() over (partition by upper(trim(var.name)), upper(trim(substring(var.scale_type from 1 for 3))))
+                    else
+                        var.abbrev
+                end
             else
-                var.data_type
+                var.column_name
         end
-    ) data_type,
-    var.not_null::bool,
+    ) column_name,
+    var.name,
+    var.data_type,
+    var.not_null,
     var.type,
     var.status,
-    (
-        case
-            when var.display_name is null then
-                initcap(var.name)
-            else
-                initcap(var.display_name)
-        end
-    ) display_name,
+    var.display_name,
     var.ontology_reference,
     var.bibliographical_reference,
-
     var.property_id,
     var.method_id,
     var.scale_id,
-
     var.variable_set
 from (
     select
-        iv.iv_id,
+        upper(replace(
+            (
+                case
+                    when var.abbrev is null
+                        then var.property_abbrev
+                        -- var.name || '_' || upper(substring(var.scale_type from 1 for 3))
+                        /*var.name || '_' || (
+                            case when var.scale_type is null then ''
+                            else substring(var.scale_type from 1 for 3) || '_' end
+                        ) || row_number() over (partition by upper(trim(var.name)), upper(substring(var.scale_type from 1 for 3)))*/
+                    /*
+                    when (
+                        select
+                            count(iv.id)
+                        from
+                            import.variable iv
+                        where
+                            upper(trim(iv.abbrev)) = upper(trim(var.abbrev))
+                    ) >= 2 then
+                        -- var.abbrev || '_' || row_number() over (partition by upper(trim(var."name")))
+                        -- var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
+                        var.abbrev || '_' || (
+                            case when var.scale_type is null then ''
+                            else substring(var.scale_type from 1 for 3) || '_' end
+                        ) || row_number() over (partition by upper(trim(var.name)), substring(var.scale_type from 1 for 3))
+                    */
+                    else
+                        var.abbrev
+                end
+            ),
+        ' ', '_')) abbrev,
+        var.column_name,
+        var.name,
+        -- var.description,
+        (
+            case
+                when var.data_type is null then
+                    'varchar'
+                else
+                    var.data_type
+            end
+        ) data_type,
+        var.not_null::bool,
+        var.type,
+        var.status,
+        (
+            case
+                when var.display_name is null then
+                    initcap(var.name)
+                else
+                    initcap(var.display_name)
+            end
+        ) display_name,
+        var.ontology_reference,
+        var.bibliographical_reference,
 
-        iv.abbrev,
-        iv.name,
-        iv.description,
-        iv.data_type,
-        iv.not_null,
-        iv.type,
-        iv.status,
-        iv.display_name,
-        iv.ontology_reference,
-        iv.bibliographical_reference,
+        var.property_id,
+        var.method_id,
+        var.scale_id,
 
-        (
-            select
-                -- mp.name
-                mp.id
-            from
-                master.property mp
-            where
-                mp.name = iv.name
-        ) property_id,
-        (
-            select
-                -- mm.name
-                mm.id
-            from
-                master.method mm
-            where
-                mm.name = iv.name || ' ' || num
-                -- and trim(mm.description) = iv.method
-        ) method_id,
-        (
-            select
-                -- ms.name
-                ms.id
-            from
-                master.scale ms
-            where
-                ms.name = iv.name || ' ' || num
-                -- and ms.description = iv.scale
-        ) scale_id,
-        (
-            select
-                -- ms.name
-                ms.type
-            from
-                master.scale ms
-            where
-                ms.name = iv.name || ' ' || num
-                -- and ms.description = iv.scale
-        ) scale_type,
+        var.scale_type,
+        var.iv_id,
 
-        iv.variable_set
+        var.variable_set
     from (
         select
-            iv.id iv_id,
-            row_number() over (partition by lower(trim("name"))) num,
+            iv.iv_id,
 
-            lower(trim(iv.abbrev)) "abbrev",
-            lower(trim(iv.name)) "name",
-            trim(iv.description) description,
-            lower(trim(iv.data_type)) data_type,
-            lower(trim(iv.not_null)) not_null,
-            lower(trim(iv.type)) "type",
-            lower(trim(iv.status)) status,
-            trim(iv.display_name) display_name,
-            trim(iv.ontology_reference) ontology_reference,
-            trim(iv.bibliographical_reference) bibliographical_reference,
+            iv.abbrev,
+            iv.column_name,
+            iv.name,
+            iv.description,
+            iv.data_type,
+            iv.not_null,
+            iv.type,
+            iv.status,
+            iv.display_name,
+            iv.ontology_reference,
+            iv.bibliographical_reference,
 
-            trim(iv.method) "method",
-            trim(iv.scale) "scale",
+            (
+                select
+                    -- mp.name
+                    mp.id
+                from
+                    master.property mp
+                where
+                    mp.name = iv.name
+            ) property_id,
+            (
+                select
+                    -- mm.name
+                    mm.id
+                from
+                    master.method mm
+                where
+                    mm.name = iv.name || ' ' || num
+                    -- and trim(mm.description) = iv.method
+            ) method_id,
+            (
+                select
+                    -- ms.name
+                    ms.id
+                from
+                    master.scale ms
+                where
+                    ms.name = iv.name || ' ' || num
+                    -- and ms.description = iv.scale
+            ) scale_id,
+            (
+                select
+                    -- ms.name
+                    ms.type
+                from
+                    master.scale ms
+                where
+                    ms.name = iv.name || ' ' || num
+                    -- and ms.description = iv.scale
+            ) scale_type,
 
-            lower(trim(iv.variable_set)) variable_set
-        from
-            import.variable iv
-    ) iv
-    -- order by
-        -- property_id,
-        -- method_id,
-        -- scale_id
+            iv.variable_set,
+
+            (
+                select
+                    mp.abbrev
+                from
+                    master.property mp
+                where
+                    mp.name = iv.name
+            ) property_abbrev
+        from (
+            select
+                iv.id iv_id,
+                row_number() over (partition by lower(trim("name"))) num,
+
+                upper(trim(iv.column_name)) column_name,
+                upper(trim(iv.abbrev)) "abbrev",
+                lower(trim(iv.name)) "name",
+                trim(iv.description) description,
+                lower(trim(iv.data_type)) data_type,
+                lower(trim(iv.not_null)) not_null,
+                lower(trim(iv.type)) "type",
+                lower(trim(iv.status)) status,
+                trim(iv.display_name) display_name,
+                trim(iv.ontology_reference) ontology_reference,
+                trim(iv.bibliographical_reference) bibliographical_reference,
+
+                trim(iv.method) "method",
+                trim(iv.scale) "scale",
+
+                lower(trim(iv.variable_set)) variable_set
+            from
+                import.variable iv
+        ) iv
+        -- order by
+            -- property_id,
+            -- method_id,
+            -- scale_id
+    ) var
+    order by
+        var.iv_id
 ) var
 order by
     var.iv_id
@@ -9637,8 +9797,8 @@ select
     distinct on (
         iv.variable_set
     )
-    iv.variable_set abbrev,
-    iv.variable_set "name",
+    upper(replace(iv.variable_set, ' ', '_')) abbrev,
+    lower(trim(iv.variable_set)) "name",
     initcap(iv.variable_set) display_name
 from (
     select
@@ -9664,10 +9824,10 @@ select
         from
             master.variable_set mvs
         where
-            mvs.name = mv.variable_set
+            upper(trim(mvs.name)) = upper(trim(mv.variable_set))
     ) variable_set_id,
     id variable_id,
-    row_number() over (partition by mv.variable_set) order_number
+    row_number() over (partition by upper(trim(mv.variable_set))) order_number
 from
     master.variable mv
 where
@@ -9675,36 +9835,5 @@ where
 order by
     mv.id
 ;
-
--- ---------------------------------------------------
-
-copy "import"."hb_data"
-from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.hb_data.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
-copy "import"."f1_data"
-from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.f1_data.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-
-copy "import"."rga_data"
-from e'D:\\argemgrflores\\workstation\\yaml2sql\\yaml2sql\/import.rga_data.csv'
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null 'NULL'
-;
+-- */
 
