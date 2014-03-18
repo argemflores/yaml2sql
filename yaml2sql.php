@@ -34,10 +34,10 @@ if (!empty($input->database)) {
     
     $dbSql = strtr(
 <<<EOD
--- create database "{dbName}"
-    -- encoding = '{dbEncoding}'
-    -- lc_collate = '{dbLcCollate}'
-    -- lc_ctype = '{dbLcCtype}';
+create database "{dbName}"
+    encoding = '{dbEncoding}'
+    lc_collate = '{dbLcCollate}'
+    lc_ctype = '{dbLcCtype}';
 EOD
         , [
             '{dbName}' => $dbName,
@@ -527,7 +527,17 @@ if (!empty($database->options)) {
             "\n\n-- --------------------------------\n\n";
     }
     
-    if (isset($dbOpts->drop_schema) and $dbOpts->drop_schema == true) {
+    if (isset($dbOpts->drop_database) and $dbOpts->drop_database == true) {
+        echo strtr(
+<<<EOD
+drop database "{dbName}";\n\n
+EOD
+            , [
+                '{dbName}' => pg_escape_string($dbName),
+            ]
+        ), $dbSql, "\n\n-- --------------------------------\n\n";
+    }
+    elseif (isset($dbOpts->drop_schema) and $dbOpts->drop_schema == true) {
         $schemas = $database->schema;
         $schDropSql = '';
         
@@ -546,17 +556,6 @@ EOD
         
         echo $schDropSql, "-- --------------------------------\n\n";
     }
-        
-    if (isset($dbOpts->drop_database) and $dbOpts->drop_database == true) {
-        echo strtr(
-<<<EOD
-drop database "{dbName}";
-EOD
-            , [
-                '{dbName}' => pg_escape_string($dbName),
-            ]
-        );
-    }
     
     if (!empty($dbOpts->append_sql) and empty($database->options->skip_append_sql)) {
         $postSql .= strtr($dbOpts->append_sql, [
@@ -565,8 +564,7 @@ EOD
     }
 }
 
-echo $dbSql, "\n\n-- --------------------------------\n\n",
-    $schSql, "\n\n";
+echo $schSql, "\n\n";
 echo $cmtSql, "\n\n";
 echo "\n\n-- --------------------------------\n\n",
     $postSql, "\n\n";
