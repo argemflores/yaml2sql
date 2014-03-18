@@ -440,6 +440,59 @@ EOD
                             }
                         }
                         
+                        $copySql = '';
+                        if (!empty($table->copy) and !empty($table->copy->from)) {
+                            $copy = $table->copy;
+                            
+                            $copyCol = '';
+                            if (!empty($copy->column)) {
+                                $copyCol = "(\n    \"" . implode("\",\n    \"", $copy->column) . "\"\n)";
+                            }
+                            
+                            $copyFrom = strtr($copy->from, [
+                                '{curdir}' => pg_escape_string($curDir),
+                                '{schema}' => $schName,
+                                '{table}' => $tblName,
+                            ]);
+                            
+                            $copyFormat = '';
+                            if (!empty($copy->option->format)) {
+                                $copyFormat = $copy->option->format;
+                            }
+                            
+                            $copyHeader = '';
+                            if (!empty($copy->option->header)) {
+                                $copyHeader = $copy->option->header;
+                            }
+                            
+                            $copyOptionList = '';
+                            if (!empty($copy->option->list)) {
+                                foreach ($copy->option->list as $key => $val) {
+                                    $copyOptionList .= $key . ' ' . $val . "\n    ";
+                                }
+                            }
+                            
+                            $copySql = strtr(
+<<<EOD
+copy "{schName}"."{tblName}" {copyCol}
+from {copyFrom}
+    {copyFormat}
+    {copyHeader}
+    {copyOptionList}
+;
+EOD
+                                , [
+                                    '{schName}' => $schName,
+                                    '{tblName}' => $tblName,
+                                    '{copyCol}' => trim($copyCol),
+                                    '{copyFrom}' => trim($copyFrom),
+                                    '{copyFormat}' => trim($copyFormat),
+                                    '{copyHeader}' => trim($copyHeader),
+                                    '{copyOptionList}' => trim($copyOptionList),
+                                ]
+                            );
+                        }
+                        
                         $tblpostSql = '';
                         if (!empty($table->options)) {
                             $tblOpts = $table->options;
@@ -450,7 +503,7 @@ EOD
                             }
                         }
                         
-                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $tblpostSql;
+                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $copySql . "\n\n" . $tblpostSql;
                     }
                 }
                 
@@ -494,11 +547,14 @@ create schema "{schName}";
 {tblSql}
 
 {viewSql}
+
+{copySql}
 EOD
                     , [
                         '{schName}' => $schName,
                         '{tblSql}' => $tblSql,
                         '{viewSql}' => $viewSql,
+                        '{copySql}' => $copySql,
                     ]
                 );
             }
