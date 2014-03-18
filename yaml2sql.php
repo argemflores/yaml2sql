@@ -449,11 +449,23 @@ EOD
                                 $copyCol = "(\n    \"" . implode("\",\n    \"", $copy->column) . "\"\n)";
                             }
                             
-                            $copyFrom = strtr($copy->from, [
-                                '{curdir}' => pg_escape_string($curDir),
-                                '{schema}' => $schName,
-                                '{table}' => $tblName,
-                            ]);
+                            $copyFrom = '';
+                            $copyValues = '';
+                            if (!empty($copy->option->stdin)) {
+                                $copyFrom = 'stdin';
+                                $copyValues = file_get_contents(strtr($copy->from, [
+                                    '{curdir}' => pg_escape_string($curDir),
+                                    '{schema}' => $schName,
+                                    '{table}' => $tblName,
+                                ]), true);
+                            }
+                            else {
+                                $copyFrom = strtr($copy->from, [
+                                    '{curdir}' => pg_escape_string($curDir),
+                                    '{schema}' => $schName,
+                                    '{table}' => $tblName,
+                                ]);
+                            }
                             
                             $copyFormat = '';
                             if (!empty($copy->option->format)) {
@@ -474,12 +486,16 @@ EOD
                             
                             $copySql = strtr(
 <<<EOD
+
 copy "{schName}"."{tblName}" {copyCol}
 from {copyFrom}
     {copyFormat}
     {copyHeader}
     {copyOptionList}
 ;
+{copyValues}
+\.
+
 EOD
                                 , [
                                     '{schName}' => $schName,
@@ -489,6 +505,7 @@ EOD
                                     '{copyFormat}' => trim($copyFormat),
                                     '{copyHeader}' => trim($copyHeader),
                                     '{copyOptionList}' => trim($copyOptionList),
+                                    '{copyValues}' => trim($copyValues),
                                 ]
                             );
                         }
