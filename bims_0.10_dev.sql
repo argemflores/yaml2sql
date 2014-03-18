@@ -444,6 +444,7 @@ create index "crosscutting_is_void_idx"
 
 create table "master"."program" (
     "id" serial not null,
+    "key" integer not null default '100',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
@@ -470,9 +471,9 @@ alter table "master"."program"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "program_abbrev_idx"
+create unique index "program_key_idx"
   on "master"."program"
-  using btree ("abbrev");
+  using btree ("key");
 create index "program_is_void_idx"
   on "master"."program"
   using btree ("is_void");
@@ -481,6 +482,7 @@ create index "program_is_void_idx"
 
 create table "master"."place" (
     "id" serial not null,
+    "key" integer not null default '10000',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
@@ -507,9 +509,9 @@ alter table "master"."place"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "place_abbrev_idx"
+create unique index "place_key_idx"
   on "master"."place"
-  using btree ("abbrev");
+  using btree ("key");
 create index "place_is_void_idx"
   on "master"."place"
   using btree ("is_void");
@@ -518,6 +520,7 @@ create index "place_is_void_idx"
 
 create table "master"."phase" (
     "id" serial not null,
+    "key" integer not null default '100',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
@@ -544,9 +547,9 @@ alter table "master"."phase"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "phase_abbrev_idx"
+create unique index "phase_key_idx"
   on "master"."phase"
-  using btree ("abbrev");
+  using btree ("key");
 create index "phase_is_void_idx"
   on "master"."phase"
   using btree ("is_void");
@@ -721,6 +724,7 @@ create index "product_metadata_is_void_idx"
 
 create table "master"."season" (
     "id" serial not null,
+    "key" integer not null default '10',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
@@ -747,9 +751,9 @@ alter table "master"."season"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "season_abbrev_idx"
+create unique index "season_key_idx"
   on "master"."season"
-  using btree ("abbrev");
+  using btree ("key");
 create index "season_is_void_idx"
   on "master"."season"
   using btree ("is_void");
@@ -2257,7 +2261,7 @@ create index "study_season_id_idx"
 create index "study_year_season_id_idx"
   on "operational"."study"
   using btree ("year", "season_id");
-create index "study_key_idx"
+create unique index "study_key_idx"
   on "operational"."study"
   using btree ("key");
 create index "study_name_idx"
@@ -2361,7 +2365,7 @@ alter table "operational"."entry"
 create index "entry_study_id_idx"
   on "operational"."entry"
   using btree ("study_id");
-create index "entry_key_idx"
+create unique index "entry_key_idx"
   on "operational"."entry"
   using btree ("key");
 create index "entry_product_id_idx"
@@ -2530,7 +2534,7 @@ create index "plot_study_id_idx"
 create index "plot_entry_id_idx"
   on "operational"."plot"
   using btree ("entry_id");
-create index "plot_key_idx"
+create unique index "plot_key_idx"
   on "operational"."plot"
   using btree ("key");
 create index "plot_is_void_idx"
@@ -2719,7 +2723,7 @@ create index "subplot_entry_id_idx"
 create index "subplot_plot_id_idx"
   on "operational"."subplot"
   using btree ("plot_id");
-create index "subplot_key_idx"
+create unique index "subplot_key_idx"
   on "operational"."subplot"
   using btree ("key");
 create index "subplot_is_void_idx"
@@ -4060,7 +4064,7 @@ create index "study_season_id_idx"
 create index "study_year_season_id_idx"
   on "warehouse"."study"
   using btree ("year", "season_id");
-create index "study_key_idx"
+create unique index "study_key_idx"
   on "warehouse"."study"
   using btree ("key");
 create index "study_name_idx"
@@ -4116,7 +4120,7 @@ alter table "warehouse"."entry"
 create index "entry_study_id_idx"
   on "warehouse"."entry"
   using btree ("study_id");
-create index "entry_key_idx"
+create unique index "entry_key_idx"
   on "warehouse"."entry"
   using btree ("key");
 create index "entry_product_id_idx"
@@ -4173,7 +4177,7 @@ create index "plot_study_id_idx"
 create index "plot_entry_id_idx"
   on "warehouse"."plot"
   using btree ("entry_id");
-create index "plot_key_idx"
+create unique index "plot_key_idx"
   on "warehouse"."plot"
   using btree ("key");
 create index "plot_is_void_idx"
@@ -4234,7 +4238,7 @@ create index "subplot_entry_id_idx"
 create index "subplot_plot_id_idx"
   on "warehouse"."subplot"
   using btree ("plot_id");
-create index "subplot_key_idx"
+create unique index "subplot_key_idx"
   on "warehouse"."subplot"
   using btree ("key");
 create index "subplot_is_void_idx"
@@ -4917,8 +4921,8 @@ comment on constraint "program_creator_id_fkey" on "master"."program"
 comment on constraint "program_modifier_id_fkey" on "master"."program"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."program_abbrev_idx"
-  is 'Unique index for the abbrev column';
+comment on index "master"."program_key_idx"
+  is 'Index for the key column';
 
 comment on index "master"."program_is_void_idx"
   is 'Index for the is_void column';
@@ -4976,8 +4980,8 @@ comment on constraint "place_creator_id_fkey" on "master"."place"
 comment on constraint "place_modifier_id_fkey" on "master"."place"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."place_abbrev_idx"
-  is 'Unique index for the abbrev column';
+comment on index "master"."place_key_idx"
+  is 'Index for the key column';
 
 comment on index "master"."place_is_void_idx"
   is 'Index for the is_void column';
@@ -5027,8 +5031,8 @@ comment on constraint "phase_creator_id_fkey" on "master"."phase"
 comment on constraint "phase_modifier_id_fkey" on "master"."phase"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."phase_abbrev_idx"
-  is 'Unique index for the abbrev column';
+comment on index "master"."phase_key_idx"
+  is 'Index for the key column';
 
 comment on index "master"."phase_is_void_idx"
   is 'Index for the is_void column';
@@ -5229,8 +5233,8 @@ comment on constraint "season_creator_id_fkey" on "master"."season"
 comment on constraint "season_modifier_id_fkey" on "master"."season"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."season_abbrev_idx"
-  is 'Unique index for the abbrev column';
+comment on index "master"."season_key_idx"
+  is 'Index for the key column';
 
 comment on index "master"."season_is_void_idx"
   is 'Index for the is_void column';
@@ -9197,6 +9201,7 @@ copy "master"."user" (
 -- ---------------------------------------------------
 
 copy "master"."program" (
+    "key",
     "abbrev",
     "name",
     "description"
@@ -9212,6 +9217,7 @@ copy "master"."program" (
 -- ---------------------------------------------------
 
 copy "master"."place" (
+    "key",
     "abbrev",
     "name",
     "description"
@@ -9227,6 +9233,7 @@ copy "master"."place" (
 -- ---------------------------------------------------
 
 copy "master"."phase" (
+    "key",
     "abbrev",
     "name",
     "description"
@@ -9242,6 +9249,7 @@ copy "master"."phase" (
 -- ---------------------------------------------------
 
 copy "master"."season" (
+    "key",
     "abbrev",
     "name",
     "description"
