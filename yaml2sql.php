@@ -24,6 +24,8 @@ $sql = '';
 $dictArr = [];
 $cmtSqlArr = [];
 
+$curDir = dirname(__FILE__);
+
 if (!empty($input->database)) {
     $database = $input->database;
     $dbSql = '';
@@ -557,7 +559,9 @@ EOD
     }
     
     if (!empty($dbOpts->append_sql) and empty($database->options->skip_append_sql)) {
-        $postSql .= $dbOpts->append_sql;
+        $postSql .= strtr($dbOpts->append_sql, [
+            '{curdir}' => pg_escape_string($curDir),
+        ]);
     }
 }
 
