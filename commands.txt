@@ -1,3 +1,7 @@
 cls && php yaml2sql.php bims_0.10.yaml > bims_0.10.sql
 cls && php yaml2sql.php bims_0.10.yaml > bims_0.10.sql && psql -U postgres -d bims_0.10 -E -f bims_0.10.sql
 cls && php yaml2sql.php bims_0.10.yaml > bims_0.10.sql && psql -U postgres -h 172.29.4.82 -d bims_0.10 -E -f bims_0.10.sql
+
+cls && php yaml2sql.php bims_0.10_dev.yaml > bims_0.10_dev.sql
+cls && php yaml2sql.php bims_0.10_dev.yaml > bims_0.10_dev.sql && psql -U postgres -d bims_0.10_dev -E -f bims_0.10_dev.sql
+cls && php yaml2sql.php bims_0.10_dev.yaml > bims_0.10_dev.sql && psql -U postgres -h 172.29.4.82 -d bims_0.10_dev -E -f bims_0.10_dev.sql
