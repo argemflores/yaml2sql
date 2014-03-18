@@ -433,7 +433,7 @@ dictionary:
             index: &def-tbl-idx
                 <<: *def-ident-tbl-idx
                 <<: *def-log-tbl-idx
-database: &bims_0.10
+database: &bims_0.10-db
     name: bims_0.10
     comment: 'BIMS: Breeding Information Management System'
     encoding: UTF8
@@ -3539,118 +3539,327 @@ database: &bims_0.10
                     index:
                         <<: *def-log-tbl-idx
                 - &import-hb_data-tbl
-                    <<: *def-tbl
                     name: hb_data
                     column:
-                        <<: *def-id-tbl-col
-                        <<: *def-log-tbl-col
-                    constraint:
-                        <<: *def-log-tbl-cst
-                    index:
-                        <<: *def-log-tbl-idx
+                        -
+                            name: year
+                            data_type: varchar
+                        -
+                            name: season
+                            data_type: varchar
+                        -
+                            name: gid
+                            data_type: varchar
+                        -
+                            name: designation
+                            data_type: varchar
+                        -
+                            name: seed_source_name
+                            data_type: varchar
+                        -
+                            name: cross_preferred_name
+                            data_type: varchar
+                        -
+                            name: cross_unique_id
+                            data_type: varchar
+                        -
+                            name: female_gid
+                            data_type: varchar
+                        -
+                            name: female_preferred_name
+                            data_type: varchar
+                        -
+                            name: female_line_name
+                            data_type: varchar
+                        -
+                            name: male_gid
+                            data_type: varchar
+                        -
+                            name: male_preferred_name
+                            data_type: varchar
+                        -
+                            name: male_line_name
+                            data_type: varchar
+                        -
+                            name: breeding_method_name
+                            data_type: varchar
+                        -
+                            name: study_name
+                            data_type: varchar
+                        -
+                            name: entry_code
+                            data_type: varchar
+                - &import-f1_data-tbl
+                    name: f1_data
+                    column:
+                        -
+                            name: year
+                            data_type: varchar
+                        -
+                            name: season
+                            data_type: varchar
+                        -
+                            name: gid
+                            data_type: varchar
+                        -
+                            name: designation
+                            data_type: varchar
+                        -
+                            name: female_gid
+                            data_type: varchar
+                        -
+                            name: female_preferred_name
+                            data_type: varchar
+                        -
+                            name: female_designation
+                            data_type: varchar
+                        -
+                            name: female_seed_source_name
+                            data_type: varchar
+                        -
+                            name: male_gid
+                            data_type: varchar
+                        -
+                            name: male_preferred_name
+                            data_type: varchar
+                        -
+                            name: male_designation
+                            data_type: varchar
+                        -
+                            name: male_seed_source_name
+                            data_type: varchar
+                        -
+                            name: plot_number
+                            data_type: varchar
+                        -
+                            name: seed_number
+                            data_type: varchar
+                        -
+                            name: breeder
+                            data_type: varchar
+                        -
+                            name: program_name
+                            data_type: varchar
+                        -
+                            name: ecosystem_program_name
+                            data_type: varchar
+                        -
+                            name: trait_team
+                            data_type: varchar
+                        -
+                            name: research_group
+                            data_type: varchar
+                        -
+                            name: division
+                            data_type: varchar
+                - &import-rga_data-tbl
+                    name: rga_data
+                    column:
+                        -
+                            name: year
+                            data_type: varchar
+                        -
+                            name: season
+                            data_type: varchar
+                        -
+                            name: family_gid
+                            data_type: varchar
+                        -
+                            name: family_designation
+                            data_type: varchar
+                        -
+                            name: gid
+                            data_type: varchar
+                        -
+                            name: derivative_name
+                            data_type: varchar
+                        -
+                            name: code
+                            data_type: varchar
+                        -
+                            name: purpose
+                            data_type: varchar
+                        -
+                            name: pedigree_name
+                            data_type: varchar
+                        -
+                            name: current_generation
+                            data_type: varchar
+                        -
+                            name: seeding_date
+                            data_type: varchar
+                        -
+                            name: seed_number
+                            data_type: varchar
+                        -
+                            name: transplanting_date
+                            data_type: varchar
+                        -
+                            name: transplanting_seed_number
+                            data_type: varchar
+                        -
+                            name: recommended_rate
+                            data_type: varchar
+                        -
+                            name: time_of_application_1
+                            data_type: varchar
+                        -
+                            name: t1_fertilizer_type
+                            data_type: varchar
+                        -
+                            name: days_after_seeding_1
+                            data_type: varchar
+                        -
+                            name: t1_fertilizer_date
+                            data_type: varchar
+                        -
+                            name: t1_fertilizer_amount
+                            data_type: varchar
+                        -
+                            name: time_of_application_2
+                            data_type: varchar
+                        -
+                            name: t2_fertilizer_type
+                            data_type: varchar
+                        -
+                            name: days_after_seeding_2
+                            data_type: varchar
+                        -
+                            name: t2_fertilizer_date
+                            data_type: varchar
+                        -
+                            name: t2_fertilizer_amount
+                            data_type: varchar
+                        -
+                            name: harvest_date
+                            data_type: varchar
+                        -
+                            name: plant_number
+                            data_type: varchar
+                        -
+                            name: germination_date
+                            data_type: varchar
+                        -
+                            name: flowering_date
+                            data_type: varchar
+                        -
+                            name: flowering_date_earliest
+                            data_type: varchar
+                        -
+                            name: flowering_date_latest
+                            data_type: varchar
+                        -
+                            name: remarks
+                            data_type: varchar
             options:
-                skip_drop: true
-                skip: true
+                skip_drop: false
+                skip: false
     options:
         drop_schema: true
         terminate_connections: true
         skip_append_sql: false
         append_sql: |
-            insert into "master"."user" (
+            /*copy ""."" (
+                
+            ) from e'{curdir}\/.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;*/
+            
+            copy "master"."user" (
                 "email",
                 "username",
                 "last_name",
                 "first_name",
                 "display_name",
                 "user_type"
-            ) values (
-                'bims.irri@gmail.com',
-                'bims.irri',
-                'IRRI',
-                'BIMS',
-                'IRRI, BIMS',
-                '1'
-            );
+            ) from e'{curdir}\/master.user.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
             
             -- ---------------------------------------------------
             
-            insert into "master"."program" (
+            copy "master"."program" (
                 "abbrev",
                 "name",
                 "description"
-            ) values (
-                'IRRSEA',
-                'Irrigated South-East Asia',
-                'Irrigated South-East Asia'
-            );
+            ) from e'{curdir}\/master.program.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
             
-            insert into "master"."place" (
+            -- ---------------------------------------------------
+            
+            copy "master"."place" (
                 "abbrev",
                 "name",
                 "description"
-            ) values (
-                'PHLB',
-                'Los Banos, Philippines',
-                'Los Banos, Philippines'
-            );
+            ) from e'{curdir}\/master.place.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
             
-            insert into "master"."phase" (
+            -- ---------------------------------------------------
+            
+            copy "master"."phase" (
                 "abbrev",
                 "name",
                 "description"
-            ) values (
-                'OYT',
-                'Observation Yield Trial',
-                'Observation Yield Trial'
-            ), (
-                'RYT',
-                'Replicated Yield Trial',
-                'Replicated Yield Trial'
-            ), (
-                'AYT',
-                'Advanced Yield Trial',
-                'Advanced Yield Trial'
-            ), (
-                'MET',
-                'Multi-Environment Yield Trial',
-                'Multi-Environment Yield Trial'
-            );
+            ) from e'{curdir}\/master.phase.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
             
-            insert into "master"."season" (
+            -- ---------------------------------------------------
+            
+            copy "master"."season" (
                 "abbrev",
                 "name",
                 "description"
-            ) values (
-                'DS',
-                'Dry',
-                'Dry season'
-            ), (
-                'WS',
-                'Wet',
-                'Wet season'
-            ), (
-                'CS',
-                'Custom',
-                'Custom season'
-            );
+            ) from e'{curdir}\/master.season.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
             
-            insert into "master"."place_season" (
+            -- ---------------------------------------------------
+            
+            copy "master"."place_season" (
                 "place_id",
                 "season_id",
                 "order_number"
-            ) values (
-                '1',
-                '1',
-                '1'
-            ), (
-                '1',
-                '2',
-                '2'
-            ), (
-                '1',
-                '3',
-                '3'
-            );
+            ) from e'{curdir}\/master.place_season.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
             
             -- ---------------------------------------------------
             
@@ -3709,6 +3918,39 @@ database: &bims_0.10
             create trigger "add_variable_column"
                 after insert on "master"."variable"
                 for each row execute procedure "master"."add_variable_column"();
+            
+            -- ---------------------------------------------------
+            
+            copy "import"."variable" (
+                "abbrev",
+                "name",
+                "description",
+                "data_type",
+                "not_null",
+                "type",
+                "status",
+                "display_name",
+                "ontology_reference",
+                "bibliographical_reference",
+                "method",
+                "scale",
+                "scale_unit",
+                "scale_type",
+                "scale_level",
+                "default_value",
+                "minimum_value",
+                "maximum_value",
+                "variable_set",
+                "synonym",
+                "entry_message"
+            ) from e'{curdir}\/master.variable.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
             
             -- ---------------------------------------------------
             
@@ -4019,4 +4261,34 @@ database: &bims_0.10
             ;
             
             -- ---------------------------------------------------
+            
+            copy "import"."hb_data"
+            from e'{curdir}\/import.hb_data.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
+            
+            copy "import"."f1_data"
+            from e'{curdir}\/import.f1_data.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null ''
+            ;
+            
+            copy "import"."rga_data"
+            from e'{curdir}\/import.rga_data.csv'
+                csv
+                header
+                delimiter ';'
+                quote '"'
+                escape e'\\'
+                null 'NULL'
+            ;
 ...
