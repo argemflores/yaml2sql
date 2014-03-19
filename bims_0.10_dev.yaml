@@ -1135,6 +1135,11 @@ database: &bims_0.10_dev-db
                     comment: Methods used in crossing studies
                     copy:
                         <<: *copy-val
+                        column:
+                            - abbrev
+                            - name
+                            - description
+                            - display_name
                 - &master-country-tbl
                     <<: *def-tbl
                     name: country
@@ -3996,6 +4001,9 @@ database: &bims_0.10_dev-db
                     name: rga_data
                     column:
                         -
+                            name: program
+                            data_type: varchar
+                        -
                             name: year
                             data_type: varchar
                         -
@@ -4093,6 +4101,36 @@ database: &bims_0.10_dev-db
                             data_type: varchar
                     copy:
                         <<: *copy-val
+                - &import-f2_data-tbl
+                    name: f2_data
+                    column:
+                        -
+                            name: program
+                            data_type: varchar
+                        -
+                            name: study_name
+                            data_type: varchar
+                        -
+                            name: entry_code
+                            data_type: varchar
+                        -
+                            name: gid
+                            data_type: varchar
+                        -
+                            name: designation
+                            data_type: varchar
+                        -
+                            name: seed_source_name
+                            data_type: varchar
+                        -
+                            name: family_designation
+                            data_type: varchar
+                        -
+                            name: family_gid
+                            data_type: varchar
+                        -
+                            name: pedigree_name
+                            data_type: varchar
             options:
                 skip_drop: false
                 skip: false
