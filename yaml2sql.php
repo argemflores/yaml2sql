@@ -450,14 +450,23 @@ EOD
                             }
                             
                             $copyFrom = '';
+                            $copyFromFlag = true;
                             $copyValues = '';
                             if (!empty($copy->option->stdin)) {
                                 $copyFrom = 'stdin';
-                                $copyValues = file_get_contents(strtr($copy->from, [
+                                
+                                $copyFilePath = strtr($copy->from, [
                                     '{curdir}' => pg_escape_string($curDir),
                                     '{schema}' => $schName,
                                     '{table}' => $tblName,
-                                ]), true);
+                                ]);
+                                
+                                if (file_exists($copyFilePath)) {
+                                    $copyValues = file_get_contents($copyFilePath, true);
+                                }
+                                else {
+                                    $copyFromFlag = false;
+                                }
                             }
                             else {
                                 $copyFrom = strtr($copy->from, [
@@ -465,28 +474,32 @@ EOD
                                     '{schema}' => $schName,
                                     '{table}' => $tblName,
                                 ]);
-                            }
-                            
-                            $copyFormat = '';
-                            if (!empty($copy->option->format)) {
-                                $copyFormat = $copy->option->format;
-                            }
-                            
-                            $copyHeader = '';
-                            if (!empty($copy->option->header)) {
-                                $copyHeader = $copy->option->header;
-                            }
-                            
-                            $copyOptionList = '';
-                            if (!empty($copy->option->list)) {
-                                foreach ($copy->option->list as $key => $val) {
-                                    $copyOptionList .= $key . ' ' . $val . "\n    ";
+                                
+                                if (!file_exists($copyFrom)) {
+                                    $copyFromFlag = false;
                                 }
                             }
                             
-                            $copySql = strtr(
+                            if ($copyFromFlag) {
+                                $copyFormat = '';
+                                if (!empty($copy->option->format)) {
+                                    $copyFormat = $copy->option->format;
+                                }
+                                
+                                $copyHeader = '';
+                                if (!empty($copy->option->header)) {
+                                    $copyHeader = $copy->option->header;
+                                }
+                                
+                                $copyOptionList = '';
+                                if (!empty($copy->option->list)) {
+                                    foreach ($copy->option->list as $key => $val) {
+                                        $copyOptionList .= $key . ' ' . $val . "\n    ";
+                                    }
+                                }
+                                
+                                $copySql = strtr(
 <<<EOD
-
 copy "{schName}"."{tblName}" {copyCol}
 from {copyFrom}
     {copyFormat}
@@ -497,15 +510,53 @@ from {copyFrom}
 \.
 
 EOD
+                                    , [
+                                        '{schName}' => $schName,
+                                        '{tblName}' => $tblName,
+                                        '{copyCol}' => trim($copyCol),
+                                        '{copyFrom}' => trim($copyFrom),
+                                        '{copyFormat}' => trim($copyFormat),
+                                        '{copyHeader}' => trim($copyHeader),
+                                        '{copyOptionList}' => trim($copyOptionList),
+                                        '{copyValues}' => trim($copyValues),
+                                    ]
+                                );
+                            }
+                        }
+                        
+                        $seqSql = '';
+                        if (!empty($table->sequence)) {
+                            $sequence = $table->sequence;
+                            
+                            $seqStartWith = 1;
+                            if (!empty($sequence->start_with)) {
+                                $seqStartWith = $sequence->start_with;
+                            }
+                            
+                            if (!empty($sequence->name)) {
+                                $seqName = $sequence->name;
+                            }
+                            else {
+                                $seqName = pg_escape_string($tblName . '_id_seq');
+                            }
+                            
+                            $seqSql .= strtr(
+<<<EOD
+alter sequence "{schName}"."{seqName}"
+  RESTART {seqStartWith};
+
+ALTER SEQUENCE "{schName}"."{seqName}"
+  START WITH {seqStartWith}
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+EOD
                                 , [
                                     '{schName}' => $schName,
-                                    '{tblName}' => $tblName,
-                                    '{copyCol}' => trim($copyCol),
-                                    '{copyFrom}' => trim($copyFrom),
-                                    '{copyFormat}' => trim($copyFormat),
-                                    '{copyHeader}' => trim($copyHeader),
-                                    '{copyOptionList}' => trim($copyOptionList),
-                                    '{copyValues}' => trim($copyValues),
+                                    '{seqName}' => $seqName,
+                                    '{seqStartWith}' => $seqStartWith,
                                 ]
                             );
                         }
@@ -520,7 +571,7 @@ EOD
                             }
                         }
                         
-                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $copySql . "\n\n" . $tblpostSql;
+                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $copySql . "\n\n" . $seqSql . "\n\n" . $tblpostSql;
                     }
                 }
                 
@@ -564,14 +615,11 @@ create schema "{schName}";
 {tblSql}
 
 {viewSql}
-
-{copySql}
 EOD
                     , [
                         '{schName}' => $schName,
                         '{tblSql}' => $tblSql,
                         '{viewSql}' => $viewSql,
-                        '{copySql}' => $copySql,
                     ]
                 );
             }
