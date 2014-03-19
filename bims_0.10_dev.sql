@@ -1021,6 +1021,28 @@ create index "cross_method_is_void_idx"
   on "master"."cross_method"
   using btree ("is_void");
 
+copy "master"."cross_method" (
+    "abbrev",
+    "name",
+    "description",
+    "display_name"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"abbrev";"name";"description";"display_name"
+"SC";"single cross";"Single cross";"Single cross"
+"BC";"backcross";"Backcross";"Backcross"
+"MC";"multi-cross";"Multi-cross";"Multi-cross"
+"C3W";"three-way cross";"Three-way cross";"Three-way cross"
+"C2W";"double cross";"Double cross";"Double cross"
+\.
+
 -- ----------------
 
 create table "master"."country" (
@@ -16310,6 +16332,7 @@ from stdin
 -- ----------------
 
 create table "import"."rga_data" (
+    "program" varchar,
     "year" varchar,
     "season" varchar,
     "family_gid" varchar,
@@ -16480,6 +16503,22 @@ from stdin
 "2013";"WS";"3731470";"IR 99983";"4135518";"IR 99983-B-B RGA";;;;"F3";"20130831";"381";;;;"Topdress1";;;"20130923";;;;;;;;;;;;;"Sowed in small cell for advancement"
 "2013";"WS";"3891567";"IR 103715";"4189641";"IR 103715-B";;;;"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
 \.
+
+-- ----------------
+
+create table "import"."f2_data" (
+    "program" varchar,
+    "study_name" varchar,
+    "entry_code" varchar,
+    "gid" varchar,
+    "designation" varchar,
+    "seed_source_name" varchar,
+    "family_designation" varchar,
+    "family_gid" varchar,
+    "pedigree_name" varchar
+) with (
+    oids = false
+);
 
 comment on database "bims_0.10_dev"
   is 'BIMS: Breeding Information Management System';
