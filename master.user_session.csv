@@ -1,0 +1,17 @@
+"id";"user_id";"data";"selected_pipeline_id";"last_visited_url";"is_default_redirect_yes";"is_default_redirect_no"
+1;20;;1;;;
+2;21;;2;;;
+3;16;;2;;;
+4;7;;1;"/bims-2.0/index.php/rga/view/pipeline/id/822";"False";"True"
+5;4;;1;;;
+6;8;;1;"/bims-2.0/index.php/rga/browse/loadCCRDView";;"True"
+7;5;"{""BimGridView"":{""audit-browser-grid"":{""entry"":{""model"":""Audit"",""filter"":{""table_name"":""entry""},""sort"":null}}}}";1;"/bims2/index.php/pipeline/1";"True";"False"
+8;12;;1;"/bims2/index.php/rga/seedPreparation/index";"True";
+9;10;;1;"/bims-2.0/index.php/rga/browse/loadCCRDView";;"True"
+10;9;;1;;;
+11;6;"{""BimGridView"":{""user-grid"":{""a.flores"":{""model"":""User"",""filter"":{""email"":""a.flores""}},""sort email"":{""model"":""User"",""filter"":[],""sort"":{""key"":""User_sort"",""value"":""email""}},""irri sort by username"":{""model"":""User"",""filter"":{""email"":""irri""},""sort"":{""key"":""User_sort"",""value"":""username""}}},""items-browser-grid"":[],""role-grid"":{""admin"":{""model"":""Role"",""filter"":{""display_name"":""admin""},""sort"":null}},""team-grid"":{""irri"":{""model"":""Team"",""filter"":{""name"":""irri""},""sort"":null}},""product-browser"":[]}}";1;;;
+12;2;;1;"/bims-2.0/index.php/auth/user/viewProfile/id/2";"True";"False"
+13;3;;1;"/bims2/index.php/crossCutting/browseTeam";"False";"False"
+14;11;;1;;;
+15;1;;1;;;
+16;24;;1;"/bims2/index.php/rga/view/switchTab";"False";"True"
