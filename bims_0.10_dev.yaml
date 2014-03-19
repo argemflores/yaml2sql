@@ -1032,6 +1032,39 @@ database: &bims_0.10_dev-db
                             name: product_name_name_type_idx
                             column: name_type
                         <<: *def-log-tbl-idx
+                - &master-product_gid-tbl
+                    <<: *def-tbl
+                    name: product_gid
+                    comment: List of GIDs of a product
+                    column:
+                        <<: *def-id-tbl-col
+                        -
+                            name: product_id
+                            data_type: integer
+                        -
+                            name: gid
+                            data_type: integer
+                        -
+                            name: gid_type
+                            data_type: varchar
+                            comment: |
+                                fixed breeding line, cross, derivative, mgid (founding germplasm)
+                        <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            name: product_gid_product_id_fkey
+                            type: foreign_key
+                            column: product_id
+                            other_attributes:
+                                foreign_table: master.product
+                                foreign_column: id
+                        <<: *def-log-tbl-cst
+                    index:
+                        - *product_id-idx
+                        -
+                            name: product_gid_gid_idx
+                            column: gid
+                        <<: *def-log-tbl-idx
                 - &master-product_metadata-tbl
                     <<: *def-tbl
                     name: product_metadata
@@ -4000,9 +4033,6 @@ database: &bims_0.10_dev-db
                 - &import-rga_data-tbl
                     name: rga_data
                     column:
-                        -
-                            name: program
-                            data_type: varchar
                         -
                             name: year
                             data_type: varchar
