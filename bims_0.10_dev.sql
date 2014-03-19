@@ -63,13 +63,17 @@ create index "user_is_void_idx"
   on "master"."user"
   using btree ("is_void");
 
-
 copy "master"."user" (
+    "id",
     "email",
     "username",
     "last_name",
     "first_name",
+    "middle_name",
     "display_name",
+    "status",
+    "valid_start_date",
+    "valid_end_date",
     "user_type"
 )
 from stdin
@@ -80,9 +84,43 @@ from stdin
     escape e'\\'
     null ''
 ;
-"email";"username";"last_name";"first_name";"display_name";"user_type"
-"bims.irri@gmail.com";"bims.irri";"BIMS";"IRRI";"IRRI, BIMS";1
+"id";"email";"username";"last_name";"first_name";"middle_name";"display_name";"status";"valid_start_date";"valid_end_date";"user_type"
+1;"bims.irri@gmail.com";"bims.irri";"IRRI";"BIMS";;"IRRI, BIMS";"1";;"2020-01-29";1
+2;"a.zarsuela@irri.org";"a.zarsuela";"Zarsuela";"Allan";"Llorente";"Lanz";"1";;"2020-01-27";1
+3;"j.lagare@irri.org";"j.lagare";"Lagare";"Jack Elendil";"Belo";"Jack";"1";;"2020-01-29";1
+4;"l.gallardo@irri.org";"l.gallardo";"Gallardo";"Larise";"Landicho";"Larise";"1";;"2020-01-29";1
+5;"v.calaminos@irri.org";"v.calaminos";"Calaminos";"Viana";"Cedro";"Yanii";"1";;"2020-01-29";1
+6;"a.flores@irri.org";"a.flores";"Flores";"Argem Gerald";"Rectitud";"Argem";"1";;"2020-01-29";1
+7;"jp.ramos@irri.org";"jp.ramos";"Ramos";"Jahzeel";"Pelegrina";"Jahzeel";"1";;"2020-01-29";1
+8;"r.cordial@irri.org";"r.cordial";"Cordial";"Reiland";"Borja";"Reiland";"1";;"2020-01-29";1
+9;"r.borromeo@irri.org";"r.borromeo";"Borromeo";"Ria";;"Ria";"1";;"2020-01-29";1
+10;"e.tenorio@irri.org";"e.tenorio";"Tenorio";"Eugenia";"Ararao";"Eugene";"1";;"2020-01-29";1
+11;"m.anacleto@irri.org";"m.anacleto";"Anacleto";"Mylah";"Uy";"manacleto";"1";;"2020-01-29";1
+12;"m.karkkainen@irri.org";"m.karkkainen";"Karkkainen";"Marko";;"mkarkkainen";"1";;"2015-01-29";1
+14;"wolverine@irri.org";"wolverine";"Howlett";"James Logan";;"Howlett, James Logan";"1";;"2014-03-13";0
+15;"testuser@irri.org";"testuser";"User";"Tess";;"User, Tess";"1";;"2014-03-25";0
+16;"a.caneda@irri.org";"a.caneda";"Cañeda";"Alex";;"Cañeda, Alex";"1";;"2015-04-04";1
+17;"w.eusebio@irri.org";"w.eusebio";"Eusebio";"William";;"Eusebio, William";"1";;"2015-04-04";1
+18;"c.lotho@irri.org";"c.lotho";"Parducho";"Consolacion";;"Parducho, Consolacion";"1";;"2015-04-04";1
+19;"c.parducho@irri.org";"c.parducho";"Parducho";"Consie";;"Parducho, Concepcion";"1";;"2015-04-04";1
+20;"r.e.carpio@irri.org";"r.e.carpio";"Carpio";"Ruth";;"Carpio, Ruth";"1";;"2015-04-04";1
+21;"v.alcantara@irri.org";"v.alcantara";"Alcantara";"Vic";;"Alcantara, Vic";"1";;"2015-04-04";1
+22;"foobar@irri.org";"foobar";"bar";"foo";;"bar, foo";"1";;"2014-03-10";0
+23;"a.capistrano@irri.org";"a.capistrano";"Capistrano";"Aileen ";;"Capistrano, Aileen ";"1";;"2014-04-03";0
+24;"k.mahipus@irri.org";"k.mahipus";"Mahipus";"Kelly John";"Devenadera";"Mahipus, Kelly John D.";"1";"2014-03-13";"2014-05-03";1
 \.
+
+
+alter sequence "master"."user_id_seq"
+  RESTART 25;
+
+ALTER SEQUENCE "master"."user_id_seq"
+  START WITH 25
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
 
 -- ----------------
 
@@ -91,6 +129,7 @@ create table "master"."property" (
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -128,6 +167,7 @@ create table "master"."method" (
     "abbrev" varchar(128) not null,
     "name" varchar,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -168,6 +208,7 @@ create table "master"."scale" (
     "type" varchar,
     "level" varchar,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -204,8 +245,8 @@ create table "master"."scale_value" (
     "id" serial not null,
     "scale_id" integer not null,
     "value" varchar not null,
-    "display_name" varchar,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "order_number" integer not null default '1',
     "creation_timestamp" timestamp not null default now(),
@@ -319,8 +360,8 @@ create table "master"."variable_set" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
-    "display_name" varchar not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -399,6 +440,7 @@ create table "master"."pipeline" (
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -436,6 +478,7 @@ create table "master"."crosscutting" (
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -470,10 +513,11 @@ create index "crosscutting_is_void_idx"
 
 create table "master"."program" (
     "id" serial not null,
-    "key" integer not null default '100',
+    "key" bigint not null default '100',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -504,7 +548,6 @@ create index "program_is_void_idx"
   on "master"."program"
   using btree ("is_void");
 
-
 copy "master"."program" (
     "key",
     "abbrev",
@@ -527,10 +570,11 @@ from stdin
 
 create table "master"."place" (
     "id" serial not null,
-    "key" integer not null default '10000',
+    "key" bigint not null default '10000',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -561,7 +605,6 @@ create index "place_is_void_idx"
   on "master"."place"
   using btree ("is_void");
 
-
 copy "master"."place" (
     "key",
     "abbrev",
@@ -584,10 +627,11 @@ from stdin
 
 create table "master"."phase" (
     "id" serial not null,
-    "key" integer not null default '100',
+    "key" bigint not null default '100',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -617,7 +661,6 @@ create unique index "phase_key_idx"
 create index "phase_is_void_idx"
   on "master"."phase"
   using btree ("is_void");
-
 
 copy "master"."phase" (
     "key",
@@ -673,6 +716,7 @@ create table "master"."product" (
     "fixed_line_name" varchar,
     "selection_method" varchar,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -744,6 +788,7 @@ create table "master"."product_name" (
     "value" varchar not null,
     "language_code" varchar not null default 'eng',
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -821,10 +866,11 @@ create index "product_metadata_is_void_idx"
 
 create table "master"."season" (
     "id" serial not null,
-    "key" integer not null default '10',
+    "key" bigint not null default '10',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -854,7 +900,6 @@ create unique index "season_key_idx"
 create index "season_is_void_idx"
   on "master"."season"
   using btree ("is_void");
-
 
 copy "master"."season" (
     "key",
@@ -920,7 +965,6 @@ create index "place_season_season_id_idx"
   on "master"."place_season"
   using btree ("season_id");
 
-
 copy "master"."place_season" (
     "place_id",
     "season_id",
@@ -946,6 +990,7 @@ create table "master"."cross_method" (
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -983,6 +1028,7 @@ create table "master"."country" (
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -1051,6 +1097,1401 @@ alter table "master"."family"
 create index "family_is_void_idx"
   on "master"."family"
   using btree ("is_void");
+
+-- ----------------
+
+create table "master"."role" (
+    "id" serial not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(256) not null,
+    "description" text,
+    "display_name" varchar(256),
+    "rank" smallint default '-1',
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."role"
+  add constraint "role_id_pkey"
+  primary key ("id");
+alter table "master"."role"
+  add constraint "role_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."role"
+  add constraint "role_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "role_is_void_idx"
+  on "master"."role"
+  using btree ("is_void");
+
+copy "master"."role" (
+    "id",
+    "abbrev",
+    "name",
+    "description",
+    "display_name",
+    "rank"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"abbrev";"name";"description";"display_name";"rank"
+1;"ADMIN";"administrator";"Authorized user who has full access to the entire system";"Administrator";1
+16;"ETM";"experience team member";"- Is responsible for executing Process' daily Activities, Tasks and Steps
+- Has a good understanding of Process Activities and Tasks
+";"Experienced Team Member";4
+6;"PS";"process supervisor";"- Is responsible for supervising the Process Activities and Tasks (technical lead)
+- Is responsible of the development and improvement of a Process
+- Has user rights to all the data and data tools
+- Has a profound understanding of technical aspects of a Process, its Activities and Tasks and Steps within a Task";"Process Supervisor";1
+14;"TM";"member";"Executes tasks and steps
+";"Team Member";6
+15;"PO";"process owner";"- Is responsible for management of a Process (financial and operational lead)
+- Is responsible of the development and improvement of a Process
+- Has user rights to all the data and data tools of a Process
+- Has a profound understanding of the Process, Sub-Processes, Activities and technical steps within a Activity (Tasks)
+";"Process Owner";3
+17;"PC";"process customer";"- Is the leader or senior supervisor of a Product Pipeline (VDP, TDP, TDT, or a Project) requesting a service from a CCRD
+- Is responsible for providing a detailed plan of action for Process Owner
+";"Process Customer";5
+18;"DM";"data manager";"The role for data admin.";"Data Manager";7
+\.
+
+
+alter sequence "master"."role_id_seq"
+  RESTART 19;
+
+ALTER SEQUENCE "master"."role_id_seq"
+  START WITH 19
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."item" (
+    "id" serial not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(256) not null,
+    "type" integer,
+    "description" text,
+    "display_name" varchar(256),
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."item"
+  add constraint "item_id_pkey"
+  primary key ("id");
+alter table "master"."item"
+  add constraint "item_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item"
+  add constraint "item_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "item_abbrev_idx"
+  on "master"."item"
+  using btree ("abbrev");
+create index "item_is_void_idx"
+  on "master"."item"
+  using btree ("is_void");
+
+copy "master"."item" (
+    "id",
+    "abbrev",
+    "name",
+    "type",
+    "description"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"abbrev";"name";"type";"description"
+1;"RGA_PROCESS_PATH";"RGA Process Path";40;"RGA Process Path"
+2;"THIS_IS_A_TEST_ITEM_1";"This is a test item";10;
+3;"THIS_IS_A_TEST_ITEM_2";"this is a test item";10;
+4;"THIS_IS_A_TEST_ITEM_3";"This is a test item";10;
+5;"CROSS_CUTTING_R&D_LANDING_PAGE";"Cross Cutting R&D Landing Page";10;"Landing page for CCR&D module"
+6;"VIEW_RGA_CROSSCUTTING_LANDING_PAGE";"View RGA Crosscutting Landing Page";10;
+7;"BROWSE_USERS";"Browse users";10;
+8;"CREATE_RGA PLAN";"Create RGA Plan";20;
+9;"SUBMIT RGA PLAN TO PROCESS OWNER";"Submit RGA Plan to Process Owner";20;
+10;"PREPARE_MATERIALS FOR RGA; SEND TO PROCESS SUPERVISOR";"Prepare Materials for RGA; Send to Process Supervisor";20;"RGA process"
+11;"CREATE_PROGENY_LIST";"Create Progeny List";20;"1. This is a subtask of  Create RGA Plan."
+12;"PLAN_& PREPARE ACTIVITY RGA";"Plan & Prepare activity RGA";30;"This is under RGA."
+13;"DEFINE_SEED SOURCE";"Define Seed Source";10;"Under subtask   Create Entry List."
+14;"DEFINE_NO. OF GENERATION IN RGA";"Define No. of Generation in RGA";10;"Under RGA subtask  2) Define Line Development Scheme"
+15;"SET_TARGET NO. OF PLANTS";"Set Target No. of Plants";10;"Under RGA subtask 2.)Define Line Development Scheme"
+16;"RECEIVE_RGA PLAN FROM PROCESS CUSTOMER";"Receive RGA Plan from Process Customer";20;"By PO...Under RGA"
+17;"DEFINE_LINE DEVELOPMENT SCHEME";"Define Line Development Scheme";20;"Subtask under Create RGA Plan"
+18;"RELAY_RGA PLAN TO PROCESS SUPERVISOR; SEEK FEEDBACK";"Relay RGA Plan to Process Supervisor; Seek Feedback";20;"Subtask of  Receive RGA Plan from Process Customer"
+19;"ACCEPT_RGA PLAN FROM PROCESS CUSTOMER";"Accept RGA Plan from Process Customer";20;"RGA"
+20;"ACCEPT_RGA PLAN";"Accept RGA plan";20;"Subtask of Accept RGA Plan from Process Customer"
+21;"_RETURN ACCEPTED RGA PLAN TO PC";"Return Accepted RGA Plan to PC";20;"Subtask of Accept RGA Plan from Process Customer"
+22;"CREATE_RGA PRODUCTION PLAN";"Create RGA Production Plan";20;"Subtask of  Accept RGA Plan from Process Customer"
+23;"DEFINE_ENTRY LIST";"Define Entry List";10;"Step of  Create RGA Production Plan"
+24;"SEND_ACCEPTED RGA PLAN AND RGA PRODUCTION PLAN TO PS";"Send Accepted RGA Plan and RGA Production Plan to PS";20;
+25;"RECEIVE_RGA PLAN (FROM PC VIA PO)";"Receive RGA Plan (from PC via PO)";20;
+26;"SEND_FEEDBACK";"Send Feedback";20;"Subtask of   Receive RGA Plan (from PC via PO)"
+27;"RECEIVE_RGA MATERIALS FROM PC";"Receive RGA Materials from PC";20;
+28;"RECEIVE_RGA PLAN FROM PC";"Receive RGA Plan from PC";20;"Subtask of Receive RGA Materials from PC"
+29;"RECEIVE_RGA SEEDS AND/OR SEEDLINGS FROM PC";"Receive RGA seeds and/or seedlings from PC";20;"Subtask of Receive RGA Materials from PC"
+30;"COMPLETE_RGA PRODUCTION PLAN";"Complete RGA Production Plan";20;
+31;"RECEIVE_RGA PRODUCTION PLAN FROM PO";"Receive RGA Production Plan from PO";20;"Subtask of  Complete RGA Production Plan
+Shows the browser of received RGA Production Plan"
+32;"COMPLETE_RGA POPULATION METADATA";"Complete RGA Population Metadata";20;"Subtask of Complete RGA Production Plan"
+33;"DEFINE_CONTAINER TYPE";"Define Container Type";10;"Step of  Complete RGA Population Metadata"
+34;"SET_NUMBER OF CONTAINERS FOR EACH ENTRY";"Set number of containers for each entry";10;"b. Step of Complete RGA Population Metadata"
+35;"DEFINE_SCHEDULE OF RGA ACTIVITIES";"Define Schedule of RGA activities";10;"3rd step of Complete RGA Population Metadata"
+36;"DEFINE_RGA TREATMENTS";"Define RGA Treatments";10;"4th step of Complete RGA Population Metadata"
+37;"PREPARE_MATERIALS TO SEND TO EXPERIENCED TEAM MEMBER";"Prepare Materials to send to Experienced Team Member";20;"Under RGA"
+38;"RECEIVE_MATERIALS FROM PROCESS SUPERVISOR";"Receive Materials from Process Supervisor";20;"Under RGA"
+39;"START_RGA";"Start RGA";20;"RGA"
+40;"PREPARE_CONTAINERS";"Prepare Containers";20;"Subtask of Start RGA"
+41;"SEEDING";"Seeding";20;"Under Start RGA"
+42;"RECEIVE_MATERIALS FROM PROCESS SUPERVISOR_deleted_by_aflores";"Receive Materials from Process Supervisor";20;"Under RGA"
+43;"VIEW_PIPELINE_LANDING_PAGE";"View Pipeline Landing Page";10;
+44;"BROWSE_PROGENY_LIST_CROSSCUTTING";"Browse Progeny list Crosscutting";10;"By the PS/PO"
+45;"VIEW_PROFILE";"View Profile";10;"View own user profile"
+46;"HARVEST";"Harvest";20;
+47;"BROWSE_THE_WHAT'S_NEW_PAGE";"Browse the what's new page";10;
+48;"VIEW_THE_IRRIGATED_SEA_PIPELINE";"View the Irrigated SEA Pipeline";10;"View the Irrigated South East Asia Pipeline landing page."
+49;"CREATE_PROGENY_LIST_ADDITIONAL_INFO";"Create Progeny List Additional Info";10;
+50;"CREATE_PROGENY_LIST_PREVIEW";"Create Progeny List Preview";10;
+51;"BROWSE_PROGENY_LIST_PIPELINE";"Browse Progeny List Pipeline";10;"This is the RGA progeny list browser accessible to the pipeline team members...all the roles."
+52;"BREAKING_SEED_DORMANCY";"Breaking Seed Dormancy";20;"In RGA crosscutting group"
+53;"SELECTION_OF_PROGENIES_TO_BE_HARVESTED";"Selection of progenies to be harvested";10;"Under harvest task."
+54;"BROWSE_RGA_PRODUCTION_PLAN";"Browse RGA Production Plan";10;"See the data browser about production plan."
+55;"UPDATE_PROGENY_LIST_PIPELINE";"Update Progeny List Pipeline";10;"Update or edit the pipeline progeny list.
+-This is by the PC."
+56;"UPDATE_RGA_PROGENY_LIST_BASIC_INFORMATION_";"Update RGA Progeny List Basic Information ";10;"This is in Pipeline by PC."
+57;"UPDATE_RGA_PROGENY_LIST_SPECIFY_ENTRIES";"Update RGA Progeny List Specify Entries";10;"By PC in the pipeline"
+58;"UPDATE_RGA_PROGENY_LIST_SEED_STOCKS";"Update RGA Progeny List Seed Stocks";10;"By PC in the pipeline"
+59;"UPDATE_RGA_PROGENY_LIST_LINE_DEV._SCHEME";"Update RGA Progeny List Line Dev. Scheme";10;"By PC in pipeline"
+60;"UPDATE_RGA_PROGENY_LIST_ADDITIONAL_INFORMATION";"Update RGA Progeny List Additional Information";10;"By PC in pipeline"
+61;"UPDATE_RGA_PROGENY_LIST_PREVIEW";"Update RGA Progeny List Preview";10;"By PC in pipeline"
+62;"BROWSE_PIPELINE_PRODUCTION_PLAN";"Browse Pipeline Production Plan";10;"By PC in pipeline"
+63;"UPDATE_PRODUCTION_PLAN_CROSSCUTTING";"Update Production Plan Crosscutting";10;"This is By PO."
+64;"DRYING_TASK";"Drying Task";20;
+\.
+
+
+alter sequence "master"."item_id_seq"
+  RESTART 65;
+
+ALTER SEQUENCE "master"."item_id_seq"
+  START WITH 65
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."item_relation" (
+    "id" serial not null,
+    "parent_id" integer not null,
+    "child_id" integer not null,
+    "order_number" integer not null default '1',
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."item_relation"
+  add constraint "item_relation_parent_id_fkey"
+  foreign key ("parent_id") references "master"."item" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item_relation"
+  add constraint "item_relation_child_id_fkey"
+  foreign key ("child_id") references "master"."item" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item_relation"
+  add constraint "item_relation_id_pkey"
+  primary key ("id");
+alter table "master"."item_relation"
+  add constraint "item_relation_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item_relation"
+  add constraint "item_relation_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "item_relation_parent_id_idx"
+  on "master"."item_relation"
+  using btree ("parent_id");
+create index "item_relation_child_id_idx"
+  on "master"."item_relation"
+  using btree ("child_id");
+create index "item_relation_is_void_idx"
+  on "master"."item_relation"
+  using btree ("is_void");
+
+copy "master"."item_relation" (
+    "id",
+    "parent_id",
+    "child_id",
+    "order_number"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"parent_id";"child_id";"order_number"
+1;1;12;1
+2;12;8;1
+3;12;9;2
+4;12;10;3
+5;12;16;4
+6;12;19;5
+7;12;24;6
+8;12;25;7
+9;12;27;8
+10;12;30;9
+11;12;37;10
+12;12;38;11
+13;12;39;12
+14;8;11;1
+15;8;17;2
+16;16;18;1
+17;19;20;1
+18;19;21;2
+19;19;22;3
+20;25;26;1
+21;27;28;1
+22;27;29;2
+23;30;31;1
+24;30;32;2
+25;39;40;1
+26;39;41;2
+27;11;13;1
+28;17;14;1
+29;17;15;2
+30;22;23;1
+31;32;33;1
+32;32;34;2
+33;32;35;3
+34;32;36;4
+\.
+
+
+alter sequence "master"."item_relation_id_seq"
+  RESTART 35;
+
+ALTER SEQUENCE "master"."item_relation_id_seq"
+  START WITH 35
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."item_action" (
+    "id" serial not null,
+    "item_id" integer not null,
+    "module" varchar,
+    "controller" varchar not null,
+    "action" varchar not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."item_action"
+  add constraint "item_action_item_id_fkey"
+  foreign key ("item_id") references "master"."item" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item_action"
+  add constraint "item_action_id_pkey"
+  primary key ("id");
+alter table "master"."item_action"
+  add constraint "item_action_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item_action"
+  add constraint "item_action_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "item_action_is_void_idx"
+  on "master"."item_action"
+  using btree ("is_void");
+
+copy "master"."item_action" (
+    "id",
+    "item_id",
+    "module",
+    "controller",
+    "action"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"item_id";"module";"controller";"action"
+1;7;"auth";"user";"browse"
+2;8;"rga";"create";"index"
+3;41;"rga";"seeding";"index"
+4;6;;"crossCutting";"index"
+5;10;"rga";"seedPreparation";"loadPipelineView"
+6;44;"rga";"browse";"loadCCRDView"
+7;45;"auth";"user";"viewProfile"
+8;22;"rga";"createProductionPlan";"index"
+9;31;"rga";"browseProductionPlan";"index"
+10;37;"rga";"containerManagement";"index"
+11;36;"rga";"treatments";"index"
+12;46;"rga";"harvest";"index"
+13;33;"rga";"containerManagement";"index"
+16;43;;"pipeline";"index"
+17;47;"changeLog";"browse";"dashboard"
+18;48;;"pipeline";"view"
+19;11;"rga";"create";"specifyEntries"
+20;13;"rga";"create";"seedStocks"
+21;17;"rga";"create";"lineDevScheme"
+22;49;"rga";"create";"additionalInformation"
+23;50;"rga";"create";"preview"
+24;51;"rga";"browse";"index"
+25;52;"rga";"breakSeedDormancy";"index"
+26;53;"rga";"selection";"index"
+27;54;"rga";"browseProductionPlan";"index"
+28;27;"rga";"seedPreparation";"index"
+29;55;"rga";"update";"index"
+30;56;"rga";"update";"basicInformation"
+31;57;"rga";"update";"specifyEntries"
+32;58;"rga";"update";"seedStocks"
+33;59;"rga";"update";"lineDevScheme"
+34;60;"rga";"update";"additionalInformation"
+35;61;"rga";"update";"preview"
+36;62;"rga";"browseProductionPlan";"pipelineProductionPlan"
+37;63;"rga";"updateProductionPlan";"index"
+38;34;"rga";"containerManagement";"index"
+39;40;"rga";"containerManagement";"index"
+40;64;"rga";"drying";"index"
+\.
+
+
+alter sequence "master"."item_action_id_seq"
+  RESTART 41;
+
+ALTER SEQUENCE "master"."item_action_id_seq"
+  START WITH 41
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."team" (
+    "id" serial not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(256) not null,
+    "leader_id" integer,
+    "type" varchar,
+    "description" text,
+    "display_name" varchar(256),
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."team"
+  add constraint "team_leader_id_fkey"
+  foreign key ("leader_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."team"
+  add constraint "team_id_pkey"
+  primary key ("id");
+alter table "master"."team"
+  add constraint "team_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."team"
+  add constraint "team_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create unique index "team_abbrev_idx"
+  on "master"."team"
+  using btree ("abbrev");
+create index "team_is_void_idx"
+  on "master"."team"
+  using btree ("is_void");
+
+copy "master"."team" (
+    "id",
+    "abbrev",
+    "name",
+    "leader_id",
+    "type",
+    "description",
+    "display_name",
+    "is_void"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"abbrev";"name";"leader_id";"type";"description";"display_name";"is_void"
+2;"RGAC";"RGA Crosscutting";11;"crosscutting";"The RGA Crosscutting Team";"RGA Crosscutting";"False"
+3;"Irri SEA";"Irrigated South East Asia";2;"pipeline";"Irrigated South East Asia pipeline team";"Irrigated South East Asia";"False"
+4;"FB";"foobar2";2;"crosscutting";"this is a test";"foobar2";"True"
+5;"foobat";"foobat";6;"pipeline";;"foobat";"True"
+6;"SG";"System Group";12;"others";"This is the group for all the registered users.
+Being a member of this group allows the user to access all the basic pages in the system such as What's new,wiki,tutorial,view profile.";"System Group";"False"
+\.
+
+
+alter sequence "master"."team_id_seq"
+  RESTART 7;
+
+ALTER SEQUENCE "master"."team_id_seq"
+  START WITH 7
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."user_item" (
+    "id" serial not null,
+    "user_id" integer not null,
+    "item_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."user_item"
+  add constraint "user_item_user_id_fkey"
+  foreign key ("user_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."user_item"
+  add constraint "user_item_item_id_fkey"
+  foreign key ("item_id") references "master"."item" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "user_item_user_id_idx"
+  on "master"."user_item"
+  using btree ("user_id");
+create index "user_item_item_id_idx"
+  on "master"."user_item"
+  using btree ("item_id");
+create index "user_item_is_void_idx"
+  on "master"."user_item"
+  using btree ("is_void");
+
+copy "master"."user_item" (
+    "id",
+    "user_id",
+    "item_id"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"user_id";"item_id"
+1;2;7
+2;11;8
+3;7;7
+4;7;12
+5;7;41
+\.
+
+
+alter sequence "master"."user_item_id_seq"
+  RESTART 6;
+
+ALTER SEQUENCE "master"."user_item_id_seq"
+  START WITH 6
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."user_role" (
+    "id" serial not null,
+    "user_id" integer not null,
+    "role_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."user_role"
+  add constraint "user_role_user_id_fkey"
+  foreign key ("user_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."user_role"
+  add constraint "user_role_item_id_fkey"
+  foreign key ("role_id") references "master"."role" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."user_role"
+  add constraint "user_role_id_pkey"
+  primary key ("id");
+alter table "master"."user_role"
+  add constraint "user_role_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."user_role"
+  add constraint "user_role_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "user_role_user_id_idx"
+  on "master"."user_role"
+  using btree ("user_id");
+create index "user_role_role_id_idx"
+  on "master"."user_role"
+  using btree ("role_id");
+create index "user_role_is_void_idx"
+  on "master"."user_role"
+  using btree ("is_void");
+
+copy "master"."user_role" (
+    "id",
+    "user_id",
+    "role_id",
+    "is_void"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"user_id";"role_id";"is_void"
+7;7;14;"False"
+29;9;16;"False"
+36;10;15;"False"
+37;6;14;"False"
+38;12;15;"False"
+39;3;15;"False"
+40;5;16;"False"
+45;6;14;"False"
+46;9;14;"False"
+47;8;14;"False"
+48;3;14;"False"
+49;2;14;"False"
+50;11;16;"False"
+51;12;17;"False"
+53;4;14;"False"
+54;11;15;"False"
+55;2;16;"False"
+56;2;6;"False"
+57;7;6;"False"
+58;7;16;"False"
+59;7;16;"False"
+60;7;15;"False"
+61;7;17;"False"
+62;2;14;"False"
+63;11;14;"False"
+64;6;14;"False"
+65;9;14;"False"
+66;7;14;"False"
+67;3;14;"False"
+68;5;14;"False"
+69;4;14;"False"
+70;10;14;"False"
+71;12;14;"False"
+72;8;14;"False"
+75;7;14;"False"
+\.
+
+
+alter sequence "master"."user_role_id_seq"
+  RESTART 76;
+
+ALTER SEQUENCE "master"."user_role_id_seq"
+  START WITH 76
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."user_session" (
+    "id" serial not null,
+    "user_id" integer not null,
+    "data" text,
+    "selected_pipeline_id" integer,
+    "last_visited_url" varchar,
+    "is_default_redirect_yes" boolean default false,
+    "is_default_redirect_no" boolean default false,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."user_session"
+  add constraint "user_session_user_id_fkey"
+  foreign key ("user_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."user_session"
+  add constraint "user_session_id_pkey"
+  primary key ("id");
+alter table "master"."user_session"
+  add constraint "user_session_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."user_session"
+  add constraint "user_session_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "user_session_user_id_idx"
+  on "master"."user_session"
+  using btree ("user_id");
+create index "user_session_is_void_idx"
+  on "master"."user_session"
+  using btree ("is_void");
+
+copy "master"."user_session" (
+    "id",
+    "user_id",
+    "data",
+    "selected_pipeline_id",
+    "last_visited_url",
+    "is_default_redirect_yes",
+    "is_default_redirect_no"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"user_id";"data";"selected_pipeline_id";"last_visited_url";"is_default_redirect_yes";"is_default_redirect_no"
+1;20;;1;;;
+2;21;;2;;;
+3;16;;2;;;
+4;7;;1;"/bims-2.0/index.php/rga/view/pipeline/id/822";"False";"True"
+5;4;;1;;;
+6;8;;1;"/bims-2.0/index.php/rga/browse/loadCCRDView";;"True"
+7;5;"{""BimGridView"":{""audit-browser-grid"":{""entry"":{""model"":""Audit"",""filter"":{""table_name"":""entry""},""sort"":null}}}}";1;"/bims2/index.php/pipeline/1";"True";"False"
+8;12;;1;"/bims2/index.php/rga/seedPreparation/index";"True";
+9;10;;1;"/bims-2.0/index.php/rga/browse/loadCCRDView";;"True"
+10;9;;1;;;
+11;6;"{""BimGridView"":{""user-grid"":{""a.flores"":{""model"":""User"",""filter"":{""email"":""a.flores""}},""sort email"":{""model"":""User"",""filter"":[],""sort"":{""key"":""User_sort"",""value"":""email""}},""irri sort by username"":{""model"":""User"",""filter"":{""email"":""irri""},""sort"":{""key"":""User_sort"",""value"":""username""}}},""items-browser-grid"":[],""role-grid"":{""admin"":{""model"":""Role"",""filter"":{""display_name"":""admin""},""sort"":null}},""team-grid"":{""irri"":{""model"":""Team"",""filter"":{""name"":""irri""},""sort"":null}},""product-browser"":[]}}";1;;;
+12;2;;1;"/bims-2.0/index.php/auth/user/viewProfile/id/2";"True";"False"
+13;3;;1;"/bims2/index.php/crossCutting/browseTeam";"False";"False"
+14;11;;1;;;
+15;1;;1;;;
+16;24;;1;"/bims2/index.php/rga/view/switchTab";"False";"True"
+\.
+
+
+alter sequence "master"."user_session_id_seq"
+  RESTART 17;
+
+ALTER SEQUENCE "master"."user_session_id_seq"
+  START WITH 17
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."team_member" (
+    "id" serial not null,
+    "team_id" integer not null,
+    "member_id" integer not null,
+    "role_id" integer not null,
+    "user_role_id" integer,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."team_member"
+  add constraint "team_member_team_id_fkey"
+  foreign key ("team_id") references "master"."team" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."team_member"
+  add constraint "team_member_member_id_fkey"
+  foreign key ("member_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."team_member"
+  add constraint "team_member_role_id_fkey"
+  foreign key ("role_id") references "master"."role" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."team_member"
+  add constraint "team_member_user_role_id_fkey"
+  foreign key ("user_role_id") references "master"."user_role" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."team_member"
+  add constraint "team_member_id_pkey"
+  primary key ("id");
+alter table "master"."team_member"
+  add constraint "team_member_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."team_member"
+  add constraint "team_member_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "team_member_team_id_idx"
+  on "master"."team_member"
+  using btree ("team_id");
+create index "team_member_member_id_idx"
+  on "master"."team_member"
+  using btree ("member_id");
+create index "team_member_role_id_idx"
+  on "master"."team_member"
+  using btree ("role_id");
+create index "team_member_user_role_id_idx"
+  on "master"."team_member"
+  using btree ("user_role_id");
+create index "team_member_is_void_idx"
+  on "master"."team_member"
+  using btree ("is_void");
+
+copy "master"."team_member" (
+    "id",
+    "team_id",
+    "member_id",
+    "role_id",
+    "user_role_id",
+    "is_void"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"team_id";"member_id";"role_id";"user_role_id";"is_void"
+6;2;7;18;7;"False"
+21;2;9;16;29;"True"
+28;2;10;15;36;"False"
+29;2;6;14;37;"False"
+30;2;12;15;38;"False"
+31;2;3;15;39;"False"
+32;2;5;16;40;"False"
+37;3;6;14;45;"True"
+38;3;9;14;46;"False"
+39;3;8;14;47;"False"
+40;3;3;14;48;"True"
+41;3;2;14;49;"False"
+42;3;11;16;50;"False"
+43;3;12;17;51;"False"
+45;2;4;14;53;"False"
+46;2;11;15;54;"False"
+47;2;2;16;55;"False"
+48;6;2;14;62;"False"
+49;6;11;14;63;"False"
+50;6;6;14;64;"False"
+51;6;9;14;65;"False"
+52;6;7;18;66;"False"
+53;6;3;14;67;"False"
+54;6;5;14;68;"False"
+55;6;4;14;69;"False"
+56;6;10;14;70;"False"
+57;6;12;14;71;"False"
+58;6;8;14;72;"False"
+61;3;7;14;75;"False"
+\.
+
+
+alter sequence "master"."team_member_id_seq"
+  RESTART 62;
+
+ALTER SEQUENCE "master"."team_member_id_seq"
+  START WITH 62
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."item_role" (
+    "id" serial not null,
+    "item_id" integer not null,
+    "role_id" integer not null,
+    "team_id" integer not null,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."item_role"
+  add constraint "item_role_item_id_fkey"
+  foreign key ("item_id") references "master"."item" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item_role"
+  add constraint "item_role_role_id_fkey"
+  foreign key ("role_id") references "master"."role" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item_role"
+  add constraint "item_role_team_id_fkey"
+  foreign key ("team_id") references "master"."team" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "item_role_item_id_idx"
+  on "master"."item_role"
+  using btree ("item_id");
+create index "item_role_role_id_idx"
+  on "master"."item_role"
+  using btree ("role_id");
+create index "item_role_team_id_idx"
+  on "master"."item_role"
+  using btree ("team_id");
+create index "item_role_is_void_idx"
+  on "master"."item_role"
+  using btree ("is_void");
+
+copy "master"."item_role" (
+    "id",
+    "item_id",
+    "role_id",
+    "team_id",
+    "is_void"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"item_id";"role_id";"team_id";"is_void"
+1;8;6;2;"False"
+2;41;6;2;"False"
+3;5;6;2;"False"
+4;5;15;2;"False"
+5;5;16;2;"False"
+6;8;17;3;"False"
+7;16;15;2;"False"
+8;8;17;2;"True"
+9;9;17;2;"False"
+10;10;17;3;"False"
+11;11;17;2;"False"
+12;17;17;2;"False"
+13;13;17;2;"False"
+14;15;17;2;"False"
+15;18;15;2;"False"
+16;19;15;2;"False"
+17;20;15;2;"False"
+18;21;15;2;"False"
+19;22;15;2;"False"
+20;23;15;2;"False"
+21;24;15;2;"False"
+22;25;6;2;"False"
+23;26;6;2;"False"
+24;27;6;2;"False"
+25;28;6;2;"False"
+26;29;6;2;"False"
+27;30;6;2;"False"
+28;31;6;2;"False"
+29;32;6;2;"False"
+30;33;6;2;"False"
+31;34;6;2;"False"
+32;35;6;2;"False"
+33;36;6;2;"False"
+34;37;6;2;"False"
+35;38;6;2;"False"
+36;39;16;2;"False"
+37;40;16;2;"False"
+38;41;16;2;"False"
+39;42;16;2;"False"
+40;6;16;2;"False"
+41;6;14;2;"False"
+42;6;6;2;"False"
+43;6;15;2;"False"
+44;43;16;3;"False"
+45;43;14;3;"False"
+46;43;17;3;"False"
+47;44;6;2;"False"
+48;44;15;2;"False"
+91;2;15;2;"False"
+94;2;16;2;"False"
+95;2;17;3;"False"
+108;2;6;2;"False"
+109;45;14;2;"False"
+110;45;16;2;"False"
+111;45;6;2;"False"
+112;45;15;2;"False"
+113;46;16;2;"False"
+114;48;14;3;"False"
+115;49;17;3;"False"
+116;50;17;3;"False"
+117;48;17;3;"False"
+118;47;14;6;"False"
+119;51;14;3;"False"
+120;51;16;3;"False"
+121;51;17;3;"False"
+122;41;14;2;"False"
+123;52;14;2;"False"
+124;52;16;2;"False"
+125;52;6;2;"False"
+126;52;15;2;"False"
+127;53;14;2;"False"
+128;53;16;2;"False"
+129;46;14;2;"False"
+130;36;14;2;"False"
+131;36;16;2;"False"
+132;54;14;2;"False"
+133;54;16;2;"False"
+134;44;14;2;"False"
+135;55;17;3;"False"
+136;56;17;3;"False"
+137;57;17;3;"False"
+138;58;17;3;"False"
+139;59;17;3;"False"
+140;60;17;3;"False"
+141;61;17;3;"False"
+142;62;17;3;"False"
+143;63;15;2;"False"
+144;40;6;2;"False"
+145;64;14;2;"False"
+146;64;16;2;"False"
+\.
+
+
+alter sequence "master"."item_role_id_seq"
+  RESTART 147;
+
+ALTER SEQUENCE "master"."item_role_id_seq"
+  START WITH 147
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."tooltip" (
+    "id" serial not null,
+    "name" varchar(256) not null,
+    "value" varchar not null,
+    "description" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."tooltip"
+  add constraint "tooltip_name_ukey"
+  unique ("name");
+
+create unique index "tooltip_name_idx"
+  on "master"."tooltip"
+  using btree ("name");
+create index "tooltip_is_void_idx"
+  on "master"."tooltip"
+  using btree ("is_void");
+
+copy "master"."tooltip" (
+    "id",
+    "name",
+    "value",
+    "description",
+    "is_void"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"name";"value";"description";"is_void"
+1;"select_pagesize";"Select pagesize";"Tooltip for selecting page size";"False"
+2;"tooltip_name";"Name of the tooltip used by the developers in the system. Test update.";;"False"
+3;"tooltip_value";"Value of the tooltip displayed in the system";;"False"
+5;"tooltip_description";"Description of the tooltip";;"False"
+6;"progeny_list_status_po";"Status of the progeny list. If the status is NEW, you may click on the entry to change its status to ACCEPTED.";;"False"
+7;"progeny_list_accept_po";"Click here to change the status of this progeny list to ACCEPTED.";;"False"
+8;"instruction_name";"Name of the instruction used by the developers in the system";;"False"
+9;"instruction_value";"Value of the instruction displayed in the system";;"False"
+10;"instruction_description";"Description of the instruction";;"False"
+11;"pipeline_module_select";"Click to select pipeline";;"False"
+12;"ccrd_module_select";"Click to select Cross Cutting activity";;"False"
+13;"progeny_list_name";"User-readable identifier of the progeny list.";;"False"
+14;"progeny_list_no_of_progenies";"Total number of active progenies included in the progeny list.";;"False"
+15;"progeny_list_location";"Location where the study is being conducted.";;"False"
+16;"progeny_list_year";"Year when the study was started.";;"False"
+17;"progeny_list_season";"Season when the study was started.";;"False"
+18;"progeny_list_author";"User who created the progeny list.";;"False"
+19;"save_filter";"Click to save current filter/s";;"False"
+20;"user_email";"Email of the user";"Email address of the user. This should be @irri.org.";"False"
+21;"username";"Username of the user";;"False"
+22;"user_first_name";"First name of the user";;"False"
+23;"user_last_name";"Last name of the user";;"False"
+24;"user_middle_name";"Middle name of the user";;"False"
+25;"user_valid_start_date";"Valid start date of the user";;"False"
+26;"user_valid_end_date";"Valid end date or expiry date of the user.";;"False"
+27;"user_is_void";"To know if the user is disabled...true or false";;"False"
+28;"user_display_name";"The display name of the user";;"False"
+29;"user_status";"The status of the user";;"False"
+30;"user_type";"The type of user ";"The options are admin or non-admin only. Note: Admin can do all the tasks and can use all the tools in the system while the non-admin can do tasks based on role and permissions .";"False"
+31;"clear_filter";"Click to clear all current filter/s";;"False"
+32;"test";"test
+";;"False"
+35;"team_abbrev";"Abbreviation of team name";;"False"
+36;"team_leader";"The leader of the team";;"False"
+37;"team_desc";"Team description";;"False"
+38;"team_is_void";"To know if team is disabled... true or false";;"False"
+39;"team_name";"The name of the team";;"False"
+40;"item_name";"Name of the item";"Item can be process,activity,task,step";"False"
+41;"item_abbrev";"Abbreviation of the item";;"False"
+42;"item_type";"Type of the item";"Indicates if step,task,activity,process.";"False"
+43;"item_is_void";"To know if the item is disabled...true or false";"True means the item is not active or considered deleted. False otherwise.";"False"
+44;"item_desc";"Description of the item";;"False"
+45;"role_name";"The name of the role";;"False"
+46;"role_abbrev";"The abbreviation of the role";;"False"
+47;"role_rank";"Rank of the role";;"False"
+48;"role_display_name";"Display name of the role";;"False"
+49;"role_desc";"Description of the role";;"False"
+50;"progeny_list_currentgeneration";"The current filial generation of the progenies in the Progeny List.";;"False"
+51;"progeny_list_target_generation";"The maximum target generation of the Progeny List.";;"False"
+52;"break_seed_dormancy";"Click the link to update the Breaking Seed Dormancy Task. (Green labeled 'A' is the actual values. Orange labeled 'P' is the planned values)";;"False"
+53;"progeny_harvest_date";"The value preceded by the green labeled 'P'  is the planned harvest date  and the value preceded by orange labeled 'A' is the  actual harvest date in the production plan of the Progeny List.";;"False"
+54;"progeny_seeding_date";"The value preceded by the green labeled 'P' is the planned seeding date and the value preceded by orange labeled ' A' is the actual seeding date in the production plan of the Progeny List.";;"False"
+55;"progeny_treatments";"Click the link to update the Treatments Task. (Green labeled 'A' is the actual values. Orange labeled 'P' is the planned values)";;"False"
+56;"progeny_container_mgt";"Click the link to update the Container Management Task. (Green labeled 'A' is the actual values. Orange labeled 'P' is the planned values)";;"False"
+57;"team_type";"Type of team";"Options are pipeline,crosscutting and   others. See the pipeline_team table for the pipeline teams and crosscutting_team table for the crosscutting team details.";"False"
+58;"role_is_void";"Is role disabled? true or false";;"False"
+59;"team_member_role";"Role of the team member";"This is the display name of the role id.";"False"
+60;"team_member";"Team Member";"Counter part display name for the member user id.";"False"
+61;"progeny_entry_name";"User-readable identifier of a progeny.";;"False"
+62;"progeny_no_of_generation";"Progeny's duration in the RGA.";;"False"
+63;"progeny_no_of_plants";"Target no. of plants at the end of the RGA.";;"False"
+64;"progeny_current_generation";"The current filial generation of the progeny.";;"False"
+65;"progeny_target_generation";"The maximum target generation for a progeny.";;"False"
+77;"seed_stock_name";"Seed source where the progeny will be coming from.";;"False"
+78;"seed_stock_volume_available";"Amount of seeds that are usable.";;"False"
+79;"seed_stock_volume_used";"Amount of seeds to be used.";;"False"
+80;"seed_stock_status";"Indicator for availability of the seed source.";;"False"
+81;"production_plan_status";"Indicates whether the RGA team has already created a production plan for at least one progeny in the list.";;"False"
+82;"study_start_date";"Date when work on the study officially started.";;"False"
+83;"program";"Consist of variety development pipelines (VDPs), trait development teams and cross-cutting activities (CCRDs).";;"False"
+84;"progeny_list_unaccept_po";"Click here to change the status of this progeny list to NEW.";;"False"
+87;"production_plan_name";"Name of the production plan where the progeny belongs.";;"False"
+88;"last_task_done";"Shows the last task done in a progeny in the production plan. Click to show all the tasks done.";;"False"
+89;"change_log_name";"The name of the feature/change done.";;"False"
+90;"change_log_description";"The description of the feature/change.";;"False"
+91;"change_log_key_person";"The key person or the person in charge of the feature/change";;"False"
+92;"change_log_date_done";"The date when the feature is considered done.";;"False"
+93;"change_log_is_void";"If the feature/change is marked as deleted.";;"False"
+94;"progenies_without_prod_plan";"Number of progenies in the progeny list without production plan.";;"False"
+95;"target_no_of_plants";"Target number of plants of the progeny.";;"False"
+96;"rga_selection_status";"Indicates whether a progeny has been selected for advancing to the next stage.";;"False"
+97;"task_remarks";"Short description of the execution of the task.";;"False"
+98;"view_last_task_done";"Click to view status of the entry";;"False"
+99;"harvest_date";"Harvest date of the progenies.";;"False"
+100;"harvest_volume";"Harvest volume of the progenies";;"False"
+101;"variable_name";"The  identifier of the variable and similar to the column_name";;"False"
+102;"variable_abbrev";"The abbreviation or the short term for the variable";;"False"
+103;"variable_prefferred_name";"The preffered name for the variable.";;"False"
+104;"variable_display_name";"The readable and understandable name of the variable";;"False"
+105;"variable_column_name";"The name of the column for the variable";;"False"
+106;"variable_data_type";"The data type of the variable e.g. integer,string,boolean etc.";;"False"
+107;"variable_size";"Size of the variable";;"False"
+108;"variable_is_nullable";"Is the variable can have the value of null?";;"False"
+109;"variable_default_value";"The default value of the variable.";"The suggested value of the variable.";"False"
+110;"variable_empty_value";"This shows the empty value format of the variable.";;"False"
+111;"variable_undefined_value";"The undefined value of the variable.";;"False"
+112;"variable_description";"The explanation about the use of variable";;"False"
+113;"variable_status";"The status of the variable e.g. active,inactive etc.";;"False"
+114;"variable_has_ontology";"If the variable has ontology";"An ontology formally represents knowledge as a set of concepts within a domain, using a shared vocabulary to denote the types, properties and interrelationships of those concepts.";"False"
+115;"variable_unit";"The unit of measure for the variable";;"False"
+116;"variable_maximum_value";"The highest value the variable could have.";;"False"
+117;"variable_minimum_value";"The smallest value for the variable";;"False"
+118;"variable_high_critical_value";"The high value of the variable that needs urgent attention.";;"False"
+119;"variable_low_critical_value";"The low value that needs urgent attention";;"False"
+120;"variable_ontology_category";"The category of the variable.";;"False"
+121;"variable_ontology_type";"The type of variable ontology";;"False"
+122;"variable_ontology_variable";"This is the matched variable of the variable id of the variable ontology.";;"False"
+123;"variable_ontology_reference";"The ontology reference of the variable";;"False"
+124;"var_ontology_classification";"The ontology classification of the variable";;"False"
+125;"variable_ontology_method";"The ontology method for the variable";;"False"
+126;"variable_ontology_scale";"The ontology scale for the variable";;"False"
+127;"variable_ontology_scale_type";"The ontology scale type for the variable";;"False"
+128;"variable_ontology_scale_level";"The ontology scale level of the variable";;"False"
+129;"variable_ontology_unit";"The ontology unit of the variable";;"False"
+130;"variable_ontology_is_interest";"If the variable is interest?";;"False"
+131;"variable_ontology_description";"The ontological description of the variable";;"False"
+132;"variable_ontology_is_void";"If the variable ontology is disabled?";;"False"
+133;"variable_is_deprecated";"This variable is historical. It is discourage to be used for future purposes.";;"False"
+134;"variable_reference";"The bibliographical reference to the variable";"Still to work on this because this can't handle the many references of the scales. ";"False"
+135;"variable_abbrev_temp";"This temporary abbrev column will hold the non-unique values added by data managers";"Abbrev column must contain unique values; this temporary abbrev column will hold the non-unique values added by data managers";"False"
+136;"variable_category";"Values may include: identification, metadata, observation";;"False"
+137;"variable_data_level";"Data level where the variable is applicable; can be study, entry, plot";;"False"
+138;"progeny_list_title";"User-defined title of the study/progeny list.";;"False"
+139;"qr_code_labels";"Generates QR Code labels containing information about the progenies in the list.";;"False"
+\.
+
+
+alter sequence "master"."tooltip_id_seq"
+  RESTART 140;
+
+ALTER SEQUENCE "master"."tooltip_id_seq"
+  START WITH 140
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
+
+-- ----------------
+
+create table "master"."instruction" (
+    "id" serial not null,
+    "name" varchar(256) not null,
+    "value" varchar not null,
+    "description" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."instruction"
+  add constraint "instruction_name_ukey"
+  unique ("name");
+
+create unique index "instruction_name_idx"
+  on "master"."instruction"
+  using btree ("name");
+create index "instruction_is_void_idx"
+  on "master"."instruction"
+  using btree ("is_void");
+
+copy "master"."instruction" (
+    "id",
+    "name",
+    "value",
+    "description",
+    "is_void"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"name";"value";"description";"is_void"
+1;"accept_progeny_list_notice";"Accepting this progeny list means that the RGA team will start creating an RGA production plan for the progenies";;"False"
+2;"progeny_list_browser_pipeline";"This is the browser for all created progeny lists across pipelines.";;"False"
+3;"role_browser_admin";"This is the browser for all user roles available in the system.";;"False"
+4;"progeny_list_browser_ccrd";"This is the browser for all <b>created</b> progeny lists across pipelines. You may change the status of the list to <b>Accepted</b> or revert it to <b>New</b> by clicking its list status value.";;"False"
+5;"production_plan_browser_ccrd";"This lists all progeny lists that have production plan. You can edit the planned and actual values by clicking on the links. You may filter by Progeny List name.";;"False"
+6;"production_plan_browser_pipeline";"This lists all progeny lists that have production plan. You can view the planned and actual values by clicking on the links. You may filter by Progeny List name.";;"False"
+7;"rga_line_dev_scheme";"Specify the <b>target no. of plants</b> you want for a specific progeny. Select the <b>target generation</b> from the dropdown list.";;"False"
+8;"prod_plan_advance";"Update the production plan by choosing the seeding date and click 'Apply'.";;"False"
+10;"test_instruction";"test";;"False"
+14;"selection_browser_rga";"This is the browser for all <b>active progenies</b> and its corresponding <b>selection information</b>. You can <b>bulk change </b> by selecting progenies and entering selection information of progenies to be harvested in the fields below then click <b>Apply to Selected</b>. You may also update specific field by clicking on the value.";;"False"
+15;"create_progeny_list_seed_stock_tab";"You may <b>select seed sources</b> for a progeny in this tab. Seed sources are automatically loaded/suggested if a source exists for a progeny. You may <b>change</b> or <b>delete</b> a seed source by <b>clicking</b> one of the </b> icons.";;"False"
+17;"create_production_plan";"This lists all accepted progeny lists. Select one or more from the list then click <b>Next</b> to proceed.";;"False"
+18;"tooltip_browser";"This browser contains all the tooltip records being used in the application. Only 'System Administrators' are allowed to view, update or delete tooltips.";"Displayed in administration under content management, tooltip browser.";"False"
+19;"instruction_browser";"This browser contains all the instruction records being used in the application. Only 'System Administrators' are allowed to view, update or delete instructions.";"Displayed in administration under content management, instruction browser.";"False"
+20;"login_page";"Click on a link below to proceed. You will be signed in using your IRRI gmail account.";;"False"
+21;"pipeline_login";"Module for the seven product-oriented varietal development pipeline of IRRI";;"False"
+22;"ccrd_login";"This module provides services for the Cross Cutting Research and Development activities, processes and tasks";;"False"
+23;"administration_login";"This module contains the tools for 'System Administrators' who has full access to the entire system";;"False"
+24;"seed_preparation_browser_rga";"This browser displays progenies from a progeny lists that has been accepted to RGA production. You can update the seed preparation task by clicking on the links on the browser.";"Instructions for seed preparation task browser in RGA.";"False"
+25;"break_seed_dormancy_browser_rga";"This is the browser for all <b>active progenies</b> and its corresponding <b>planned or actual breaking seed dormancy information</b>. You can bulk add or update by selecting progenies and entering <b>actual</b> breaking seed dormancy information in the fields below then click <b>Apply to Selected</b>. You may also update specific field by clicking on the value.";"Instructions for breaking seed dormancy browser.";"False"
+26;"treatments_browser_rga";"This is the browser for all <b>active progenies</b> and its corresponding <b>planned</b> or <b>actual treatments information.</b> You can <b>bulk add or update</b> by selecting progenies and entering <b>actual</b> treatments information in the fields below then click <b>Apply to Selected.</b> You may also update specific field by clicking on the value. You can choose to update <b>Basal Fertilizer, T1 Fertilizer, T2 Fertilizer and Pesticide.</b>";"Instructions for treatments browser in RGA.";"False"
+27;"seeding_browser_rga";"This is the browser for all <b>active progenies</b> and its corresponding <b>planned</b> or <b>actual seeding information</b>. You can <b>bulk add or update</b> by selecting progenies and entering <b>actual</b> seeding information in the fields below then click <b>Apply to Selected</b>. You may also update specific field by clicking on the value.";"Instructions for seeding task browser in RGA.";"False"
+28;"harvest_browser_rga";"This is the browser for all <b>active progenies</b> and its corresponding <b>planned or actual harvest information</b>. You can bulk add or update by selecting progenies and entering <b>actual</b> harvest information in the fields below then click <b>Apply to Selected</b>. You may also update specific field by clicking on the value.";"Instructions for harvest task browser in RGA.";"False"
+29;"create_progeny_list_specify_entries_tab";"-After selecting from the data browser, click <b>Select</b> to temporarily add it to the selected progenies. Click <b>Save</b> to save it to the database.
+-You may also <b>reorder</b> the entries you have chosen by dragging an entry upward or downward.
+-The progenies that are highlighted in <b>green</b> are not yet saved in the database.";;"False"
+30;"create_progeny_list_specify_entries_tab_f1_studies";"This is the browser for all F1 studies currently in the system.";;"False"
+31;"advance_progenies";"This lists all <b>progenies with harvest</b>. Select one or more from the list then click <b>Advance</b> to proceed.";;"False"
+32;"containerMgt_browser_rga";"This is the browser for all progeny lists available in your pipeline/s. You can add or update tasks by clicking on the container management task links.";"Instructions for container management task browser in RGA.";"False"
+33;"user_browser";"This is the browser for all the users in the system. Use filters to find the records you want.";;"False"
+34;"ccrd_productionplan_browser";"This is the browser for all the created production plan available in your pipeline/s. 
+You can edit the actual and planned values by clicking on the links. You may filter according to study. (The orange labeled 'P' is for the planned values and the green labeled 'A' is for the actual values).";;"False"
+35;"pipeline_productionplan_browser";"This is the browser for all the <b>created</b> production plans available in your pipeline/s. You can view the progenies in the production plan. You can see the tasks done by clicking the links in the last column.";;"False"
+36;"item_browser";"This is the browser for all the items in the system. Use filters to find the records you want.";;"False"
+37;"team_browser";"This is the browser for all the teams in the system. Use filters to find the records you want.";;"False"
+38;"team_members_browser";"This is the team search form. Find record by team, role and member's name.";;"False"
+39;"audit_trail_browser";"This is the browser for all transactions and changes done in the system.";;"False"
+40;"seeding_task_modal";"You may specify seeding dates of each progeny by clicking on the datepickers. To perform bulk changes, you may click apply to all/selected.";;"False"
+41;"harvest_task_modal";"You may specify harvest information of each progeny by clicking on the datepickers, and typing in the volume. To perform bulk changes, you may click apply to all/selected.";;"False"
+77;"create_progeny_list_additional_information_tab";"You may put <b>additional information</b> about the progeny list you are about to create here.";;"False"
+78;"unaccept_progeny_list_notice";"Reverting the status of  this progeny list will mean that the RGA team will not yet create a production plan.";;"False"
+80;"rga_description";"Provides features for RGA processes, activities and tasks.";;"False"
+81;"hb_description";"Provides features for Crossing block and F1 nursery processes, activities and tasks. ";;"False"
+82;"create_prod_plan_progenies_tab";"This lists all the progenies of the selected progeny list/s. Select one or more from the list then click <b>Next</b> to proceed.";;"False"
+83;"create_prod_plan_details_tab";"Specify the information you want in your production plan. 
+The dates are automatically updated upon changing a field according to the default set of standards. You can also change the number of days between a task's date and seeding date
+Click the <b>check</b> or <b>Next</b> to view information you want to apply.";;"False"
+84;"create_prod_plan_preview_tab";"Please review information of the production plan you want to create then click the <b>check</b> or <b>Save</b> to apply.";;"False"
+85;"create_progeny_list_preview";"Please <b>review</b> all information of the progeny list you want to create. Click <b>Create</b> to change its status to Created.";;"False"
+86;"drying_browser_rga";"This is the template generator. You can print reports containing information about a progeny.";;"False"
+87;"whats_new_browser";"This is the browser for all the new features. Use filters to find the records you want.";;"False"
+88;"variable_browser";"This is the variable browser. Filter the records by column filters.";;"False"
+89;"variable_create";"Fill up the forms with the necessary information about the variable.";;"False"
+90;"update-production-plan";"Update the production by specifying the desired values. Task with <b>actual value</b> can no longer be updated. Click the <b>check</b> or <b>Save</b> to update.";;"False"
+91;"import_study";"1. Select the file of the study you want to import. <br>
+2. Click <b>Validate</b> button<br>";;"False"
+92;"import_entry";"Select the file of the entries you want to import then click <b>Validate</b> to proceed. The file must be in <b>CSV</b> format. ";;"False"
+93;"import_plot";"Select the file of the plot observations you want to import then click <b>Validate</b> to proceed. The file must be in <b>CSV</b> format. ";;"False"
+94;"import_summary";"You can now import the <b>Study</b>,  <b>Entry</b>, and <b>Plot</b> information by clicking <b>Import</b>. Click <b>Cancel</b> to discard transaction.";;"False"
+95;"view-production-plan";"This contains planned <b>(P)</b> and actual <b>(A)</b> values for the production plan of the progeny.";;"False"
+96;"data_management_login";"This module contains the administration tools for 'Data Managers' ";;"False"
+97;"import_view";"This contains <b>study</b>, <b>entry</b>, and <b>plot</b> information of the data you have imported in the data warehouse terminal. ";;"False"
+98;"tour_product_catalog";"Lets you browse, create or update products used and produced in product development programs.";;"False"
+99;"tour_seed_stocks";"Lets you browse all available seed stocks in product development programs.";;"False"
+100;"tour_variables";"Lets you browse, create, update and delete variables";;"False"
+101;"tour_data_import";"Lets you validate and import studies, entries and plot observations files in the data terminal and commit it to the data warehouse.";;"False"
+102;"tour_audit_trail";"Lets you browse audit records of tasks performed, table name, old and new value and who performed the task.";;"False"
+103;"tour_create_prog_list_basic_info_name";"Name of the progeny list is auto generated but you may still modify the value.";;"False"
+104;"tour_create_prog_list_basic_info_tvp";"Choose sub-program of your selected Variety Development Pipeline.";;"False"
+105;"tour_create_prog_list_basic_info_year";"Specify the year when the study was started.";;"False"
+106;"tour_create_prog_list_basic_info_season";"Choose the season of the study when it was started.";;"False"
+107;"tour_create_prog_list_basic_info_create";"Click to proceed in the creation of progeny list. The progeny will have a status of <b>Draft</b>.";;"False"
+108;"imported_studies_browser";"This is the browser for all studies imported in the data terminal.";;"False"
+109;"uploaded_files_browser";"This is the browser for all <b>original files</b> uploaded in the data terminal. You may <b>download</b> the files by clicking on the download icon.";;"False"
+110;"data_warehouse_study_browser";"This is the browser for all imported studies in the product development programs that are committed in the data terminal.";;"False"
+111;"my_team_members_browser";"This browser lists all members of your team.";;"False"
+112;"my_teams_browser";"This browser lists all teams that you belong. Click on the number of members to browse team members of your team.";;"False"
+113;"staff_description";"Provides information about all users or team members in your team.";;"False"
+114;"send_seeds";"This is the browser for all <b>active progenies</b> and its corresponding  <b>send seeds</b> information. You can <b>bulk add or update</b> by selecting progenies and entering <b>send seeds</b> information in the fields below then click <b>Apply to Selected</b>. You may also update specific field by clicking on the value.";;"False"
+115;"template_generator";"This is the browser for all created progeny lists across pipelines. You can generate <b>print-outs</b> here.";;"False"
+116;"template_preview";"You can customize your report here. To include attributes, check appropriate boxes.";;"False"
+117;"update-production-plan-of-advanced-progenies";"This is the <b>created production plan</b> of the <b>advanced progenies</b>. To <b>update</b>,  specify the desired values and click the <b>check</b> or <b>Save</b>.";;"False"
+\.
+
+
+alter sequence "master"."instruction_id_seq"
+  RESTART 118;
+
+ALTER SEQUENCE "master"."instruction_id_seq"
+  START WITH 118
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
 
 -- ----------------
 
@@ -1141,480 +2582,48 @@ create index "change_log_is_void_idx"
   on "master"."change_log"
   using btree ("is_void");
 
--- ----------------
+copy "master"."change_log" (
+    "id",
+    "name",
+    "description",
+    "key_person_id",
+    "date_done",
+    "is_void"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"id";"name";"description";"key_person_id";"date_done";"is_void"
+2;"Temporary Non-Admin";"Admin can act like a non-admin user temporarily";2;"2014-02-18";"False"
+3;"Lorem Impsum";"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc purus libero, porttitor et rhoncus sed, fringilla nec felis. Pellentesque a mi nec velit viverra euismod. Nullam tincidunt dictum elit, non laoreet arcu faucibus dictum. Duis sed porta nunc. Phasellus varius nunc ut lacus lacinia pulvinar. Duis vitae varius felis.";3;"2014-02-19";"True"
+4;"Test2";"Test description";6;"2014-02-13";"True"
+5;"feature name";"this is a feature description";2;"2014-02-22";"True"
+6;"BIMS Wiki";"Initial site for BIMS concepts knowledgebase.";7;"2014-02-25";"False"
+7;"Guided Tour";"Initial implementation of a guided tour for users.";7;"2014-02-28";"False"
+8;"Data Management Module";"New entry point for data management tools to be used by data managers.";7;"2014-02-25";"False"
+9;"Create Production Plan";"An improved user interface and validation for creating, updating, and viewing production plans. This includes a timeline where users can view the summary of dates for tasks and edit the number of days before or after the seeding date for each task.";10;"2014-02-28";"True"
+10;"Create Progeny List";"Validation in creating new progeny lists where users can only create a list if all required information is provided. A checklist is provided to guide the user.";8;"2014-02-28";"False"
+11;"Data validation for RGA knowledge work tools";"Basic business logic or validation rules for RGA knowledge work tasks.";8;"2014-02-27";"False"
+12;"Variable Management";"Tool for data managaers that allows adding of new variables to the system. This also provides a data browser where the user can view, update, or delete variable items.";2;"2014-02-28";"False"
+13;"Create Production Plan";"An improved user interface and validation for creating, updating, and viewing production plans. This includes a timeline where users can view the summary of dates for tasks and edit the number of days before or after the seeding date for each task.";10;"2014-03-28";"False"
+\.
 
-create table "master"."instruction" (
-    "id" serial not null,
-    "name" varchar(256) not null,
-    "value" varchar not null,
-    "description" text,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
 
-alter table "master"."instruction"
-  add constraint "instruction_name_ukey"
-  unique ("name");
+alter sequence "master"."change_log_id_seq"
+  RESTART 14;
 
-create unique index "instruction_name_idx"
-  on "master"."instruction"
-  using btree ("name");
-create index "instruction_is_void_idx"
-  on "master"."instruction"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."role" (
-    "id" serial not null,
-    "abbrev" varchar(128) not null,
-    "name" varchar(256) not null,
-    "rank" smallint default '-1',
-    "display_name" varchar(256),
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."role"
-  add constraint "role_id_pkey"
-  primary key ("id");
-alter table "master"."role"
-  add constraint "role_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."role"
-  add constraint "role_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "role_is_void_idx"
-  on "master"."role"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."item" (
-    "id" serial not null,
-    "abbrev" varchar(128) not null,
-    "name" varchar(256) not null,
-    "description" text,
-    "remarks" text,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."item"
-  add constraint "item_id_pkey"
-  primary key ("id");
-alter table "master"."item"
-  add constraint "item_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."item"
-  add constraint "item_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create unique index "item_abbrev_idx"
-  on "master"."item"
-  using btree ("abbrev");
-create index "item_is_void_idx"
-  on "master"."item"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."item_relation" (
-    "id" serial not null,
-    "parent_item_id" integer not null,
-    "child_item_id" integer not null,
-    "order_number" integer not null default '1',
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."item_relation"
-  add constraint "item_relation_parent_item_id_fkey"
-  foreign key ("parent_item_id") references "master"."item" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."item_relation"
-  add constraint "item_relation_child_item_id_fkey"
-  foreign key ("child_item_id") references "master"."item" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."item_relation"
-  add constraint "item_relation_id_pkey"
-  primary key ("id");
-alter table "master"."item_relation"
-  add constraint "item_relation_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."item_relation"
-  add constraint "item_relation_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "item_relation_parent_item_id_idx"
-  on "master"."item_relation"
-  using btree ("parent_item_id");
-create index "item_relation_child_item_id_idx"
-  on "master"."item_relation"
-  using btree ("child_item_id");
-create index "item_relation_is_void_idx"
-  on "master"."item_relation"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."item_action" (
-    "id" serial not null,
-    "item_id" integer not null,
-    "module" varchar,
-    "controller" varchar not null,
-    "action" varchar not null,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."item_action"
-  add constraint "item_action_item_id_fkey"
-  foreign key ("item_id") references "master"."item" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."item_action"
-  add constraint "item_action_id_pkey"
-  primary key ("id");
-alter table "master"."item_action"
-  add constraint "item_action_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."item_action"
-  add constraint "item_action_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "item_action_is_void_idx"
-  on "master"."item_action"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."item_role" (
-    "id" serial not null,
-    "item_id" integer not null,
-    "role_id" integer not null,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."item_role"
-  add constraint "item_role_item_id_fkey"
-  foreign key ("item_id") references "master"."item" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."item_role"
-  add constraint "item_role_role_id_fkey"
-  foreign key ("role_id") references "master"."role" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "item_role_item_id_idx"
-  on "master"."item_role"
-  using btree ("item_id");
-create index "item_role_role_id_idx"
-  on "master"."item_role"
-  using btree ("role_id");
-create index "item_role_is_void_idx"
-  on "master"."item_role"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."tooltip" (
-    "id" serial not null,
-    "name" varchar(256) not null,
-    "value" varchar not null,
-    "description" text,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."tooltip"
-  add constraint "tooltip_name_ukey"
-  unique ("name");
-
-create unique index "tooltip_name_idx"
-  on "master"."tooltip"
-  using btree ("name");
-create index "tooltip_is_void_idx"
-  on "master"."tooltip"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."user_item" (
-    "id" serial not null,
-    "user_id" integer not null,
-    "item_id" integer not null,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."user_item"
-  add constraint "user_item_user_id_fkey"
-  foreign key ("user_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."user_item"
-  add constraint "user_item_item_id_fkey"
-  foreign key ("item_id") references "master"."item" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "user_item_user_id_idx"
-  on "master"."user_item"
-  using btree ("user_id");
-create index "user_item_item_id_idx"
-  on "master"."user_item"
-  using btree ("item_id");
-create index "user_item_is_void_idx"
-  on "master"."user_item"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."user_role" (
-    "id" serial not null,
-    "user_id" integer not null,
-    "role_id" integer not null,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."user_role"
-  add constraint "user_role_user_id_fkey"
-  foreign key ("user_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."user_role"
-  add constraint "user_role_item_id_fkey"
-  foreign key ("role_id") references "master"."role" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."user_role"
-  add constraint "user_role_id_pkey"
-  primary key ("id");
-alter table "master"."user_role"
-  add constraint "user_role_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."user_role"
-  add constraint "user_role_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "user_role_user_id_idx"
-  on "master"."user_role"
-  using btree ("user_id");
-create index "user_role_role_id_idx"
-  on "master"."user_role"
-  using btree ("role_id");
-create index "user_role_is_void_idx"
-  on "master"."user_role"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."user_session" (
-    "id" serial not null,
-    "user_id" integer not null,
-    "data" json,
-    "selected_pipeline_id" integer,
-    "last_visited_url" varchar,
-    "is_default_redirect_yes" boolean default false,
-    "is_default_redirect_no" boolean default false,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."user_session"
-  add constraint "user_session_user_id_fkey"
-  foreign key ("user_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."user_session"
-  add constraint "user_session_id_pkey"
-  primary key ("id");
-alter table "master"."user_session"
-  add constraint "user_session_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."user_session"
-  add constraint "user_session_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "user_session_user_id_idx"
-  on "master"."user_session"
-  using btree ("user_id");
-create index "user_session_is_void_idx"
-  on "master"."user_session"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."team" (
-    "id" serial not null,
-    "abbrev" varchar(128) not null,
-    "name" varchar(256) not null,
-    "leader_id" integer,
-    "description" text,
-    "remarks" text,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."team"
-  add constraint "team_leader_id_fkey"
-  foreign key ("leader_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."team"
-  add constraint "team_id_pkey"
-  primary key ("id");
-alter table "master"."team"
-  add constraint "team_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."team"
-  add constraint "team_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create unique index "team_abbrev_idx"
-  on "master"."team"
-  using btree ("abbrev");
-create index "team_is_void_idx"
-  on "master"."team"
-  using btree ("is_void");
-
--- ----------------
-
-create table "master"."team_member" (
-    "id" serial not null,
-    "team_id" integer not null,
-    "member_id" integer not null,
-    "role_id" integer not null,
-    "user_role_id" integer,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."team_member"
-  add constraint "team_member_team_id_fkey"
-  foreign key ("team_id") references "master"."team" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."team_member"
-  add constraint "team_member_member_id_fkey"
-  foreign key ("member_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."team_member"
-  add constraint "team_member_role_id_fkey"
-  foreign key ("role_id") references "master"."role" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."team_member"
-  add constraint "team_member_user_role_id_fkey"
-  foreign key ("user_role_id") references "master"."user_role" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."team_member"
-  add constraint "team_member_id_pkey"
-  primary key ("id");
-alter table "master"."team_member"
-  add constraint "team_member_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."team_member"
-  add constraint "team_member_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create index "team_member_team_id_idx"
-  on "master"."team_member"
-  using btree ("team_id");
-create index "team_member_member_id_idx"
-  on "master"."team_member"
-  using btree ("member_id");
-create index "team_member_role_id_idx"
-  on "master"."team_member"
-  using btree ("role_id");
-create index "team_member_user_role_id_idx"
-  on "master"."team_member"
-  using btree ("user_role_id");
-create index "team_member_is_void_idx"
-  on "master"."team_member"
-  using btree ("is_void");
+ALTER SEQUENCE "master"."change_log_id_seq"
+  START WITH 14
+  NO MINVALUE
+  MAXVALUE 9223372036854775807
+  INCREMENT BY 1
+  CACHE 1
+  NO CYCLE;
 
 create view "master"."variable_list" as
 select
@@ -1704,6 +2713,7 @@ create table "dictionary"."schema" (
     "name" varchar(256) not null,
     "comment" text,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -1748,6 +2758,7 @@ create table "dictionary"."table" (
     "name" varchar(256) not null,
     "comment" text,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -2340,7 +3351,7 @@ create table "operational"."study" (
     "year" integer not null,
     "season_id" integer not null,
     "sequence_number" integer not null,
-    "key" integer not null,
+    "key" bigint not null,
     "name" varchar(256) not null,
     "title" varchar,
     "creation_timestamp" timestamp not null default now(),
@@ -2463,12 +3474,13 @@ create table "operational"."entry" (
     "id" serial not null,
     "study_id" integer not null,
     "number" integer not null default '1',
-    "key" integer not null,
+    "key" bigint not null,
     "code" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
     "product_name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -2632,9 +3644,10 @@ create table "operational"."plot" (
     "study_id" integer not null,
     "entry_id" integer not null,
     "replication_number" integer,
-    "key" integer not null,
+    "key" bigint not null,
     "code" varchar,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -2815,8 +3828,9 @@ create table "operational"."subplot" (
     "entry_id" integer not null,
     "plot_id" integer not null,
     "number" integer not null default '1',
-    "key" integer not null,
+    "key" bigint not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -3025,6 +4039,7 @@ create table "operational"."cross" (
     "male_product_name" varchar(256) not null,
     "cross_method_id" integer not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -4137,7 +5152,7 @@ create schema "warehouse";
 
 create table "warehouse"."study" (
     "id" serial not null,
-    "key" integer not null,
+    "key" bigint not null,
     "program_id" integer not null,
     "place_id" integer not null,
     "phase_id" integer not null,
@@ -4216,7 +5231,7 @@ create index "study_is_void_idx"
 
 create table "warehouse"."entry" (
     "id" serial not null,
-    "key" integer not null,
+    "key" bigint not null,
     "study_id" integer not null,
     "number" integer not null default '1',
     "code" varchar,
@@ -4224,6 +5239,7 @@ create table "warehouse"."entry" (
     "product_gid" integer not null,
     "product_name" varchar(256) not null,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -4272,12 +5288,14 @@ create index "entry_is_void_idx"
 
 create table "warehouse"."plot" (
     "id" serial not null,
-    "key" integer not null,
+    "key" bigint not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "replication_number" integer,
     "code" varchar,
+    "plot_no" varchar,
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -4326,12 +5344,13 @@ create index "plot_is_void_idx"
 
 create table "warehouse"."subplot" (
     "id" serial not null,
-    "key" integer not null,
+    "key" bigint not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "plot_id" integer not null,
     "number" integer not null default '1',
     "description" text,
+    "display_name" varchar(256),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -4438,7 +5457,6 @@ create index "variable_is_void_idx"
   on "import"."variable"
   using btree ("is_void");
 
-
 copy "import"."variable" (
     "abbrev",
     "column_name",
@@ -4504,7 +5522,6 @@ from stdin
 ;;"varietal group";;"integer";"no";"metadata";"active";"Varietal Group";;"SES 5th editon 2013";;"1= Indica\n2= Temperate japonica (equivalent to old japonica)\n3= Tropical japonica (equivalent to old javanica\n4= Aus\n5 =Aromatic (basmati-type)\n6= Deepwater\7= Indica-Aus intermediates\n8= Japonica intermediates\9Japonica-aromatic intermediates\n10= Other intermediates. []";;"categorical";;;1;10;"morphological";"variety group";;
 "WATER MANAGEMENT";"WATER_MGT";"WATER MANAGEMENT";"Type of water management, whether irrigated or rainfed";"character varying";"no";"metadata";"active";"Water management";;"IRIS";;"irrigated\nrainfed";;"categorical";;;;;"field management";;;
 ;"AREA_SQM";"area in square meters";"Area in square meters";"float";"no";"metadata";;"Area (sqm)";;;;;"sqm";"continuous";;;;;"study metadata";;;
-;"TOTAL";"total?";;"integer";"no";"metadata";;"Total";;;;;;"continuous";;;;;"unknown";;;
 "ENTNO";"ENTNO";"Entry number";"Entry number";"integer";"yes";"identification";"active";"Entry Number";;;;;;"continuous";;;;;"entry identifier";;;
 "ProductID";"ProductID";"Product ID";;"integer";"yes";"identification";;"Product ID";;;;;;"continuous";;;;;"entry metadata";;;
 "ENTCODE";"ENTCODE";"Entry code";"Entry code";"character varying";"no";"metadata";;"Entry Code";;;;;;"discrete";;;;;"entry metadata";;;
@@ -4512,7 +5529,6 @@ from stdin
 "GID";"GID";"Germplasm ID";"IRIS Germplasm identification number";"integer";"yes";"metadata";"active";"IRIS GID";;;;;;"continuous";;;1;999999999;"entry metadata";;;
 "SOURCE";;"Seed Source";"Seed Source";"character varying";"no";"metadata";"active";"Seed Source";;"IRIS";;;;"continuous";;;;;"design factor";;;
 "BMETH";"BMETH";"Breeding Method";"Breeding method used";;"no";"metadata";"active";"Breeding method";;"IRIS";;;;;;;;;"field management";;;
-"FLW";"FLW_CONT_CO";"days to flowering";"Number of days from the seed sowing or the seedling transplant date to the anthesis (flowering) stage. [CO:rs";"integer";"no";"metadata";"active";"Days to flowering";"CO_320:0000083";;"Determine the date when 80% flowering was observed, or express as number of days from seeding. []";"Count of number of days to flower";;"continuous";"ratio";;0;;"agronomic";"days to flower;DTF";"Count number of days to flower";
 "SEEDING_DATE";"SEEDING_DATE";"Seeding Date";"Date of seeding";"integer";"no";"metadata";"active";"Seeding date";;"IRIS";;"ICIS date format";;"continuous";;;;;"design factor";;;
 "T1";"T1";"T1 fertilizer";"T1 fertilizer used";"character varying";"no";"metadata";;"T1 fertilizer";;;"Record topdress 1 fertilizer used";;;"continuous";;;;;"field management";"Topdress 1";;
 "Amount_T1";"Amt_T1";"T1 fertilizer amount";"Amount of T1 fertilizer used";"character varying";"no";"metadata";;"T1 fertilizer amount";;;"Record the amount of topdress 1 fertilizer";"Measured in grams.";"g";"continuous";;;;;"field management";;;
@@ -4528,7 +5544,7 @@ from stdin
 "COL";"COL";"Column in layout";"Specific column position of plot in the Latin Square randomized layout in the field";"integer";"no";"metadata";;"Coulmn in layout";;;;;;"continuous";;;;;"design factor";;;
 "ROW";;"Row in layout";"Specific row position of plot in the Latin Square randomized layout in the field";"integer";"no";"metadata";;"Row in layout";;;;;;"continuous";;;;;"design factor";;;
 ;"ROW_LENGTH";"row length";"Row length";"float";"no";"metadata";;"row length";;;"Measure row length";;;"continuous";;;;;"field management";;;
-;"AP_SCOR_1_9";"abortion pattern";"Observations are made on staining behavior and number of nuclei in most of the pollens. [CO:rs]";"integer";"no";"observation";"active";"Abortion Pattern";"CO_320:0000331";"Crop Ontology";"Florets are collected and fixed in 3:1 Acetic alcohol. Pollen grains are squeezed out from some anthers in Acetocarmine stain and observation are made on their staining behavior and number of nuclei visible in most of the pollen grains.";"1= Pollen free TGMS line Norin PL12\n3= Abortion at uni-nucleate stage of pollen \"\"CMS-WA\"\" type\n5= Abortion at binucleate stage of pollen \"\"CMS-HL\"\" type\n7= Abortion at trinucleate stage of pollen \"\"CMS-boro\"\" type\n9= Abortion at later stage and pollen looks like a fertile pollen 518A (O. nivara cytoplasm).";;"categorical";;;1;9;"hybrid";"abortion pattern of male sterile line;pollen abortion type";;
+;"AP_SCOR_1_9";"abortion pattern";"Observations are made on staining behavior and number of nuclei in most of the pollens. [CO:rs]";"integer";"no";"observation";"active";"Abortion Pattern";"CO_320:0000331";"Crop Ontology";"Florets are collected and fixed in 3:1 Acetic alcohol. Pollen grains are squeezed out from some anthers in Acetocarmine stain and observation are made on their staining behavior and number of nuclei visible in most of the pollen grains.";"1= Pollen free TGMS line Norin PL12\n3= Abortion at uni-nucleate stage of pollen 'CMS-WA' type\n5= Abortion at binucleate stage of pollen 'CMS-HL' type\n7= Abortion at trinucleate stage of pollen 'CMS-boro' type\n9= Abortion at later stage and pollen looks like a fertile pollen 518A (O. nivara cytoplasm).";;"categorical";;;1;9;"hybrid";"abortion pattern of male sterile line;pollen abortion type";;
 "Alk";"Alk_GRNH_1_9";"Alkali tolerance";"Observe general growth conditions in relation to standard resistance and susceptible checks. Since some soil problems are very heterogenous in the field, several replications may be needed to obtain precise reading.";"integer";"no";"observation";;"Alkali injury";;"SES 4th Ed. 1996";"At growth stage: 3-4";"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;"Leaf is counted as discolored or dead if more than half of its area if discolored or dead.";
 "Alk1";"Alk1_FLD_1_9";"Alkali tolerance";"Observation done in the field";"integer";"no";"observation";;"alkali injury";;"SES 4th Ed. 1996";;"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;
 "ALKTOL";;"Alkali tolerance";"Sensitivity to the zinc content in the growth environment. [CO:rs]";;"no";"observation";;"Alkali tolerance";"CO_320:0000055";"Crop Ontology";;;;;;;;;"stress";"Alk;alkali injury";;
@@ -4626,6 +5642,7 @@ from stdin
 ;"FgLL_CONT";"flag leaf length";"Length of flag leaf. [CO:rs]";"float";"no";"observation";"active";"Flag Leaf Length";"CO_320:0000271";"Crop Ontology";"Measure length of the flag leaf, from the ligule to the tip of the blade, on five\nrepresentative plants. Calculate average to nearest cm. Stage: 7 days after\nanthesis. [RD:7.3.20]";"Measured in cm. [RD:7.3.20]";"cm";"continuous";;;;;"morphological";;;
 ;"FgLW_CONT";"flag leaf width";"Width of flag leaf. [CO:rs]";"float";"no";"observation";"active";"Flag Leaf Width";"CO_320:0000137";"Crop Ontology";"Measure width at the widest portion of the flag leaf on five representative plants. Calculate average to nearest cm. Stage: 7 days after anthesis. [RD:7.3.21]";"Measured in cm. [RD:7.3.21]";"cm";"continuous";;;;;"morphological";;;
 "FLW";"FLW_CONT";"flowering";"Days to flowering";"float";"no";"observation";"active";"Flowering";;"IRIS";"80% flowering";"Number of days";;"continuous";;;;;"agronomic";;;
+"FLW";"FLW_CONT_CO";"days to flowering";"Number of days from the seed sowing or the seedling transplant date to the anthesis (flowering) stage. [CO:rs";"integer";"no";"observation";"active";"Days to flowering";"CO_320:0000083";;"Determine the date when 80% flowering was observed, or express as number of days from seeding. []";"Count of number of days to flower";;"continuous";"ratio";;0;;"agronomic";"days to flower;DTF";"Count number of days to flower";
 "GM";"GM_FLD_0_9";"gall midge";"Causal agent: Orseolia oryzae.";"integer";"no";"observation";;"gall midge";;"SES 4th Ed. 1996";"For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check. Similarly, 60% of the plants in susceptible check shoul show silver shoots under greenhouse tests.\n\nIf any of the test entry in field evaluation exhibits damage less than 10% on plants basis, rate it in ""0"" category, since such damage could be due to other reasons.\n\nAt growth stage: 2-5";"SCALE (Infected tillers in field test)\n0= No damage\n1= Less than 1%\n3= 1-5%\n5= 6-10%\n7= 11-25%\n9= More than 25%";;"categorical";;;0;9;"stress";;;
 "GM";"GM_GRNH_0_9";"gall midge";"Causal agent: Orseolia oryzae.";"integer";"no";"observation";;"gall midge";;"SES 4th Ed. 1996";"For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check. Similarly, 60% of the plants in susceptible check shoul show silver shoots under greenhouse tests.\n\nIf any of the test entry in field evaluation exhibits damage less than 10% on plants basis, rate it in ""0"" category, since such damage could be due to other reasons.\n\nAt growth stage: 2-5";"SCALE (Plants with silver shoots in greenhouse test)\n0= No injury\n1= Less than 5%\n3= 6-10%\n5= 11-20%\n7= 21-50%\n9= More than 50%.";;"categorical";;;0;9;"stress";;;
 ;;"gall midge damage";"The trait is scored for the plant damage caused by gall midge (Orseolia oryzae). [CO:rs]";"integer";"no";"observation";;"gall midge";"CO_320:0000199";"Crop Ontology";"At growth stage: 2-5.\nNote: For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check.";"SCALE (Infected tillers in field test)\n0 No injury\n1 Less than 1%\n3 1-5%\n5 6-10%\n7 11-25%\n9 More than 25%\n\n\n\nSCALE (Plants with silver shoots in greenhouse test)\n0 No injury\n1 Less than 5%\n3 6-10%\n5 11-20%\n7 21-50%\n9 More than 50%. [SES:65]";;"categorical";;;0;9;"stress";;;
@@ -4772,6 +5789,7 @@ from stdin
 "TILL1";"TILL1";"tillering";"Number of tillers from sample 1";"float";"no";"observation";;"Tillering";;"IRIS";"At growth stage 5 - Plant sample 1";"Number of tillers/plant";;"categorical";;;;;"stress";;;
 "TILL2";"TILL2";"tillering";"Number of tillers from sample 2";"float";"no";"observation";;"Tillering";;;"At growth stage 5 - Plant sample 2";"Number of tillers/plant";;"categorical";;;;;"stress";;;
 "TILL3";"TILL3";"tillering";"Number of tillers from sample 3";"float";"no";"observation";;"Tillering";;"IRIS";"At growth stage 5 - Plant sample 3";"Number of tillers/plant";;"categorical";;;;;"stress";;;
+;"TOTAL";"total?";;"integer";"no";"observation";;"Total";;;;;;"continuous";;;;;"unknown";;;
 ;"TOTAL_Hill";"total hill";"Total number of hills in a plot";"float";"no";"observation";;"Total Hill";;"IRIS";"Count the number of hills per plot";;;"continuous";;;;;"plot metadata";;;
 ;;"udbatta disease";"The trait is scored for the plant response to the agent Balansia oryzae-sativae (Ephelis oryzae) causing udbatta disease. [CO:rs]";"integer";"no";"observation";;"udbatta disease";"CO_320:0000194";"Crop Ontology";;"SCALE (Incidence: percent infected tillers)\n0= No disease observed\n1= Less than1%\n5= 1-25%\n9= 26-100%. [SES:41]";;"categorical";;;0;9;"stress";;"Symptoms: A white mycelial mat ties panicle branches together so that they emerge as single, small, cylindrical rods.";
 "UDb";;"udbatta disease";"Causal agent: Balansia oryzae-sativae (Ephelis oryzae).\nSymptoms: A white mycelial mat ties the panicle branches together so that they emerge as single, small, cylindrical rods.";"integer";"no";"observation";;"udbatta disease";;"SES 4th Ed. 1996";;"Scale (infected panicles or tillers)\n\n0= No incidence\n1= Less than 1%\n5= 1-25%\n9= 26-100%";;"categorical";;;0;9;"stress";;;
@@ -4814,7 +5832,6 @@ create table "import"."hb_data" (
 ) with (
     oids = false
 );
-
 
 
 
@@ -10523,7 +11540,6 @@ create table "import"."f1_data" (
 
 
 
-
 copy "import"."f1_data" 
 from stdin
     csv
@@ -15334,141 +16350,6 @@ create table "import"."rga_data" (
 
 
 
-
-copy "import"."rga_data" 
-from stdin
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-"year";"season";"family_gid";"family_designation";"gid";"derivative_name";"code";"purpose";"pedigree_name";"current_generation";"seeding_date";"seed_number";"transplanting_date";"transplanting_seed_number";"recommended_date";"time_of_application_1";"t1_fertilizer_type";"days_after_seeding_1";"t1_fertilizer_date";"t1_fertilizer_amount";"time_of_application_2";"t2_fertilizer_type";"days_after_seeding_2";"t2_fertilizer_date";"t2_fertilizer_amount";"harvest_date";"plant_number";"germination_date";"flowering_date";"flowering_date_earliest";"flowering_date_latest";"remarks"
-"2013";"WS";"3731530";"IR 100043";"4135432";"IR 100043-B RGA";;"Advancement";"IR 06N234/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731585";"IR 100090";"4135433";"IR 100090-B RGA";;"Advancement";"IR 09N542/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731631";"IR 100136";"4135434";"IR 100136-B RGA";;"Advancement";"IR 10A125/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731643";"IR 100148";"4135435";"IR 100148-B RGA";;"Advancement";"IR 09N514/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731655";"IR 100160";"4135436";"IR 100160-B RGA";;"Advancement";"IR 08N128/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731666";"IR 100171";"4135437";"IR 100171-B RGA";;"Advancement";"IR 08A176/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3891613";"IR 103761";"4135438";"IR 103761-B RGA";;"Advancement";"PR 37866-113-1-4/Milyang 23/OM 4498";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731484";"IR 99997";"4135439";"IR 99997-B RGA";;"Advancement";"IRRI 151/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2012";"WS";"3383303";"IR 96892";"4135440";"IR 96892-B RGA";;"Breeding";"IR 09F120/IR 04A25";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121113";"448";;;;;
-"2012";"WS";"3383303";"IR 96892";"4135483";"IR 96892-B RGA-B RGA";;"Breeding";"IR 09F120/IR 04A25";"F3";"20121004";"448";;;;;;;;;;;;;;;;;;;;"Sown in cell trays (5 blue trays)"
-"2012";"WS";"3383326";"IR 96915";"4135441";"IR 96915-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121114";"419";;;;;
-"2012";"WS";"3383326";"IR 96915";"4135484";"IR 96915-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F3";"20121213";"615";;;;;;;;;;;;;;"20130405";"558";;;;;"8 green trays"
-"2013";"DS";"3383326";"IR 96915";"4135519";"IR 96915-B RGA-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130311";"548";;;;;;;;;;;;;;"20130715";"518";;;;;"Sowed in small cell, in blue trays"
-"2013";"DS";"3383326";"IR 96915";"4135519";"IR 96915-B RGA-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130422";"548";;;;;;;;;;;;;;;;;;;;
-"2013";"WS";"3383326";"IR 96915";"4135539";"IR 96915-B RGA-B RGA-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F5";"20130819";"518";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"518 seeds are sow in small cell, blue trays. The remnants are in bulk brown paper bag"
-"2012";"WS";"3383332";"IR 96921";"4135442";"IR 96921-B RGA";;"Breeding";"IR 09F437/IR 10F328";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"320";;;;;
-"2012";"WS";"3383332";"IR 96921";"4135485";"IR 96921-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F328";"F3";"20121217";"320";;;;;;;;;;;;;;"20130404";"257";;;;;
-"2012";"WS";"3383333";"IR 96922";"4135443";"IR 96922-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121114";"420";;;;;
-"2012";"WS";"3383333";"IR 96922";"4135486";"IR 96922-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F3";"20121211";"448";;;;;;;;;;;;;;"20130404";"376";;;;;"6 green trays"
-"2013";"DS";"3383333";"IR 96922";"4135520";"IR 96922-B RGA-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F4";"20130312";"424";;;;;;;;;;;;;;"20130715";"364";;;;;"Now the harvest seeds are in (F5) stage. The remnants are in bulk, brown paper bag"
-"2013";"WS";"3383333";"IR 96922";"4135537";"IR 96922-B RGA-B RGA-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F5";"20130823";"364";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in small cell"
-"2012";"WS";"3383336";"IR 96925";"4135444";"IR 96925-B RGA";;"Breeding";"IR 09F437/IR 10F388";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"360";;;;;
-"2012";"WS";"3383336";"IR 96925";"4135487";"IR 96925-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F388";"F3";"20121220";"360";;;;;;;;;;;;;;"20130408";"332";;;;;"5 green trays"
-"2013";"WS";"3383336";"IR 96925";"4135521";"IR 96925-B RGA-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F388";"F4";"20131004";"332";;;;;;;;;;;;;;;;;;;;"Sown in small cells, 3 1/4 blue trays"
-"2012";"WS";"3383361";"IR 96950";"4135445";"IR 96950-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"228";;;;;
-"2013";"DS";"3383361";"IR 96950";"4135488";"IR 96950-B RGA-B RGA";;"Breeding";;"F3";"20130423";"228";;;;;;;;;;;;;;"20130826";"110";;;;;"Remnants per panicle, 5 seeds per envelop. Also remnant in bulk"
-"2013";"WS";"3383361";"IR 96950";"4135522";"IR 96950-B RGA-B RGA-B RGA";;"Breeding";;"F4";"20130907";"110";;;;;;;;;;;;;;;;;;;;"Sowed in cell tray"
-"2012";"WS";"3383362";"IR 96951";"4135446";"IR 96951-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F2";"20121001";"240";;;;;;;;;;;;;;"20130128";"215";;;;;
-"2013";"DS";"3383362";"IR 96951";"4135489";"IR 96951-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F3";"20130422";"215";;;;;;;;;;;;;;"20130826";"85";;;;;"Large cell 6 trays. Remants: per panicle, 5 seeds per envelop. Plus remnant per bulk"
-"2013";"WS";"3383362";"IR 96951";"4135523";"IR 96951-B RGA-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130907";"85";;;;;;;;;;;;;;;;;;;;"Sowed in trays (cell)"
-"2012";"WS";"3383764";"IR 97337";"4135447";"IR 97337-B RGA";;"Breeding";"IR 09F164/MTU 1064//IR 10F205";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121113";"407";;;;;
-"2012";"WS";"3383770";"IR 97343";"4135448";"IR 97343-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"520";;;;;
-"2012";"WS";"3383770";"IR 97343";"4135490";"IR 97343-B RGA-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F3";"20121207";"240";;;;;;;;;;;;;;"20130403";"354";;;;;"3 small trays"
-"2012";"WS";"3383770";"IR 97343";"4135490";"IR 97343-B RGA-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F3";"20121214";"400";;;;;;;;;;;;;;"20130405";"362";;;;;"5 small trays"
-"2013";"WS";"3383770";"IR 97343";"4135524";"IR 97343-B RGA-B RGA-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F4";"20131010";"716";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 7 blue trays"
-"2012";"WS";"3383771";"IR 97344";"4135449";"IR 97344-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121110";"456";;;;;
-"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B RGA-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121206";"240";;;;;;;;;;;;;;"20130402";"170";;;;;
-"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B RGA-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121207";"240";;;;;;;;;;;;;;"20130404";"192";;;;;
-"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B RGA-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121218";"320";;;;;;;;;;;;;;"20130405";"264";;;;;
-"2012";"WS";"3383773";"IR 97346";"4135450";"IR 97346-B RGA";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F2";"20120802";"1142";;;;;;;;;;;;;;"20121110";"480";;;;;
-"2012";"WS";"3383773";"IR 97346";"4135492";"IR 97346-B RGA-B RGA";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F3";"20121207";"240";;;;;;;;;;;;;;"20130403";"227";;;;;
-"2012";"WS";"3383773";"IR 97346";"4135492";"IR 97346-B RGA-B RGA";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F3";"20121212";"400";;;;;;;;;;;;;;"20130404";"372";;;;;
-"2012";"WS";"3383794";"IR 97367";"4135451";"IR 97367-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121110";"415";;;;;
-"2012";"WS";"3383794";"IR 97367";"4135493";"IR 97367-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F3";"20121207";;;;;;;;;;;;;;;"20130403";"167";;;;;
-"2012";"WS";"3383794";"IR 97367";"4135493";"IR 97367-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F3";"20121219";;;;;;;;;;;;;;;"20130402";"268";;;;;"The rest of the remnants were in bulk (F5). 204 panicles (DOH 20130810)"
-"2013";"DS";"3383794";"IR 97367";"4135525";"IR 97367-B RGA-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F4";"20130422";"832";;;;;;;;;;;;;;"20130810";"260";;;;;"Also the remnants of 25 panicles were in bulk as well (DOH 20130808). Breeding in small cell trays. Molecular breeding big cell trays."
-"2013";"DS";"3383794";"IR 97367";"4135525";"IR 97367-B RGA-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F4";"20130423";"210";;;;;;;;;;;;;;"20130808";"25";;;;;
-"2013";"WS";"3383794";"IR 97367";"4135538";"IR 97367-B RGA-B RGA-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F5";"20130819";"200";;;;"Topdress1";;;"20130917";;;;;;;;;;;;;"One seed per pot. So 200 seeds have been sown in pots. Rest of the remnants (F5 seeds) are in bulk. "
-"2012";"WS";"3568780";"IR 98466";"4135452";"IR 98466-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"155";;;;;
-"2012";"WS";"3568806";"IR 98492";"4135453";"IR 98492-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"223";;;;;
-"2013";"DS";"3568806";"IR 98492";"4135494";"IR 98492-B RGA-B RGA";;"Breeding";;"F3";"20130422";"223";;;;;;;;;;;;;;"20130820";"117";;;;;"Almost 1/2 of the population were contaminated cause of the BPH insects and disease. Now the seeds are F4 seeds. Per panicle has remnants of 5 seeds are placed in each coing envelop. Also with remnants of bulk."
-"2013";"DS";"3568806";"IR 98492";"4135494";"IR 98492-B RGA-B RGA";;"Breeding";;"F3";"20130422";"223";;;;;;;;;;;;;;"20130831";"2";;;;;"Late harvest"
-"2013";"WS";"3568806";"IR 98492";"4135526";"IR 98492-B RGA-B RGA-B RGA";;"Breeding";;"F4";"20130824";"117";;;;"Topdress1";;;"20130917";;;;;;;;;;;;;"Sown in white pots. Seed are sowed per pot for molecular purpose."
-"2012";"WS";"3568838";"IR 98524";"4135454";"IR 98524-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130106";"197";;;;;
-"2013";"WS";"3568838";"IR 98524";"4135495";"IR 98524-B RGA-B RGA";;"Breeding";;"F3";"20131005";"197";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 2 blue trays"
-"2012";"WS";"3568843";"IR 98529";"4135455";"IR 98529-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130114";"189";;;;;
-"2013";"WS";"3568843";"IR 98529";"4135496";"IR 98529-B RGA-B RGA";;"Breeding";;"F3";"20131009";"189";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 2 blue trays"
-"2012";"WS";"3568904";"IR 98590";"4135456";"IR 98590-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"217";;;;;
-"2013";"DS";"3568904";"IR 98590";"4135497";"IR 98590-B RGA-B RGA";;"Breeding";;"F3";"20130423";"217";;;;;;;;;;;;;;"20130829";"80";;;;;"Large cell trays"
-"2013";"WS";"3568904";"IR 98590";"4135527";"IR 98590-B RGA-B RGA-B RGA";;"Breeding";;"F4";"20130913";"80";;;;;;;;;;;;;;;;;;;;
-"2012";"WS";"3568905";"IR 98591";"4135457";"IR 98591-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"212";;;;;
-"2012";"WS";"3568908";"IR 98594";"4135458";"IR 98594-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130207";"187";;;;;
-"2013";"DS";"3568908";"IR 98594";"4135498";"IR 98594-B RGA-B RGA";;"Breeding";;"F3";"20130308";"187";;;;;;;;;;;;;;"20130704";"147";;;;;"35 no plants. 4 sterile plants no seeds"
-"2013";"WS";"3568908";"IR 98594";"4135528";"IR 98594-B RGA-B RGA-B RGA";;"Breeding";;"F4";"20130823";"147";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in small cell. Remnants seeds are in small envelop, has its own number cause it was sow before in small pots"
-"2012";"WS";"3568909";"IR 98595";"4135459";"IR 98595-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"160";;;;;
-"2013";"DS";"3568909";"IR 98595";"4135499";"IR 98595-B RGA-B RGA";;"Breeding";;"F3";"20130308";"160";;;;;;;;;;;;;;"20130704";"143";;;;;"16 no plants. 2 sterile plants no seeds"
-"2013";"WS";"3568909";"IR 98595";"4135529";"IR 98595-B RGA-B RGA-B RGA";;"Breeding";;"F4";"20130822";"143";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Each panicle that have been harvested the remnants seeds has its own coin envelop. Not in bulk."
-"2012";"WS";"3568913";"IR 98599";"4135460";"IR 98599-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"183";;;;;
-"2012";"WS";"3569476";"IR 99124";"4135461";"IR 99124-B RGA";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"223";;;;;
-"2013";"DS";"3569476";"IR 99124";"4135500";"IR 99124-B RGA-B RGA";;"Breeding";;"F3";"20130423";"223";;;;;;;;;;;;;;"20130826";"142";;;;;"Remants per panicle in coin envelop consist of 5 seeds. Also remnants in bulk."
-"2013";"WS";"3569476";"IR 99124";"4135530";"IR 99124-B RGA-B RGA-B RGA";;"Breeding";;"F4";"20130907";"139";;;;;;;;;;;;;;;;;;;;"Sowed in small cell tray"
-"2012";"WS";"3569481";"IR 99129";"4135462";"IR 99129-B RGA";"PI2";"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"223";;;;;
-"2013";"DS";"3569481";"IR 99129";"4135501";"IR 99129-B RGA-B RGA";"PI2";"Breeding";;"F3";;;"20130123";"243";;;;;;;;;;;;"20130416";"180";;;;;
-"2013";"DS";"3569481";"IR 99129";"4135501";"IR 99129-B RGA-B RGA";"PI2";"Breeding";;"F3";;;"20130522";"362";;;;;;;;;;;;"20130831";"19";;;;;"The 19 panicles note as F4 seeds"
-"2013";"WS";"3569481";"IR 99129";"4135531";"IR 99129-B RGA-B RGA-B RGA";"PI2";"Breeding";;"F4";"20130815";"180";;;;"Topdress1";"Urea";;"20130906";;;;;;;;;;;;;"1 seed per pot"
-"2013";"DS";"3731494";"IR 100007";"4135463";"IR 100007-B RGA";;"Breeding";"IR 05N412/IRRI 105";"F2";"20130307";"400";;;;;;;;;;;;;;"20130716";"363";;;;;
-"2013";"DS";"3731494";"IR 100007";"4135463";"IR 100007-B RGA";;"Breeding";;"F2";"20130525";"320";;;;;;;;;;;;;;"20130824";"40";;;;;
-"2013";"WS";"3731494";"IR 100007";"4135502";"IR 100007-B RGA-B RGA";;"Breeding";;"F3";"20130814";"288";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"The seed were planted in white pot. 1 seed per pot. Remnants in "
-"2013";"WS";"3731494";"IR 100007";"4135502";"IR 100007-B RGA-B RGA";;"Breeding";;"F3";"20130909";"40";;;;;;;;;;;;;;;;;;;;
-"2013";"DS";"3731516";"IR 100029";"4135464";"IR 100029-B RGA";;"Breeding";;"F2";"20130307";"400";;;;;;;;;;;;;;"20130715";"379";;;;;
-"2013";"WS";"3731516";"IR 100029";"4135503";"IR 100029-B RGA-B RGA";;"Breeding";;"F3";"20130814";"288";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"Seeds were planted in white pots. 1 seed per pot."
-"2013";"DS";"3731604";"IR 100109";"4135465";"IR 100109-B RGA";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130821";"500";;;;;"1/2 of the population did not survive cause of the BPH insents/disease virus"
-"2013";"WS";"3731604";"IR 100109";"4135504";"IR 100109-B RGA-B RGA";;"Breeding";;"F3";"20130903";"500";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell trays for advancement. Early flowering only 2 months, started to flower 20131105 (20130903 to 20131105)"
-"2013";"DS";"3731605";"IR 100110";"4135466";"IR 100110-B RGA";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130813";"790";;;;;"Remants for each panicle have its own envelop. In it has 5 seeds. Includes bulk seeds remants in brown bag."
-"2013";"WS";"3731605";"IR 100110";"4135505";"IR 100110-B RGA-B RGA";;"Breeding";;"F3";"20130831";"790";;;;"Topdress1";;;"20130923";;;;;;;;;;;;;"Sowed in small cell for advancement"
-"2013";"DS";"3731607";"IR 100112";"4135467";"IR 100112-B RGA";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130821";"205";;;;;"Due to less (plants) panicles been harvest cause by insect (BPH) pest/disease. The problem may have occur during early growth. Remants for each panicle has its own envelop with 5 seeds in it. That also have remnants in bulk."
-"2013";"WS";"3731607";"IR 100112";"4135506";"IR 100112-B RGA-B RGA";;"Breeding";;"F3";"20130903";"205";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell trays"
-"2013";"DS";"3731616";"IR 100121";"4135468";"IR 100121-B RGA";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130814";"589";;;;;"Remants for each panicle has its own envelop which has 5 seeds in it. Also include remanants for bulk seeds in brown bag."
-"2013";"WS";"3731616";"IR 100121";"4135507";"IR 100121-B RGA-B RGA";;"Breeding";;"F3";"20130826";"589";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in cell blue trays"
-"2013";"DS";"3731617";"IR 100122";"4135469";"IR 100122-B RGA";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130812";"772";;;;;"remnants for each panicle has its own envelop which has 5 seeds in it. Also it has bulk remants in brown bag"
-"2013";"WS";"3731617";"IR 100122";"4135508";"IR 100122-B RGA-B RGA";;"Breeding";;"F3";"20130826";"725";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in cell blue trays"
-"2013";"DS";"3731619";"IR 100124";"4135470";"IR 100124-B RGA";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130812";"693";;;;;"Remnants for each panicle have its own envelop, in it has 5 seeds. Which also includes a remants bulk seeds in brown paper bag"
-"2013";"WS";"3731619";"IR 100124";"4135509";"IR 100124-B RGA-B RGA";;"Breeding";;"F3";"20130827";"554";;;;"Topdress1";;;"20130920";;;;;;;;;;;;;"Sowed in cell blue trays for advancement"
-"2013";"DS";"3731799";"IR 100304 Super Basmati RBB 66";"4135472";"IR 100304-B RGA";;"Breeding";;"F2";"20130301";"210";;;;;;;;;;;;;;"20130716";"185";;;;;"Sowed in green small pots. 210 per square pot"
-"2013";"WS";"3731799";"IR 100304 Super Basmati RBB 66";"4135510";"IR 100304-B RGA-B RGA";;"Breeding";;"F3";"20130813";"185";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"Seeds were planted in white pots. 1 seed per pot. Remnants for each panicle (seeds) has its own envelop. "
-"2013";"DS";"3731801";"IR 100306";"4135471";"IR 100306-B-B RGA";;"Breeding";"F122713";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"571";;;;;
-"2013";"DS";"3731801";"IR 100306";"4135511";"IR 100306-B-B RGA-B RGA";;"Breeding";"F122713";"F4";"20130506";"300";;;;;;;;;;;;;;"20130827";"57";;;;;"Lowest amount of plants were harvested caused by PBH insects"
-"2013";"WS";"3731801";"IR 100306";"4135532";"IR 100306-B-B RGA-B RGA-B RGA";;"Breeding";"F122713";"F5";"20130913";"57";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)"
-"2013";"DS";"3732217";"IR 100722";"4135473";"IR 100722-B RGA";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130827";"378";;;;;"Lowest amount of plants were harvest cause by BPH insects (pest)"
-"2013";"WS";"3732217";"IR 100722";"4135512";"IR 100722-B RGA-B RGA";;"Breeding";;"F3";"20130913";"378";;;;;;;;;;;;;;;;;;;;"Sown in cell (4 trays)"
-"2013";"DS";"3732218";"IR 100723";"4135474";"IR 100723-B RGA";;"Breeding";;"F2";"20130430";"1000";;;;"Topdress1";"Urea";;"20130523";"5gm";;;;;;"20130821";"82";;;;;"This population were also infected by (BPH) insect pest. Reason why small number of panicles been harvest."
-"2013";"WS";"3732218";"IR 100723";"4135513";"IR 100723-B RGA-B RGA";;"Breeding";;"F3";"20130903";"82";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell blue trays for advancement"
-"2013";"DS";"3732316";"IR 100821";"4135475";"IR 100821-B-B RGA";;"Breeding";"F122730";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"586";;;;;
-"2013";"DS";"3732316";"IR 100821";"4135514";"IR 100821-B-B RGA-B RGA";;"Breeding";"F122730";"F4";"20130506";"300";;;;;;;;;;;;;;"20130829";"54";;;;;"The reason why small amount fo plants were harvest due to a damage of BPH pest"
-"2013";"WS";"3732316";"IR 100821";"4135533";"IR 100821-B-B RGA-B RGA-B RGA";;"Breeding";"F122730";"F5";"20130909";"54";;;;;;;;;;;;;;;;;;;;"Sowed in pots"
-"2013";"DS";"3732317";"IR 100822";"4135476";"IR 100822-B-B RGA";;"Breeding";"F122731";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"528";;;;;"Remants: 5 seeds per panicle/coin envelop"
-"2013";"DS";"3732317";"IR 100822";"4135515";"IR 100822-B-B RGA-B RGA";;"Breeding";"F122731";"F4";"20130506";"300";;;;;;;;;;;;;;"20130829";"33";;;;;"Sowed in pots"
-"2013";"WS";"3732317";"IR 100822";"4135534";"IR 100822-B-B RGA-B RGA-B RGA";;"Breeding";"F122731";"F5";"20130909";"33";;;;;;;;;;;;;;;;;;;;
-"2013";"DS";"3732336";"IR 100841";"4135477";"IR 100841-B-B RGA";;"Breeding";"F122749";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"508";;;;;
-"2013";"DS";"3732336";"IR 100841";"4135516";"IR 100841-B-B RGA-B RGA";;"Breeding";"F122749";"F4";"20130506";"300";;;;;;;;;;;;;;"20130828";"86";;;;;"Not much plants survive due to BPH pest (insect)"
-"2013";"WS";"3732336";"IR 100841";"4135535";"IR 100841-B-B RGA-B RGA-B RGA";;"Breeding";"F122749";"F5";"20130913";"86";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)"
-"2013";"DS";"3732337";"IR 100842";"4135478";"IR 100842-B-B RGA";;"Breeding";"F122750";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"549";;;;;
-"2013";"DS";"3732337";"IR 100842";"4135517";"IR 100842-B-B RGA-B RGA";;"Breeding";"F122750";"F4";"20130506";"300";;;;;;;;;;;;;;"201308";"38";;;;;"Severely damaged by insect (BPH)"
-"2013";"WS";"3732337";"IR 100842";"4135536";"IR 100842-B-B RGA-B RGA-B RGA";;"Breeding";"F122750";"F5";"20130913";"38";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)"
-"2013";"DS";"3568777";"IR 98463";"4135479";"IR 98463-B RGA";;"Standard Generation Advancement";"IRRI 119/IR 42";"F2";"20130620";"1040";;;;"Topdress1";;;"20130630";;"Topdress2";;;"20130704";;;;;;;;
-"2013";"DS";"3568778";"IR 98464";"4135480";"IR 98464-B RGA";;"Standard Generation Advancement";"IRRI 119/IR 24";"F2";"20130620";"1040";;;;"Topdress1";;;"20130630";;"Topdress2";;;"20130704";;;;;;;;
-"2013";"DS";"3731470";"IR 99983";"4135481";"IR 99983-B RGA";;;;"F2";"20130307";"400";;;;;;;;;;;;;;"20130715";"381";;;;;"Remnants are in bulk"
-"2013";"WS";"3731470";"IR 99983";"4135518";"IR 99983-B RGA-B RGA";;;;"F3";"20130831";"381";;;;"Topdress1";;;"20130923";;;;;;;;;;;;;"Sowed in small cell for advancement"
-"2013";"WS";"3891567";"IR 103715";"4135482";"IR 103715-B RGA";;;;"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-\.
-
-
-
-
 copy "import"."rga_data" 
 from stdin
     csv
@@ -15657,6 +16538,9 @@ comment on column "master"."property"."name"
 comment on column "master"."property"."description"
   is 'Description';
 
+comment on column "master"."property"."display_name"
+  is 'Name to display to users';
+
 comment on column "master"."property"."remarks"
   is 'Additional details';
 
@@ -15704,6 +16588,9 @@ comment on column "master"."method"."abbrev"
 
 comment on column "master"."method"."description"
   is 'Description';
+
+comment on column "master"."method"."display_name"
+  is 'Name to display to users';
 
 comment on column "master"."method"."remarks"
   is 'Additional details';
@@ -15762,6 +16649,9 @@ comment on column "master"."scale"."level"
 comment on column "master"."scale"."description"
   is 'Description';
 
+comment on column "master"."scale"."display_name"
+  is 'Name to display to users';
+
 comment on column "master"."scale"."remarks"
   is 'Additional details';
 
@@ -15806,6 +16696,9 @@ comment on column "master"."scale_value"."id"
 
 comment on column "master"."scale_value"."description"
   is 'Description';
+
+comment on column "master"."scale_value"."display_name"
+  is 'Name to display to users';
 
 comment on column "master"."scale_value"."remarks"
   is 'Additional details';
@@ -15906,6 +16799,9 @@ comment on column "master"."variable_set"."name"
 comment on column "master"."variable_set"."description"
   is 'Description';
 
+comment on column "master"."variable_set"."display_name"
+  is 'Name to display to users';
+
 comment on column "master"."variable_set"."remarks"
   is 'Additional details';
 
@@ -16001,6 +16897,9 @@ comment on column "master"."pipeline"."name"
 comment on column "master"."pipeline"."description"
   is 'Description';
 
+comment on column "master"."pipeline"."display_name"
+  is 'Name to display to users';
+
 comment on column "master"."pipeline"."remarks"
   is 'Additional details';
 
@@ -16052,6 +16951,9 @@ comment on column "master"."crosscutting"."name"
 
 comment on column "master"."crosscutting"."description"
   is 'Description';
+
+comment on column "master"."crosscutting"."display_name"
+  is 'Name to display to users';
 
 comment on column "master"."crosscutting"."remarks"
   is 'Additional details';
@@ -16106,6 +17008,9 @@ comment on column "master"."program"."name"
 
 comment on column "master"."program"."description"
   is 'Description';
+
+comment on column "master"."program"."display_name"
+  is 'Name to display to users';
 
 comment on column "master"."program"."remarks"
   is 'Additional details';
@@ -16166,6 +17071,9 @@ comment on column "master"."place"."name"
 comment on column "master"."place"."description"
   is 'Description';
 
+comment on column "master"."place"."display_name"
+  is 'Name to display to users';
+
 comment on column "master"."place"."remarks"
   is 'Additional details';
 
@@ -16216,6 +17124,9 @@ comment on column "master"."phase"."name"
 
 comment on column "master"."phase"."description"
   is 'Description';
+
+comment on column "master"."phase"."display_name"
+  is 'Name to display to users';
 
 comment on column "master"."phase"."remarks"
   is 'Additional details';
@@ -16284,6 +17195,9 @@ comment on column "master"."product"."generation"
 comment on column "master"."product"."description"
   is 'Description';
 
+comment on column "master"."product"."display_name"
+  is 'Name to display to users';
+
 comment on column "master"."product"."remarks"
   is 'Additional details';
 
@@ -16334,6 +17248,9 @@ comment on column "master"."product_name"."language_code"
 
 comment on column "master"."product_name"."description"
   is 'Description';
+
+comment on column "master"."product_name"."display_name"
+  is 'Name to display to users';
 
 comment on column "master"."product_name"."remarks"
   is 'Additional details';
@@ -16419,6 +17336,9 @@ comment on column "master"."season"."name"
 comment on column "master"."season"."description"
   is 'Description';
 
+comment on column "master"."season"."display_name"
+  is 'Name to display to users';
+
 comment on column "master"."season"."remarks"
   is 'Additional details';
 
@@ -16503,6 +17423,9 @@ comment on column "master"."cross_method"."name"
 comment on column "master"."cross_method"."description"
   is 'Description';
 
+comment on column "master"."cross_method"."display_name"
+  is 'Name to display to users';
+
 comment on column "master"."cross_method"."remarks"
   is 'Additional details';
 
@@ -16553,6 +17476,9 @@ comment on column "master"."country"."name"
 
 comment on column "master"."country"."description"
   is 'Description';
+
+comment on column "master"."country"."display_name"
+  is 'Name to display to users';
 
 comment on column "master"."country"."remarks"
   is 'Additional details';
@@ -16629,125 +17555,8 @@ comment on constraint "family_modifier_id_fkey" on "master"."family"
 comment on index "master"."family_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."audit"
-  is '{table}';
-
-comment on column "master"."audit"."id"
-  is 'Locally unique primary key';
-
-comment on column "master"."audit"."description"
-  is 'Description';
-
-comment on column "master"."audit"."creation_timestamp"
-  is 'Timestamp when the record was added to the table';
-
-comment on column "master"."audit"."creator_id"
-  is 'ID of the user who added the record to the table';
-
-comment on column "master"."audit"."modification_timestamp"
-  is 'Timestamp when the record was last modified';
-
-comment on column "master"."audit"."modifier_id"
-  is 'ID of the user who last modified the record';
-
-comment on column "master"."audit"."notes"
-  is 'Additional details added by an admin; can be technical or advanced details';
-
-comment on column "master"."audit"."is_void"
-  is 'Indicator whether the record is deleted or not';
-
-comment on index "master"."audit_id_pkey"
-  is 'Primary key constraint for the id column';
-
-comment on constraint "audit_creator_id_fkey" on "master"."audit"
-  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
-
-comment on constraint "audit_modifier_id_fkey" on "master"."audit"
-  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
-
-comment on index "master"."audit_is_void_idx"
-  is 'Index for the is_void column';
-
-comment on table "master"."change_log"
-  is '{table}';
-
-comment on column "master"."change_log"."id"
-  is 'Locally unique primary key';
-
-comment on column "master"."change_log"."name"
-  is 'Name identifier';
-
-comment on column "master"."change_log"."description"
-  is 'Description';
-
-comment on column "master"."change_log"."creation_timestamp"
-  is 'Timestamp when the record was added to the table';
-
-comment on column "master"."change_log"."creator_id"
-  is 'ID of the user who added the record to the table';
-
-comment on column "master"."change_log"."modification_timestamp"
-  is 'Timestamp when the record was last modified';
-
-comment on column "master"."change_log"."modifier_id"
-  is 'ID of the user who last modified the record';
-
-comment on column "master"."change_log"."notes"
-  is 'Additional details added by an admin; can be technical or advanced details';
-
-comment on column "master"."change_log"."is_void"
-  is 'Indicator whether the record is deleted or not';
-
-comment on index "master"."change_log_id_pkey"
-  is 'Primary key constraint for the id column';
-
-comment on constraint "change_log_creator_id_fkey" on "master"."change_log"
-  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
-
-comment on constraint "change_log_modifier_id_fkey" on "master"."change_log"
-  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
-
-comment on index "master"."change_log_is_void_idx"
-  is 'Index for the is_void column';
-
-comment on table "master"."instruction"
-  is '{table}';
-
-comment on column "master"."instruction"."id"
-  is 'Locally unique primary key';
-
-comment on column "master"."instruction"."name"
-  is 'Name identifier';
-
-comment on column "master"."instruction"."value"
-  is 'Value of a variable';
-
-comment on column "master"."instruction"."description"
-  is 'Description';
-
-comment on column "master"."instruction"."creation_timestamp"
-  is 'Timestamp when the record was added to the table';
-
-comment on column "master"."instruction"."creator_id"
-  is 'ID of the user who added the record to the table';
-
-comment on column "master"."instruction"."modification_timestamp"
-  is 'Timestamp when the record was last modified';
-
-comment on column "master"."instruction"."modifier_id"
-  is 'ID of the user who last modified the record';
-
-comment on column "master"."instruction"."notes"
-  is 'Additional details added by an admin; can be technical or advanced details';
-
-comment on column "master"."instruction"."is_void"
-  is 'Indicator whether the record is deleted or not';
-
-comment on index "master"."instruction_is_void_idx"
-  is 'Index for the is_void column';
-
 comment on table "master"."role"
-  is '{table}';
+  is 'Titles of privileged users that can perform definite actions';
 
 comment on column "master"."role"."id"
   is 'Locally unique primary key';
@@ -16758,11 +17567,14 @@ comment on column "master"."role"."abbrev"
 comment on column "master"."role"."name"
   is 'Name identifier';
 
-comment on column "master"."role"."rank"
-  is '0: System admin; >0: Other users; <0: Guest/undefined';
+comment on column "master"."role"."description"
+  is 'Description';
 
 comment on column "master"."role"."display_name"
   is 'Name to display to users';
+
+comment on column "master"."role"."rank"
+  is '0: System admin; >0: Other users; <0: Guest/undefined';
 
 comment on column "master"."role"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -16795,7 +17607,7 @@ comment on index "master"."role_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."item"
-  is '{table}';
+  is 'Processes, activities, tasks, and steps of the system';
 
 comment on column "master"."item"."id"
   is 'Locally unique primary key';
@@ -16806,8 +17618,14 @@ comment on column "master"."item"."abbrev"
 comment on column "master"."item"."name"
   is 'Name identifier';
 
+comment on column "master"."item"."type"
+  is '10: step; 20: task; 30: activity; 40: process';
+
 comment on column "master"."item"."description"
   is 'Description';
+
+comment on column "master"."item"."display_name"
+  is 'Name to display to users';
 
 comment on column "master"."item"."remarks"
   is 'Additional details';
@@ -16846,7 +17664,7 @@ comment on index "master"."item_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."item_relation"
-  is '{table}';
+  is 'Hierarchical relationships of items (process -> activity -> task -> step)';
 
 comment on column "master"."item_relation"."id"
   is 'Locally unique primary key';
@@ -16917,67 +17735,61 @@ comment on constraint "item_action_modifier_id_fkey" on "master"."item_action"
 comment on index "master"."item_action_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."item_role"
+comment on table "master"."team"
   is '{table}';
 
-comment on column "master"."item_role"."id"
+comment on column "master"."team"."id"
   is 'Locally unique primary key';
 
-comment on column "master"."item_role"."creation_timestamp"
-  is 'Timestamp when the record was added to the table';
+comment on column "master"."team"."abbrev"
+  is 'Short name identifier or abbreviation';
 
-comment on column "master"."item_role"."creator_id"
-  is 'ID of the user who added the record to the table';
-
-comment on column "master"."item_role"."modification_timestamp"
-  is 'Timestamp when the record was last modified';
-
-comment on column "master"."item_role"."modifier_id"
-  is 'ID of the user who last modified the record';
-
-comment on column "master"."item_role"."notes"
-  is 'Additional details added by an admin; can be technical or advanced details';
-
-comment on column "master"."item_role"."is_void"
-  is 'Indicator whether the record is deleted or not';
-
-comment on index "master"."item_role_is_void_idx"
-  is 'Index for the is_void column';
-
-comment on table "master"."tooltip"
-  is '{table}';
-
-comment on column "master"."tooltip"."id"
-  is 'Locally unique primary key';
-
-comment on column "master"."tooltip"."name"
+comment on column "master"."team"."name"
   is 'Name identifier';
 
-comment on column "master"."tooltip"."value"
-  is 'Value of a variable';
+comment on column "master"."team"."type"
+  is 'pipeline; crosscutting';
 
-comment on column "master"."tooltip"."description"
+comment on column "master"."team"."description"
   is 'Description';
 
-comment on column "master"."tooltip"."creation_timestamp"
+comment on column "master"."team"."display_name"
+  is 'Name to display to users';
+
+comment on column "master"."team"."remarks"
+  is 'Additional details';
+
+comment on column "master"."team"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
-comment on column "master"."tooltip"."creator_id"
+comment on column "master"."team"."creator_id"
   is 'ID of the user who added the record to the table';
 
-comment on column "master"."tooltip"."modification_timestamp"
+comment on column "master"."team"."modification_timestamp"
   is 'Timestamp when the record was last modified';
 
-comment on column "master"."tooltip"."modifier_id"
+comment on column "master"."team"."modifier_id"
   is 'ID of the user who last modified the record';
 
-comment on column "master"."tooltip"."notes"
+comment on column "master"."team"."notes"
   is 'Additional details added by an admin; can be technical or advanced details';
 
-comment on column "master"."tooltip"."is_void"
+comment on column "master"."team"."is_void"
   is 'Indicator whether the record is deleted or not';
 
-comment on index "master"."tooltip_is_void_idx"
+comment on index "master"."team_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "team_creator_id_fkey" on "master"."team"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "team_modifier_id_fkey" on "master"."team"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."team_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "master"."team_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."user_item"
@@ -17106,57 +17918,6 @@ comment on index "master"."user_session_user_id_idx"
 comment on index "master"."user_session_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."team"
-  is '{table}';
-
-comment on column "master"."team"."id"
-  is 'Locally unique primary key';
-
-comment on column "master"."team"."abbrev"
-  is 'Short name identifier or abbreviation';
-
-comment on column "master"."team"."name"
-  is 'Name identifier';
-
-comment on column "master"."team"."description"
-  is 'Description';
-
-comment on column "master"."team"."remarks"
-  is 'Additional details';
-
-comment on column "master"."team"."creation_timestamp"
-  is 'Timestamp when the record was added to the table';
-
-comment on column "master"."team"."creator_id"
-  is 'ID of the user who added the record to the table';
-
-comment on column "master"."team"."modification_timestamp"
-  is 'Timestamp when the record was last modified';
-
-comment on column "master"."team"."modifier_id"
-  is 'ID of the user who last modified the record';
-
-comment on column "master"."team"."notes"
-  is 'Additional details added by an admin; can be technical or advanced details';
-
-comment on column "master"."team"."is_void"
-  is 'Indicator whether the record is deleted or not';
-
-comment on index "master"."team_id_pkey"
-  is 'Primary key constraint for the id column';
-
-comment on constraint "team_creator_id_fkey" on "master"."team"
-  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
-
-comment on constraint "team_modifier_id_fkey" on "master"."team"
-  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
-
-comment on index "master"."team_abbrev_idx"
-  is 'Unique index for the abbrev column';
-
-comment on index "master"."team_is_void_idx"
-  is 'Index for the is_void column';
-
 comment on table "master"."team_member"
   is '{table}';
 
@@ -17191,6 +17952,186 @@ comment on constraint "team_member_modifier_id_fkey" on "master"."team_member"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
 comment on index "master"."team_member_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."item_role"
+  is '{table}';
+
+comment on column "master"."item_role"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."item_role"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."item_role"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."item_role"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."item_role"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."item_role"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."item_role"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."item_role_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."tooltip"
+  is '{table}';
+
+comment on column "master"."tooltip"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."tooltip"."name"
+  is 'Name identifier';
+
+comment on column "master"."tooltip"."value"
+  is 'Value of a variable';
+
+comment on column "master"."tooltip"."description"
+  is 'Description';
+
+comment on column "master"."tooltip"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."tooltip"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."tooltip"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."tooltip"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."tooltip"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."tooltip"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."tooltip_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."instruction"
+  is '{table}';
+
+comment on column "master"."instruction"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."instruction"."name"
+  is 'Name identifier';
+
+comment on column "master"."instruction"."value"
+  is 'Value of a variable';
+
+comment on column "master"."instruction"."description"
+  is 'Description';
+
+comment on column "master"."instruction"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."instruction"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."instruction"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."instruction"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."instruction"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."instruction"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."instruction_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."audit"
+  is '{table}';
+
+comment on column "master"."audit"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."audit"."description"
+  is 'Description';
+
+comment on column "master"."audit"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."audit"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."audit"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."audit"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."audit"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."audit"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."audit_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "audit_creator_id_fkey" on "master"."audit"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "audit_modifier_id_fkey" on "master"."audit"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."audit_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."change_log"
+  is '{table}';
+
+comment on column "master"."change_log"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."change_log"."name"
+  is 'Name identifier';
+
+comment on column "master"."change_log"."description"
+  is 'Description';
+
+comment on column "master"."change_log"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."change_log"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."change_log"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."change_log"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."change_log"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."change_log"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."change_log_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "change_log_creator_id_fkey" on "master"."change_log"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "change_log_modifier_id_fkey" on "master"."change_log"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."change_log_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "dictionary"."database"
@@ -17262,6 +18203,9 @@ comment on column "dictionary"."schema"."comment"
 comment on column "dictionary"."schema"."description"
   is 'Description';
 
+comment on column "dictionary"."schema"."display_name"
+  is 'Name to display to users';
+
 comment on column "dictionary"."schema"."remarks"
   is 'Additional details';
 
@@ -17324,6 +18268,9 @@ comment on column "dictionary"."table"."comment"
 
 comment on column "dictionary"."table"."description"
   is 'Description';
+
+comment on column "dictionary"."table"."display_name"
+  is 'Name to display to users';
 
 comment on column "dictionary"."table"."remarks"
   is 'Additional details';
@@ -18202,6 +19149,9 @@ comment on column "operational"."entry"."product_name"
 comment on column "operational"."entry"."description"
   is 'Description';
 
+comment on column "operational"."entry"."display_name"
+  is 'Name to display to users';
+
 comment on column "operational"."entry"."remarks"
   is 'Additional details';
 
@@ -18405,6 +19355,9 @@ comment on column "operational"."plot"."code"
 
 comment on column "operational"."plot"."description"
   is 'Description';
+
+comment on column "operational"."plot"."display_name"
+  is 'Name to display to users';
 
 comment on column "operational"."plot"."remarks"
   is 'Additional details';
@@ -18627,6 +19580,9 @@ comment on column "operational"."subplot"."key"
 
 comment on column "operational"."subplot"."description"
   is 'Description';
+
+comment on column "operational"."subplot"."display_name"
+  is 'Name to display to users';
 
 comment on column "operational"."subplot"."remarks"
   is 'Additional details';
@@ -18879,6 +19835,9 @@ comment on column "operational"."cross"."male_product_name"
 
 comment on column "operational"."cross"."description"
   is 'Description';
+
+comment on column "operational"."cross"."display_name"
+  is 'Name to display to users';
 
 comment on column "operational"."cross"."remarks"
   is 'Additional details';
@@ -20146,6 +21105,9 @@ comment on column "warehouse"."entry"."product_name"
 comment on column "warehouse"."entry"."description"
   is 'Description';
 
+comment on column "warehouse"."entry"."display_name"
+  is 'Name to display to users';
+
 comment on column "warehouse"."entry"."remarks"
   is 'Additional details';
 
@@ -20218,6 +21180,9 @@ comment on column "warehouse"."plot"."code"
 comment on column "warehouse"."plot"."description"
   is 'Description';
 
+comment on column "warehouse"."plot"."display_name"
+  is 'Name to display to users';
+
 comment on column "warehouse"."plot"."remarks"
   is 'Additional details';
 
@@ -20289,6 +21254,9 @@ comment on column "warehouse"."subplot"."number"
 
 comment on column "warehouse"."subplot"."description"
   is 'Description';
+
+comment on column "warehouse"."subplot"."display_name"
+  is 'Name to display to users';
 
 comment on column "warehouse"."subplot"."remarks"
   is 'Additional details';
