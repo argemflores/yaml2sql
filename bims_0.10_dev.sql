@@ -828,6 +828,49 @@ create index "product_name_is_void_idx"
 
 -- ----------------
 
+create table "master"."product_gid" (
+    "id" serial not null,
+    "product_id" integer,
+    "gid" integer,
+    "gid_type" varchar,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."product_gid"
+  add constraint "product_gid_product_id_fkey"
+  foreign key ("product_id") references "master"."product" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."product_gid"
+  add constraint "product_gid_id_pkey"
+  primary key ("id");
+alter table "master"."product_gid"
+  add constraint "product_gid_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."product_gid"
+  add constraint "product_gid_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "product_gid_product_id_idx"
+  on "master"."product_gid"
+  using btree ("product_id");
+create index "product_gid_gid_idx"
+  on "master"."product_gid"
+  using btree ("gid");
+create index "product_gid_is_void_idx"
+  on "master"."product_gid"
+  using btree ("is_void");
+
+-- ----------------
+
 create table "master"."product_metadata" (
     "id" serial not null,
     "variable_id" integer,
@@ -16332,7 +16375,6 @@ from stdin
 -- ----------------
 
 create table "import"."rga_data" (
-    "program" varchar,
     "year" varchar,
     "season" varchar,
     "family_gid" varchar,
@@ -17322,6 +17364,48 @@ comment on constraint "product_name_modifier_id_fkey" on "master"."product_name"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
 comment on index "master"."product_name_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "master"."product_gid"
+  is 'List of GIDs of a product';
+
+comment on column "master"."product_gid"."id"
+  is 'Locally unique primary key';
+
+comment on column "master"."product_gid"."gid_type"
+  is 'fixed breeding line, cross, derivative, mgid (founding germplasm)';
+
+comment on column "master"."product_gid"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."product_gid"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."product_gid"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."product_gid"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."product_gid"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."product_gid"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."product_gid_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "product_gid_creator_id_fkey" on "master"."product_gid"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "product_gid_modifier_id_fkey" on "master"."product_gid"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."product_gid_product_id_idx"
+  is 'Index for the product_id column';
+
+comment on index "master"."product_gid_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."product_metadata"
