@@ -31,6 +31,7 @@ create table "master"."user" (
     "valid_start_date" date,
     "valid_end_date" date,
     "user_type" integer not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -245,10 +246,10 @@ create table "master"."scale_value" (
     "id" serial not null,
     "scale_id" integer not null,
     "value" varchar not null,
+    "order_number" integer not null default '1',
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
-    "order_number" integer not null default '1',
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -301,6 +302,7 @@ create table "master"."variable" (
     "scale_id" integer,
     "variable_set" varchar,
     "synonym" varchar,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -344,6 +346,9 @@ create index "variable_method_id_idx"
 create index "variable_scale_id_idx"
   on "master"."variable"
   using btree ("scale_id");
+create index "variable_property_id_method_id_scale_id_idx"
+  on "master"."variable"
+  using btree ("property_id", "method_id", "scale_id");
 create index "variable_abbrev_idx"
   on "master"."variable"
   using btree ("abbrev");
@@ -399,6 +404,7 @@ create table "master"."variable_set_member" (
     "variable_set_id" integer not null,
     "variable_id" integer not null,
     "order_number" integer not null default '1',
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -833,6 +839,7 @@ create table "master"."product_gid" (
     "product_id" integer,
     "gid" integer,
     "gid_type" varchar,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -875,6 +882,7 @@ create table "master"."product_metadata" (
     "id" serial not null,
     "variable_id" integer,
     "value" varchar not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -971,6 +979,7 @@ create table "master"."place_season" (
     "place_id" integer not null,
     "season_id" integer not null,
     "order_number" integer not null default '1',
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -1137,6 +1146,7 @@ create table "master"."family" (
     "cross_id" integer not null,
     "female_entry_id" integer not null,
     "male_entry_id" integer not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -1172,6 +1182,7 @@ create table "master"."role" (
     "description" text,
     "display_name" varchar(256),
     "rank" smallint default '-1',
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -1390,6 +1401,7 @@ create table "master"."item_relation" (
     "parent_id" integer not null,
     "child_id" integer not null,
     "order_number" integer not null default '1',
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -1501,6 +1513,7 @@ create table "master"."item_action" (
     "module" varchar,
     "controller" varchar not null,
     "action" varchar not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -1688,6 +1701,7 @@ create table "master"."user_item" (
     "id" serial not null,
     "user_id" integer not null,
     "item_id" integer not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -1756,6 +1770,7 @@ create table "master"."user_role" (
     "id" serial not null,
     "user_id" integer not null,
     "role_id" integer not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -1870,6 +1885,7 @@ create table "master"."user_session" (
     "last_visited_url" varchar,
     "is_default_redirect_yes" boolean default false,
     "is_default_redirect_no" boolean default false,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -1959,6 +1975,7 @@ create table "master"."team_member" (
     "member_id" integer not null,
     "role_id" integer not null,
     "user_role_id" integer,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2080,6 +2097,7 @@ create table "master"."item_role" (
     "item_id" integer not null,
     "role_id" integer not null,
     "team_id" integer not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2243,6 +2261,7 @@ create table "master"."tooltip" (
     "name" varchar(256) not null,
     "value" varchar not null,
     "description" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2425,6 +2444,7 @@ create table "master"."instruction" (
     "name" varchar(256) not null,
     "value" varchar not null,
     "description" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2573,6 +2593,7 @@ create table "master"."audit" (
     "action_timestamp" timestamp,
     "description" text,
     "status" varchar(32),
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2614,6 +2635,7 @@ create table "master"."change_log" (
     "description" text,
     "key_person_id" integer not null,
     "date_done" date not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2692,6 +2714,7 @@ ALTER SEQUENCE "master"."change_log_id_seq"
 
 create view "master"."variable_list" as
 select
+    mv.id variable_id,
     mv.abbrev,
     mv.column_name,
     mv.name,
@@ -2726,6 +2749,8 @@ where
     mv.property_id = mp.id
     and mv.method_id = mm.id
     and mv.scale_id = ms.id
+order by
+    mv.id
 ;
 
 -- --------------------------------
@@ -2740,6 +2765,7 @@ create table "dictionary"."database" (
     "encoding" varchar not null default 'UTF8',
     "lc_collate" varchar not null default 'C',
     "lc_ctype" varchar not null default 'C',
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2876,6 +2902,7 @@ create table "dictionary"."column" (
     "not_null" boolean not null default false,
     "default_value" varchar,
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2937,6 +2964,7 @@ create table "dictionary"."constraint" (
     "no_inherit" boolean not null default false,
     "concurrent" boolean not null default false,
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -2996,6 +3024,7 @@ create table "dictionary"."index" (
     "unique" boolean not null default false,
     "concurrent" boolean not null default false,
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -3054,6 +3083,7 @@ create table "dictionary"."rule" (
     "condition" text,
     "command" text,
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -3107,6 +3137,7 @@ create table "dictionary"."trigger" (
     "argument" varchar,
     "condition" varchar,
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -3154,6 +3185,7 @@ create table "dictionary"."view" (
     "name" varchar(256) not null,
     "command" text,
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -3206,6 +3238,7 @@ create table "dictionary"."sequence" (
     "cache" integer not null default '1',
     "cycle" boolean not null default false,
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -3258,6 +3291,7 @@ create table "dictionary"."function" (
     "execution_privilege" varchar not null default 'invoker',
     "stability" varchar not null default 'volatile',
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -3308,6 +3342,7 @@ create table "dictionary"."domain" (
     "default_value" varchar,
     "collation" varchar not null default 'pg_catalog.C',
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -3359,6 +3394,7 @@ create table "dictionary"."aggregate" (
     "final_function_id" integer,
     "initial_condition" text,
     "comment" text,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -3419,6 +3455,7 @@ create table "operational"."study" (
     "key" bigint not null,
     "name" varchar(256) not null,
     "title" varchar,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -4293,6 +4330,7 @@ create table "operational"."seed_storage" (
     "harvest_date" date,
     "label" varchar not null,
     "original_storage_id" integer,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -4348,6 +4386,7 @@ create table "operational"."seed_storage_log" (
     "event_timestamp" timestamp not null,
     "sender" varchar,
     "receiver" varchar,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -4624,6 +4663,7 @@ create table "warehouse_terminal"."study_variable" (
     "data_level" varchar not null,
     "variable_id" integer not null,
     "order_number" integer not null default '1',
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -4871,6 +4911,7 @@ create table "warehouse_terminal"."entry_summary" (
     "max" varchar,
     "average" varchar,
     "study_name" varchar,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -5127,6 +5168,7 @@ create table "warehouse_terminal"."plot_summary" (
     "max" varchar,
     "average" varchar,
     "study_name" varchar,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -5171,6 +5213,7 @@ create table "warehouse_terminal"."temporary_data_upload" (
     "variable_name" varchar,
     "variable_value" varchar,
     "user_id" integer not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -5226,6 +5269,7 @@ create table "warehouse"."study" (
     "number" integer not null,
     "name" varchar(256) not null,
     "title" varchar,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -5496,6 +5540,7 @@ create table "import"."variable" (
     "entry_message" varchar,
     "coded_values" varchar,
     "id" serial not null,
+    "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
     "modification_timestamp" timestamp,
@@ -16574,6 +16619,9 @@ comment on table "master"."user"
 comment on column "master"."user"."id"
   is 'Locally unique primary key';
 
+comment on column "master"."user"."remarks"
+  is 'Additional details';
+
 comment on column "master"."user"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -16775,6 +16823,9 @@ comment on table "master"."scale_value"
 comment on column "master"."scale_value"."id"
   is 'Locally unique primary key';
 
+comment on column "master"."scale_value"."order_number"
+  is 'Ordering number';
+
 comment on column "master"."scale_value"."description"
   is 'Description';
 
@@ -16783,9 +16834,6 @@ comment on column "master"."scale_value"."display_name"
 
 comment on column "master"."scale_value"."remarks"
   is 'Additional details';
-
-comment on column "master"."scale_value"."order_number"
-  is 'Ordering number';
 
 comment on column "master"."scale_value"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -16831,6 +16879,9 @@ comment on column "master"."variable"."column_name"
 
 comment on column "master"."variable"."name"
   is 'Name of the variable''s property';
+
+comment on column "master"."variable"."remarks"
+  is 'Additional details';
 
 comment on column "master"."variable"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -16924,6 +16975,9 @@ comment on table "master"."variable_set_member"
 
 comment on column "master"."variable_set_member"."id"
   is 'Locally unique primary key';
+
+comment on column "master"."variable_set_member"."remarks"
+  is 'Additional details';
 
 comment on column "master"."variable_set_member"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -17375,6 +17429,9 @@ comment on column "master"."product_gid"."id"
 comment on column "master"."product_gid"."gid_type"
   is 'fixed breeding line, cross, derivative, mgid (founding germplasm)';
 
+comment on column "master"."product_gid"."remarks"
+  is 'Additional details';
+
 comment on column "master"."product_gid"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -17413,6 +17470,9 @@ comment on table "master"."product_metadata"
 
 comment on column "master"."product_metadata"."id"
   is 'Locally unique primary key';
+
+comment on column "master"."product_metadata"."remarks"
+  is 'Additional details';
 
 comment on column "master"."product_metadata"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -17503,6 +17563,9 @@ comment on table "master"."place_season"
 
 comment on column "master"."place_season"."id"
   is 'Locally unique primary key';
+
+comment on column "master"."place_season"."remarks"
+  is 'Additional details';
 
 comment on column "master"."place_season"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -17648,6 +17711,9 @@ comment on column "master"."family"."id"
 comment on column "master"."family"."study_id"
   is 'ID referring to study';
 
+comment on column "master"."family"."remarks"
+  is 'Additional details';
+
 comment on column "master"."family"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -17698,6 +17764,9 @@ comment on column "master"."role"."display_name"
 
 comment on column "master"."role"."rank"
   is '0: System admin; >0: Other users; <0: Guest/undefined';
+
+comment on column "master"."role"."remarks"
+  is 'Additional details';
 
 comment on column "master"."role"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -17792,6 +17861,9 @@ comment on table "master"."item_relation"
 comment on column "master"."item_relation"."id"
   is 'Locally unique primary key';
 
+comment on column "master"."item_relation"."remarks"
+  is 'Additional details';
+
 comment on column "master"."item_relation"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -17827,6 +17899,9 @@ comment on table "master"."item_action"
 
 comment on column "master"."item_action"."id"
   is 'Locally unique primary key';
+
+comment on column "master"."item_action"."remarks"
+  is 'Additional details';
 
 comment on column "master"."item_action"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -17924,6 +17999,9 @@ comment on column "master"."user_item"."id"
 comment on column "master"."user_item"."user_id"
   is 'ID of user';
 
+comment on column "master"."user_item"."remarks"
+  is 'Additional details';
+
 comment on column "master"."user_item"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -17959,6 +18037,9 @@ comment on column "master"."user_role"."id"
 
 comment on column "master"."user_role"."user_id"
   is 'ID of user';
+
+comment on column "master"."user_role"."remarks"
+  is 'Additional details';
 
 comment on column "master"."user_role"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -18005,6 +18086,9 @@ comment on column "master"."user_session"."id"
 comment on column "master"."user_session"."user_id"
   is 'ID of user';
 
+comment on column "master"."user_session"."remarks"
+  is 'Additional details';
+
 comment on column "master"."user_session"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18047,6 +18131,9 @@ comment on table "master"."team_member"
 comment on column "master"."team_member"."id"
   is 'Locally unique primary key';
 
+comment on column "master"."team_member"."remarks"
+  is 'Additional details';
+
 comment on column "master"."team_member"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18082,6 +18169,9 @@ comment on table "master"."item_role"
 
 comment on column "master"."item_role"."id"
   is 'Locally unique primary key';
+
+comment on column "master"."item_role"."remarks"
+  is 'Additional details';
 
 comment on column "master"."item_role"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -18119,6 +18209,9 @@ comment on column "master"."tooltip"."value"
 comment on column "master"."tooltip"."description"
   is 'Description';
 
+comment on column "master"."tooltip"."remarks"
+  is 'Additional details';
+
 comment on column "master"."tooltip"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18155,6 +18248,9 @@ comment on column "master"."instruction"."value"
 comment on column "master"."instruction"."description"
   is 'Description';
 
+comment on column "master"."instruction"."remarks"
+  is 'Additional details';
+
 comment on column "master"."instruction"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18184,6 +18280,9 @@ comment on column "master"."audit"."id"
 
 comment on column "master"."audit"."description"
   is 'Description';
+
+comment on column "master"."audit"."remarks"
+  is 'Additional details';
 
 comment on column "master"."audit"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -18226,6 +18325,9 @@ comment on column "master"."change_log"."name"
 
 comment on column "master"."change_log"."description"
   is 'Description';
+
+comment on column "master"."change_log"."remarks"
+  is 'Additional details';
 
 comment on column "master"."change_log"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -18270,6 +18372,9 @@ comment on column "dictionary"."database"."name"
   is 'Name identifier';
 
 comment on column "dictionary"."database"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."database"."remarks"
   is 'Additional details';
 
 comment on column "dictionary"."database"."creation_timestamp"
@@ -18473,6 +18578,9 @@ comment on column "dictionary"."column"."default_value"
 comment on column "dictionary"."column"."comment"
   is 'Additional details';
 
+comment on column "dictionary"."column"."remarks"
+  is 'Additional details';
+
 comment on column "dictionary"."column"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18552,6 +18660,9 @@ comment on column "dictionary"."constraint"."foreign_column_id"
   is 'Column of the reference table for foreign key constraint only';
 
 comment on column "dictionary"."constraint"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."constraint"."remarks"
   is 'Additional details';
 
 comment on column "dictionary"."constraint"."creation_timestamp"
@@ -18635,6 +18746,9 @@ comment on column "dictionary"."index"."concurrent"
 comment on column "dictionary"."index"."comment"
   is 'Additional details';
 
+comment on column "dictionary"."index"."remarks"
+  is 'Additional details';
+
 comment on column "dictionary"."index"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18713,6 +18827,9 @@ comment on column "dictionary"."rule"."command"
 comment on column "dictionary"."rule"."comment"
   is 'Additional details';
 
+comment on column "dictionary"."rule"."remarks"
+  is 'Additional details';
+
 comment on column "dictionary"."rule"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18785,6 +18902,9 @@ comment on column "dictionary"."trigger"."event"
 comment on column "dictionary"."trigger"."comment"
   is 'Additional details';
 
+comment on column "dictionary"."trigger"."remarks"
+  is 'Additional details';
+
 comment on column "dictionary"."trigger"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18848,6 +18968,9 @@ comment on column "dictionary"."view"."command"
 comment on column "dictionary"."view"."comment"
   is 'Additional details';
 
+comment on column "dictionary"."view"."remarks"
+  is 'Additional details';
+
 comment on column "dictionary"."view"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -18906,6 +19029,9 @@ comment on column "dictionary"."sequence"."name"
   is 'Name identifier';
 
 comment on column "dictionary"."sequence"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."sequence"."remarks"
   is 'Additional details';
 
 comment on column "dictionary"."sequence"."creation_timestamp"
@@ -18968,6 +19094,9 @@ comment on column "dictionary"."function"."name"
 comment on column "dictionary"."function"."comment"
   is 'Additional details';
 
+comment on column "dictionary"."function"."remarks"
+  is 'Additional details';
+
 comment on column "dictionary"."function"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -19028,6 +19157,9 @@ comment on column "dictionary"."domain"."name"
 comment on column "dictionary"."domain"."comment"
   is 'Additional details';
 
+comment on column "dictionary"."domain"."remarks"
+  is 'Additional details';
+
 comment on column "dictionary"."domain"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -19086,6 +19218,9 @@ comment on column "dictionary"."aggregate"."name"
   is 'Name identifier';
 
 comment on column "dictionary"."aggregate"."comment"
+  is 'Additional details';
+
+comment on column "dictionary"."aggregate"."remarks"
   is 'Additional details';
 
 comment on column "dictionary"."aggregate"."creation_timestamp"
@@ -19151,6 +19286,9 @@ comment on column "operational"."study"."name"
 
 comment on column "operational"."study"."title"
   is 'Title of the study';
+
+comment on column "operational"."study"."remarks"
+  is 'Additional details';
 
 comment on column "operational"."study"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -20162,6 +20300,9 @@ comment on column "operational"."seed_storage"."original_storage_id"
   is 'Null except in special cases when a seed lot is divided into several seed lots,
 this contains the seed storage ID of the original seed lot that was divided';
 
+comment on column "operational"."seed_storage"."remarks"
+  is 'Additional details';
+
 comment on column "operational"."seed_storage"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -20215,6 +20356,9 @@ comment on column "operational"."seed_storage_log"."sender"
 
 comment on column "operational"."seed_storage_log"."receiver"
   is 'Where the withdrawn seeds will go to';
+
+comment on column "operational"."seed_storage_log"."remarks"
+  is 'Additional details';
 
 comment on column "operational"."seed_storage_log"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -20520,6 +20664,9 @@ comment on column "warehouse_terminal"."study_variable"."data_level"
 comment on column "warehouse_terminal"."study_variable"."order_number"
   is 'Ordering number';
 
+comment on column "warehouse_terminal"."study_variable"."remarks"
+  is 'Additional details';
+
 comment on column "warehouse_terminal"."study_variable"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -20783,6 +20930,9 @@ comment on column "warehouse_terminal"."entry_summary"."id"
 
 comment on column "warehouse_terminal"."entry_summary"."transaction_id"
   is 'ID of the transaction made in the terminal';
+
+comment on column "warehouse_terminal"."entry_summary"."remarks"
+  is 'Additional details';
 
 comment on column "warehouse_terminal"."entry_summary"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -21057,6 +21207,9 @@ comment on column "warehouse_terminal"."plot_summary"."id"
 comment on column "warehouse_terminal"."plot_summary"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
+comment on column "warehouse_terminal"."plot_summary"."remarks"
+  is 'Additional details';
+
 comment on column "warehouse_terminal"."plot_summary"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
@@ -21101,6 +21254,9 @@ comment on column "warehouse_terminal"."temporary_data_upload"."transaction_id"
 
 comment on column "warehouse_terminal"."temporary_data_upload"."user_id"
   is 'ID of user';
+
+comment on column "warehouse_terminal"."temporary_data_upload"."remarks"
+  is 'Additional details';
 
 comment on column "warehouse_terminal"."temporary_data_upload"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -21164,6 +21320,9 @@ comment on column "warehouse"."study"."name"
 
 comment on column "warehouse"."study"."title"
   is 'Title of the study';
+
+comment on column "warehouse"."study"."remarks"
+  is 'Additional details';
 
 comment on column "warehouse"."study"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
@@ -21443,6 +21602,9 @@ comment on column "import"."variable"."abbrev"
 
 comment on column "import"."variable"."id"
   is 'Locally unique primary key';
+
+comment on column "import"."variable"."remarks"
+  is 'Additional details';
 
 comment on column "import"."variable"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
