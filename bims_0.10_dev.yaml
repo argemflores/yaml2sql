@@ -189,7 +189,7 @@ dictionary:
             length: 256
             comment: Name to display to users
     constraint:
-        - &id_pkey-cst
+        - &id-pkey-cst
             name: {table}_id_pkey
             type: primary_key
             column: id
@@ -431,7 +431,7 @@ dictionary:
                 - *is_void-col
         constraint:
             - &def-log-tbl-cst
-                - *id_pkey-cst
+                - *id-pkey-cst
                 - *creator_id-fkey-cst
                 - *modifier_id-fkey-cst
         index:
@@ -519,6 +519,14 @@ database: &bims_0.10_dev-db
                             data_type: integer
                             not_null: true
                         <<: *def-log-tbl-col
+                    constraint:
+                        -
+                            type: unique_key
+                            column: email
+                        -
+                            type: unique_key
+                            column: username
+                        <<: *def-log-tbl-cst
                     index:
                         - &user-email-idx
                             name: user_email_idx
@@ -549,11 +557,6 @@ database: &bims_0.10_dev-db
                     <<: *def-tbl
                     name: property
                     comment: 'Property describes the context of the sampling unit and experimental material, or the trait being measured.'
-                    index:
-                        -
-                            <<: *abbrev-idx
-                            unique: false
-                        <<: *def-log-tbl-idx
                 - &master-method-tbl
                     <<: *def-tbl
                     name: method
@@ -627,12 +630,12 @@ database: &bims_0.10_dev-db
                         <<: *def-id-tbl-col
                         - &variable-abbrev-col
                             <<: *abbrev-col
-                            comment: Abbrev of the property of the variable
-                        - &variable-column_name-col
-                            name: column_name
+                            comment: Column name of the variable in the warehouse tables
+                        - &variable-label-col
+                            name: label
                             data_type: varchar
                             length: 128
-                            comment: Column name of the variable in the warehouse tables
+                            comment: Abbrev of the variable's property
                         - &variable-name-col
                             <<: *name-col
                             comment: Name of the variable's property
@@ -702,6 +705,10 @@ database: &bims_0.10_dev-db
                                 foreign_column: id
                         <<: *def-tbl-cst
                     index:
+                        -
+                            name: variable_abbrev_idx
+                            column: abbrev
+                            unique: true
                         - &variable-property_id-idx
                             name: variable_property_id_idx
                             column: property_id
@@ -717,13 +724,6 @@ database: &bims_0.10_dev-db
                                 - property_id
                                 - method_id
                                 - scale_id
-                        -
-                            <<: *abbrev-idx
-                            unique: false
-                        -
-                            name: variable_column_name_idx
-                            column: column_name
-                            unique: true
                         <<: *def-log-tbl-idx
                 - &master-variable_set-tbl
                     <<: *def-tbl
@@ -1671,7 +1671,7 @@ database: &bims_0.10_dev-db
                     constraint:
                         -
                             name: tooltip_name_ukey
-                            type: unique
+                            type: unique_key
                             column: name
                         <<: *def-log-tbl-col
                     index:
@@ -1702,7 +1702,7 @@ database: &bims_0.10_dev-db
                     constraint:
                         -
                             name: instruction_name_ukey
-                            type: unique
+                            type: unique_key
                             column: name
                         <<: *def-log-tbl-col
                     index:
@@ -1819,7 +1819,7 @@ database: &bims_0.10_dev-db
                         select
                             mv.id variable_id,
                             mv.abbrev,
-                            mv.column_name,
+                            mv.label,
                             mv.name,
                             mv.data_type,
                             mv.not_null,
@@ -3804,7 +3804,7 @@ database: &bims_0.10_dev-db
                             <<: *abbrev-col
                             not_null: false
                         -
-                            name: column_name
+                            name: label
                             data_type: varchar
                             not_null: false
                         -
@@ -3878,7 +3878,7 @@ database: &bims_0.10_dev-db
                         <<: *copy-val
                         column:
                             - abbrev
-                            - column_name
+                            - label
                             - name
                             - description
                             - data_type
@@ -4173,10 +4173,10 @@ database: &bims_0.10_dev-db
                 -- if (upper(new."type") = 'METADATA' or upper(new."type") = 'OBSERVATION') then
                 if (upper(new."type") = 'OBSERVATION') then
                     -- column name
-                    if (new."column_name" is null or trim(new."column_name") = '') then
-                        column_name := '"' || lower(new."name") || '"';
+                    if (new."abbrev" is null or trim(new."abbrev") = '') then
+                        column_name := '"' || lower(new."label") || '"';
                     else
-                        column_name := '"' || lower(new."column_name") || '"';
+                        column_name := '"' || lower(new."abbrev") || '"';
                     end if;
                     
                     -- data type
@@ -4235,10 +4235,10 @@ database: &bims_0.10_dev-db
                                     when iv.abbrev is null
                                         then (
                                             case
-                                                when iv.column_name is null
+                                                when iv.abbrev is null
                                                     then upper(replace(trim(iv.name), ' ', '_'))
                                                 else
-                                                    upper(replace(trim(iv.column_name), ' ', '_'))
+                                                    upper(replace(trim(iv.abbrev), ' ', '_'))
                                             end
                                         )
                                     else
@@ -4255,14 +4255,6 @@ database: &bims_0.10_dev-db
                     limit 1
                 ) "abbrev",
                 lower(trim(var."name")) "name",
-                /*(
-                    select
-                        description
-                    from
-                        import.variable
-                    where
-                        id = id_arr[1]
-                ) description*/
                 array_to_string(var.description_arr, '\n') description
             from (
                 select
@@ -4274,9 +4266,6 @@ database: &bims_0.10_dev-db
                     import.variable iv
                 group by
                     lower(trim(iv."name"))
-                -- order by
-                    -- lower(trim(iv."name")) asc,
-                    -- count(iv.id) desc
             ) var
             ;
             
@@ -4310,8 +4299,6 @@ database: &bims_0.10_dev-db
                     import.variable iv
                 order by
                     iv.id
-                -- order by
-                    -- trim(iv.method) asc
             ) var
             ;
             
@@ -4354,8 +4341,6 @@ database: &bims_0.10_dev-db
                     import.variable iv
                 order by
                     iv.id
-                -- order by
-                    -- trim(iv.scale) asc
             ) var
             ;
             
@@ -4363,7 +4348,7 @@ database: &bims_0.10_dev-db
             
             insert into master.variable (
                 abbrev,
-                column_name,
+                label,
                 name,
                 data_type,
                 not_null,
@@ -4378,10 +4363,9 @@ database: &bims_0.10_dev-db
                 variable_set
             )
             select
-                var.abbrev,
                 (
                     case
-                        when var.column_name is null
+                        when var.abbrev is null
                             then case
                                 when (
                                     select
@@ -4391,17 +4375,18 @@ database: &bims_0.10_dev-db
                                     where
                                         upper(trim(iv.name)) = upper(trim(var.name))
                                 ) >= 2 then
-                                    var.abbrev || '_' || (
+                                    var.label || '_' || (
                                         case when var.scale_type is null then ''
                                         else upper(substring(var.scale_type from 1 for 3)) || '_' end
                                     ) || row_number() over (partition by upper(trim(var.name)), upper(trim(substring(var.scale_type from 1 for 3))))
                                 else
-                                    var.abbrev
+                                    var.label
                             end
                         else
-                            var.column_name
+                            var.abbrev
                     end
-                ) column_name,
+                ) abbrev,
+                var.label,
                 var.name,
                 var.data_type,
                 var.not_null,
@@ -4416,43 +4401,21 @@ database: &bims_0.10_dev-db
                 var.variable_set
             from (
                 select
+                    var.abbrev,
                     upper(replace(
                         (
                             case
-                                when var.abbrev is null
+                                when var.label is null
                                     then var.property_abbrev
-                                    -- var.name || '_' || upper(substring(var.scale_type from 1 for 3))
-                                    /*var.name || '_' || (
-                                        case when var.scale_type is null then ''
-                                        else substring(var.scale_type from 1 for 3) || '_' end
-                                    ) || row_number() over (partition by upper(trim(var.name)), upper(substring(var.scale_type from 1 for 3)))*/
-                                /*
-                                when (
-                                    select
-                                        count(iv.id)
-                                    from
-                                        import.variable iv
-                                    where
-                                        upper(trim(iv.abbrev)) = upper(trim(var.abbrev))
-                                ) >= 2 then
-                                    -- var.abbrev || '_' || row_number() over (partition by upper(trim(var."name")))
-                                    -- var.abbrev || '_' || (trunc((random() * 10)::numeric, 2) + 1)
-                                    var.abbrev || '_' || (
-                                        case when var.scale_type is null then ''
-                                        else substring(var.scale_type from 1 for 3) || '_' end
-                                    ) || row_number() over (partition by upper(trim(var.name)), substring(var.scale_type from 1 for 3))
-                                */
                                 else
-                                    var.abbrev
+                                    var.label
                             end
                         ),
-                    ' ', '_')) abbrev,
-                    var.column_name,
+                    ' ', '_')) "label",
                     var.name,
-                    -- var.description,
                     (
                         case
-                            when var.data_type is null then
+                            when var.data_type is null or trim(var.data_type) = '' then
                                 'varchar'
                             else
                                 var.data_type
@@ -4485,7 +4448,7 @@ database: &bims_0.10_dev-db
                         iv.iv_id,
                         
                         iv.abbrev,
-                        iv.column_name,
+                        iv.label,
                         iv.name,
                         iv.description,
                         iv.data_type,
@@ -4551,8 +4514,8 @@ database: &bims_0.10_dev-db
                             iv.id iv_id,
                             row_number() over (partition by lower(trim("name"))) num,
                             
-                            upper(trim(iv.column_name)) column_name,
                             upper(trim(iv.abbrev)) "abbrev",
+                            upper(trim(iv.label)) "label",
                             lower(trim(iv.name)) "name",
                             trim(iv.description) description,
                             lower(trim(iv.data_type)) data_type,
@@ -4570,10 +4533,6 @@ database: &bims_0.10_dev-db
                         from
                             import.variable iv
                     ) iv
-                    -- order by
-                        -- property_id,
-                        -- method_id,
-                        -- scale_id
                 ) var
                 order by
                     var.iv_id
