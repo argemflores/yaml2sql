@@ -177,6 +177,7 @@ create table "master"."method" (
     "name" varchar,
     "description" text,
     "display_name" varchar(256),
+    "formula" varchar,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -601,7 +602,13 @@ from stdin
     null ''
 ;
 "abbrev";"name";"description"
-"IRSEA";"Irrigated South-East Asia";"Irrigated South-East Asia"
+"IRSEA";"Irrigated South-East Asia";
+"RFSEA";"Rainfed Lowland South-East Asia";
+"IRSA";"Irrigated South Asia";
+"RFSA";"Rainfed Lowland South Asia";
+"ESA";"Eastern Southern Africa";"Rainfed and Irrigated TVPs"
+"HYB";"Hybrid";
+"JAP";"Japonica";"Temperate and Tropical TVPs"
 \.
 
 -- ----------------
@@ -16927,7 +16934,8 @@ create table "import"."f2_data" (
 );
 
 comment on database "bims_0.10_dev"
-  is 'BIMS: Breeding Information Management System';
+  is 'BIMS: Breeding Information Management System
+https://sites.google.com/a/irri.org/bim/conceptual-model';
 
 comment on schema "master"
   is 'Stores master data, which are absolutely correct data that does not change frequently';
@@ -19585,8 +19593,8 @@ comment on index "dictionary"."aggregate_is_void_idx"
   is 'Index for the is_void column';
 
 comment on schema "operational"
-  is 'Consist the basic study, entry, plot, and subplot data, the study meta, observation data and the audit data
-produced in day to day data production events (knowledge work) in the product development programs';
+  is 'Consist of the basic study, entry, plot, and subplot data, the study metadata, observation data and audit data
+produced in day-to-day data production events (knowledge work) in the product development programs';
 
 comment on table "operational"."study"
   is 'Studies';
@@ -21620,7 +21628,7 @@ comment on index "warehouse_terminal"."temporary_data_upload_is_void_idx"
   is 'Index for the is_void column';
 
 comment on schema "warehouse"
-  is 'Validated data from the operational schema';
+  is 'Stores validated operational data';
 
 comment on table "warehouse"."study"
   is 'Studies';
