@@ -552,6 +552,7 @@ database: &bims_0.10_dev-db
                             - valid_end_date
                             - user_type
                     sequence:
+                        restart: true
                         start_with: 25
                 - &master-property-tbl
                     <<: *def-tbl
@@ -621,6 +622,16 @@ database: &bims_0.10_dev-db
                         - &scale_value-scale_id-idx
                             name: scale_value_scale_id_idx
                             column: scale_id
+                        -
+                            name: scale_value_scale_id_value_idx
+                            column:
+                                - scale_id
+                                - value
+                        -
+                            name: scale_value_scale_id_order_number_idx
+                            column:
+                                - scale_id
+                                - order_number
                         <<: *def-log-tbl-idx
                 - &master-variable-tbl
                     <<: *def-tbl
@@ -705,10 +716,10 @@ database: &bims_0.10_dev-db
                                 foreign_column: id
                         <<: *def-tbl-cst
                     index:
+                        <<: *def-ident-tbl-idx
                         -
-                            name: variable_abbrev_idx
-                            column: abbrev
-                            unique: true
+                            name: variable_label_idx
+                            column: label
                         - &variable-property_id-idx
                             name: variable_property_id_idx
                             column: property_id
@@ -729,11 +740,6 @@ database: &bims_0.10_dev-db
                     <<: *def-tbl
                     name: variable_set
                     comment: Groups of variables
-                    column:
-                        <<: *def-id-tbl-col
-                        <<: *def-meta-tbl-col
-                        <<: *def-desc-tbl-col
-                        <<: *def-log-tbl-col
                 - &master-variable_set_member-tbl
                     <<: *def-tbl
                     name: variable_set_member
@@ -769,8 +775,17 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.variable
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - variable_set_id
+                                - variable_id
                         <<: *def-log-tbl-cst
                     index:
+                        -
+                            column: variable_set_id
+                        -
+                            column: variable_id
                         <<: *def-log-tbl-idx
                 - &master-pipeline-tbl
                     <<: *def-tbl
@@ -799,24 +814,14 @@ database: &bims_0.10_dev-db
                         Products of VDPs are varieties, breeding lines, parental lines and other genetic materials in different stages of a breeding scheme, and IP related to the genetic materials.
                         Products of trait development are discovered trait donors, QTL's and genes, and marker application for selection of those, and related IP.
                         Trait development products work through different type IP-solutions than variety development.
-                    column:
-                        <<: *def-id-tbl-col
-                        -
-                            <<: *key-col
-                            default_value: 100
-                        <<: *def-meta-tbl-col
-                        <<: *def-desc-tbl-col
-                        <<: *def-log-tbl-col
-                    index:
-                        - *key-idx
-                        <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
                         column:
-                            - key
                             - abbrev
                             - name
                             - description
+                    sequence:
+                        start_with: 101
                 - &master-place-tbl
                     <<: *def-tbl
                     name: place
@@ -830,46 +835,26 @@ database: &bims_0.10_dev-db
                             - Glasshouse
                             - Warehouse
                             - Storage
-                    column:
-                        <<: *def-id-tbl-col
-                        -
-                            <<: *key-col
-                            default_value: 10000
-                        <<: *def-meta-tbl-col
-                        <<: *def-desc-tbl-col
-                        <<: *def-log-tbl-col
-                    index:
-                        - *key-idx
-                        <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
                         column:
-                            - key
                             - abbrev
                             - name
                             - description
+                    sequence:
+                        start_with: 100001
                 - &master-phase-tbl
                     <<: *def-tbl
                     name: phase
                     comment: Breeding development phases
-                    column:
-                        <<: *def-id-tbl-col
-                        -
-                            <<: *key-col
-                            default_value: 100
-                        <<: *def-meta-tbl-col
-                        <<: *def-desc-tbl-col
-                        <<: *def-log-tbl-col
-                    index:
-                        - *key-idx
-                        <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
                         column:
-                            - key
                             - abbrev
                             - name
                             - description
+                    sequence:
+                        start_with: 101
                 - &master-product-tbl
                     <<: *def-tbl
                     name: product
@@ -938,12 +923,6 @@ database: &bims_0.10_dev-db
                         - &product-fixed_line_name-col
                             name: fixed_line_name
                             data_type: varchar
-                        # - &product-common_name-col
-                        #     name: common_name
-                        #     data_type: varchar
-                        # - &product-cultivar_name-col
-                        #     name: cultivar_name
-                        #     data_type: varchar
                         - &product-selection_method-col
                             name: selection_method
                             data_type: varchar
@@ -957,13 +936,13 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.program
                                 foreign_column: id
-                        - &product-cross_id-fkey-cst
-                            name: product_cross_id_fkey
-                            type: foreign_key
-                            column: cross_id
-                            other_attributes:
-                                foreign_table: operational.cross
-                                foreign_column: id
+                        # - &product-cross_id-fkey-cst
+                        #     name: product_cross_id_fkey
+                        #     type: foreign_key
+                        #     column: cross_id
+                        #     other_attributes:
+                        #         foreign_table: operational.cross
+                        #         foreign_column: id
                         <<: *def-log-tbl-cst
                     index:
                         - &product-program_id-idx
@@ -990,6 +969,14 @@ database: &bims_0.10_dev-db
                         - &product-generation-idx
                             name: product_generation_idx
                             column: generation
+                        -
+                            column: iris_preferred_id
+                        -
+                            column: breeding_line_name
+                        -
+                            column: derivative_name
+                        -
+                            column: fixed_line_name
                         <<: *def-ident-tbl-idx
                         <<: *def-log-tbl-idx
                 - &master-product_name-tbl
@@ -1007,7 +994,7 @@ database: &bims_0.10_dev-db
                             data_type: varchar
                             not_null: true
                             comment: |
-                                derivative, fixed_line, cultivar, common
+                                derivative, fixed_line, cultivar, common, others
                         - &product_name-value-col
                             name: value
                             data_type: varchar
@@ -1054,7 +1041,7 @@ database: &bims_0.10_dev-db
                             name: gid_type
                             data_type: varchar
                             comment: |
-                                fixed breeding line, cross, derivative, mgid (founding germplasm)
+                                fixed breeding line, cross, derivative, mgid (founding germplasm; from gms)
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1064,6 +1051,11 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.product
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - product_id
+                                - gid
                         <<: *def-log-tbl-cst
                     index:
                         - *product_id-idx
@@ -1101,24 +1093,14 @@ database: &bims_0.10_dev-db
                     <<: *def-tbl
                     name: season
                     comment: List of seasons
-                    column:
-                        <<: *def-id-tbl-col
-                        -
-                            <<: *key-col
-                            default_value: 10
-                        <<: *def-meta-tbl-col
-                        <<: *def-desc-tbl-col
-                        <<: *def-log-tbl-col
-                    index:
-                        - *key-idx
-                        <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
                         column:
-                            - key
                             - abbrev
                             - name
                             - description
+                    sequence:
+                        start_with: 11
                 - &master-place_season-tbl
                     <<: *def-tbl
                     name: place_season
@@ -1154,14 +1136,26 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.season
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - place_id
+                                - season_id
+                        -
+                            type: unique_key
+                            column:
+                                - place_id
+                                - order_number
                         <<: *def-tbl-cst
                     index:
-                        - &place_season-place_id-idx
-                            name: place_season_place_id_idx
+                        -
                             column: place_id
-                        - &place_season-season_id-idx
-                            name: place_season_season_id_idx
+                        -
                             column: season_id
+                        -
+                            column:
+                                - place_id
+                                - season_id
                     copy:
                         <<: *copy-val
                         column:
@@ -1200,21 +1194,55 @@ database: &bims_0.10_dev-db
                             name: male_product_id
                             data_type: integer
                             not_null: true
-                        - *study_id-col
+                        -
+                            <<: *study_id-col
+                            not_null: false
                         - &family-cross_id-col
                             name: cross_id
                             data_type: integer
-                            not_null: true
                         - &family-female_entry_id-col
                             name: female_entry_id
                             data_type: integer
-                            not_null: true
                         - &family-male_entry_id-col
                             name: male_entry_id
                             data_type: integer
-                            not_null: true
                         <<: *def-log-tbl-col
                     constraint:
+                        -
+                            type: foreign_key
+                            column: female_product_id
+                            other_attributes:
+                                foreign_table: master.product
+                                foreign_column: id
+                        -
+                            type: foreign_key
+                            column: male_product_id
+                            other_attributes:
+                                foreign_table: master.product
+                                foreign_column: id
+                        # -
+                        #     type: foreign_key
+                        #     column: cross_id
+                        #     other_attributes:
+                        #         foreign_table: operational.cross
+                        #         foreign_column: id
+                        # -
+                        #     type: foreign_key
+                        #     column: female_entry_id
+                        #     other_attributes:
+                        #         foreign_table: operational.entry
+                        #         foreign_column: id
+                        # -
+                        #     type: foreign_key
+                        #     column: male_entry_id
+                        #     other_attributes:
+                        #         foreign_table: operational.entry
+                        #         foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - female_product_id
+                                - male_product_id
                         <<: *def-log-tbl-cst
                     index:
                         <<: *def-log-tbl-idx
@@ -1249,6 +1277,7 @@ database: &bims_0.10_dev-db
                             - display_name
                             - rank
                     sequence:
+                        restart: true
                         start_with: 19
                 - &master-item-tbl
                     <<: *def-tbl
@@ -1274,6 +1303,7 @@ database: &bims_0.10_dev-db
                             - type
                             - description
                     sequence:
+                        restart: true
                         start_with: 65
                 - &master-item_relation-tbl
                     <<: *def-tbl
@@ -1328,6 +1358,7 @@ database: &bims_0.10_dev-db
                             - child_id
                             - order_number
                     sequence:
+                        restart: true
                         start_with: 35
                 - &master-item_action-tbl
                     <<: *def-tbl
@@ -1370,6 +1401,7 @@ database: &bims_0.10_dev-db
                             - controller
                             - action
                     sequence:
+                        restart: true
                         start_with: 41
                 - &master-team-tbl
                     <<: *def-tbl
@@ -1407,6 +1439,7 @@ database: &bims_0.10_dev-db
                             - display_name
                             - is_void
                     sequence:
+                        restart: true
                         start_with: 7
                 - &master-user_item-tbl
                     <<: *def-tbl
@@ -1442,6 +1475,7 @@ database: &bims_0.10_dev-db
                             - user_id
                             - item_id
                     sequence:
+                        restart: true
                         start_with: 6
                 - &master-user_role-tbl
                     <<: *def-tbl
@@ -1478,6 +1512,7 @@ database: &bims_0.10_dev-db
                             - role_id
                             - is_void
                     sequence:
+                        restart: true
                         start_with: 76
                 - &master-user_session-tbl
                     <<: *def-tbl
@@ -1520,6 +1555,7 @@ database: &bims_0.10_dev-db
                             - is_default_redirect_yes
                             - is_default_redirect_no
                     sequence:
+                        restart: true
                         start_with: 17
                 - &master-team_member-tbl
                     <<: *def-tbl
@@ -1596,6 +1632,7 @@ database: &bims_0.10_dev-db
                             - user_role_id
                             - is_void
                     sequence:
+                        restart: true
                         start_with: 62
                 - &master-item_role-tbl
                     <<: *def-tbl
@@ -1658,6 +1695,7 @@ database: &bims_0.10_dev-db
                             - team_id
                             - is_void
                     sequence:
+                        restart: true
                         start_with: 147
                 - &master-tooltip-tbl
                     <<: *def-tbl
@@ -1689,6 +1727,7 @@ database: &bims_0.10_dev-db
                             - description
                             - is_void
                     sequence:
+                        restart: true
                         start_with: 140
                 - &master-instruction-tbl
                     <<: *def-tbl
@@ -1720,6 +1759,7 @@ database: &bims_0.10_dev-db
                             - description
                             - is_void
                     sequence:
+                        restart: true
                         start_with: 118
                 - &master-audit-tbl
                     <<: *def-tbl
@@ -1811,6 +1851,7 @@ database: &bims_0.10_dev-db
                             - date_done
                             - is_void
                     sequence:
+                        restart: true
                         start_with: 14
             view:
                 - &master-variable_list-view
