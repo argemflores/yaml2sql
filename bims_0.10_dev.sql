@@ -70,6 +70,8 @@ create index "user_is_void_idx"
   on "master"."user"
   using btree ("is_void");
 
+
+
 copy "master"."user" (
     "id",
     "email",
@@ -285,9 +287,12 @@ alter table "master"."scale_value"
 create index "scale_value_scale_id_idx"
   on "master"."scale_value"
   using btree ("scale_id");
-create index "scale_value_scale_id_value_order_number_idx"
+create index "scale_value_scale_id_value_idx"
   on "master"."scale_value"
-  using btree ("scale_id", "value", "order_number");
+  using btree ("scale_id", "value");
+create index "scale_value_scale_id_order_number_idx"
+  on "master"."scale_value"
+  using btree ("scale_id", "order_number");
 create index "scale_value_is_void_idx"
   on "master"."scale_value"
   using btree ("is_void");
@@ -349,6 +354,9 @@ alter table "master"."variable"
 create unique index "variable_abbrev_idx"
   on "master"."variable"
   using btree ("abbrev");
+create index "variable_label_idx"
+  on "master"."variable"
+  using btree ("label");
 create index "variable_property_id_idx"
   on "master"."variable"
   using btree ("property_id");
@@ -430,6 +438,9 @@ alter table "master"."variable_set_member"
   foreign key ("variable_id") references "master"."variable" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."variable_set_member"
+  add constraint "variable_set_member_variable_set_id_variable_id_ukey"
+  unique ("variable_set_id", "variable_id");
+alter table "master"."variable_set_member"
   add constraint "variable_set_member_id_pkey"
   primary key ("id");
 alter table "master"."variable_set_member"
@@ -441,6 +452,12 @@ alter table "master"."variable_set_member"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "variable_set_member_variable_set_id_idx"
+  on "master"."variable_set_member"
+  using btree ("variable_set_id");
+create index "variable_set_member_variable_id_idx"
+  on "master"."variable_set_member"
+  using btree ("variable_id");
 create index "variable_set_member_is_void_idx"
   on "master"."variable_set_member"
   using btree ("is_void");
@@ -525,7 +542,6 @@ create index "crosscutting_is_void_idx"
 
 create table "master"."program" (
     "id" serial not null,
-    "key" bigint not null default '100',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
@@ -553,15 +569,25 @@ alter table "master"."program"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "program_key_idx"
+create unique index "program_abbrev_idx"
   on "master"."program"
-  using btree ("key");
+  using btree ("abbrev");
 create index "program_is_void_idx"
   on "master"."program"
   using btree ("is_void");
 
+alter sequence "master"."program_id_seq"
+  restart 101;
+
+alter sequence "master"."program_id_seq"
+  start with 101
+  minvalue 1
+  maxvalue 9223372036854775807
+  increment by 1
+  cache 1
+  no cycle;
+
 copy "master"."program" (
-    "key",
     "abbrev",
     "name",
     "description"
@@ -574,15 +600,14 @@ from stdin
     escape e'\\'
     null ''
 ;
-"key";"abbrev";"name";"description"
-101;"IRSEA";"Irrigated South-East Asia";"Irrigated South-East Asia"
+"abbrev";"name";"description"
+"IRSEA";"Irrigated South-East Asia";"Irrigated South-East Asia"
 \.
 
 -- ----------------
 
 create table "master"."place" (
     "id" serial not null,
-    "key" bigint not null default '10000',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
@@ -610,15 +635,25 @@ alter table "master"."place"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "place_key_idx"
+create unique index "place_abbrev_idx"
   on "master"."place"
-  using btree ("key");
+  using btree ("abbrev");
 create index "place_is_void_idx"
   on "master"."place"
   using btree ("is_void");
 
+alter sequence "master"."place_id_seq"
+  restart 100001;
+
+alter sequence "master"."place_id_seq"
+  start with 100001
+  minvalue 1
+  maxvalue 9223372036854775807
+  increment by 1
+  cache 1
+  no cycle;
+
 copy "master"."place" (
-    "key",
     "abbrev",
     "name",
     "description"
@@ -631,15 +666,14 @@ from stdin
     escape e'\\'
     null ''
 ;
-"key";"abbrev";"name";"description"
-10001;"IRRIHQ";"IRRI, Los Baños, Philippines";"IRRI, Los Baños, Philippines"
+"abbrev";"name";"description"
+"IRRIHQ";"IRRI, Los Baños, Philippines";"IRRI, Los Baños, Philippines"
 \.
 
 -- ----------------
 
 create table "master"."phase" (
     "id" serial not null,
-    "key" bigint not null default '100',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
@@ -667,15 +701,25 @@ alter table "master"."phase"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "phase_key_idx"
+create unique index "phase_abbrev_idx"
   on "master"."phase"
-  using btree ("key");
+  using btree ("abbrev");
 create index "phase_is_void_idx"
   on "master"."phase"
   using btree ("is_void");
 
+alter sequence "master"."phase_id_seq"
+  restart 101;
+
+alter sequence "master"."phase_id_seq"
+  start with 101
+  minvalue 1
+  maxvalue 9223372036854775807
+  increment by 1
+  cache 1
+  no cycle;
+
 copy "master"."phase" (
-    "key",
     "abbrev",
     "name",
     "description"
@@ -688,22 +732,22 @@ from stdin
     escape e'\\'
     null ''
 ;
-"key";"abbrev";"name";"description"
-101;"OYT";"Observation Yield Trial";"Observation Yield Trial"
-102;"RYT";"Replicated Yield Trial";"Replicated Yield Trial"
-103;"AYT";"Advanced Yield Trial";"Advanced Yield Trial"
-104;"MET";"Multi-Environment Yield Trial";"Multi-Environment Yield Trial"
-105;"HB";"Hybridization";"Hybridization"
-106;"F1";"F1";"F1"
-107;"RGA";"RGA";"Rapid Generation Advancement"
-108;"F2";"F2";"F2"
-109;"F3";"F3";"F3"
-110;"F4";"F4";"F4"
-111;"F5";"F5";"F5"
-112;"F6";"F6";"F6"
-113;"F7";"F7";"F7"
-114;"F8";"F8";"F8"
-115;"F9";"F9";"F9"
+"abbrev";"name";"description"
+"OYT";"Observation Yield Trial";"Observation Yield Trial"
+"RYT";"Replicated Yield Trial";"Replicated Yield Trial"
+"AYT";"Advanced Yield Trial";"Advanced Yield Trial"
+"MET";"Multi-Environment Yield Trial";"Multi-Environment Yield Trial"
+"HB";"Hybridization";"Hybridization"
+"F1";"F1";"F1"
+"RGA";"RGA";"Rapid Generation Advancement"
+"F2";"F2";"F2"
+"F3";"F3";"F3"
+"F4";"F4";"F4"
+"F5";"F5";"F5"
+"F6";"F6";"F6"
+"F7";"F7";"F7"
+"F8";"F8";"F8"
+"F9";"F9";"F9"
 \.
 
 -- ----------------
@@ -745,10 +789,6 @@ alter table "master"."product"
   foreign key ("program_id") references "master"."program" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."product"
-  add constraint "product_cross_id_fkey"
-  foreign key ("cross_id") references "operational"."cross" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."product"
   add constraint "product_id_pkey"
   primary key ("id");
 alter table "master"."product"
@@ -784,6 +824,18 @@ create index "product_cross_id_idx"
 create index "product_generation_idx"
   on "master"."product"
   using btree ("generation");
+create index "product_iris_preferred_id_idx"
+  on "master"."product"
+  using btree ("iris_preferred_id");
+create index "product_breeding_line_name_idx"
+  on "master"."product"
+  using btree ("breeding_line_name");
+create index "product_derivative_name_idx"
+  on "master"."product"
+  using btree ("derivative_name");
+create index "product_fixed_line_name_idx"
+  on "master"."product"
+  using btree ("fixed_line_name");
 create unique index "product_abbrev_idx"
   on "master"."product"
   using btree ("abbrev");
@@ -861,6 +913,9 @@ alter table "master"."product_gid"
   foreign key ("product_id") references "master"."product" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."product_gid"
+  add constraint "product_gid_product_id_gid_ukey"
+  unique ("product_id", "gid");
+alter table "master"."product_gid"
   add constraint "product_gid_id_pkey"
   primary key ("id");
 alter table "master"."product_gid"
@@ -923,7 +978,6 @@ create index "product_metadata_is_void_idx"
 
 create table "master"."season" (
     "id" serial not null,
-    "key" bigint not null default '10',
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "description" text,
@@ -951,15 +1005,25 @@ alter table "master"."season"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "season_key_idx"
+create unique index "season_abbrev_idx"
   on "master"."season"
-  using btree ("key");
+  using btree ("abbrev");
 create index "season_is_void_idx"
   on "master"."season"
   using btree ("is_void");
 
+alter sequence "master"."season_id_seq"
+  restart 11;
+
+alter sequence "master"."season_id_seq"
+  start with 11
+  minvalue 1
+  maxvalue 9223372036854775807
+  increment by 1
+  cache 1
+  no cycle;
+
 copy "master"."season" (
-    "key",
     "abbrev",
     "name",
     "description"
@@ -972,10 +1036,10 @@ from stdin
     escape e'\\'
     null ''
 ;
-"key";"abbrev";"name";"description"
-11;"DS";"Dry";"Dry season"
-12;"WS";"Wet";"Wet season"
-13;"CS";"Custom";"Custom season"
+"abbrev";"name";"description"
+"DS";"Dry";"Dry season"
+"WS";"Wet";"Wet season"
+"CS";"Custom";"Custom season"
 \.
 
 -- ----------------
@@ -1005,6 +1069,12 @@ alter table "master"."place_season"
   foreign key ("season_id") references "master"."season" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."place_season"
+  add constraint "place_season_place_id_season_id_ukey"
+  unique ("place_id", "season_id");
+alter table "master"."place_season"
+  add constraint "place_season_place_id_order_number_ukey"
+  unique ("place_id", "order_number");
+alter table "master"."place_season"
   add constraint "place_season_id_pkey"
   primary key ("id");
 alter table "master"."place_season"
@@ -1022,6 +1092,11 @@ create index "place_season_place_id_idx"
 create index "place_season_season_id_idx"
   on "master"."place_season"
   using btree ("season_id");
+create index "place_season_place_id_season_id_idx"
+  on "master"."place_season"
+  using btree ("place_id", "season_id");
+
+
 
 copy "master"."place_season" (
     "place_id",
@@ -1037,8 +1112,8 @@ from stdin
     null ''
 ;
 "place_id";"season_id";"order_number"
-"1";"1";"1"
-"1";"2";"2"
+"100001";"11";"1"
+"100001";"12";"2"
 \.
 
 -- ----------------
@@ -1078,6 +1153,8 @@ create unique index "cross_method_abbrev_idx"
 create index "cross_method_is_void_idx"
   on "master"."cross_method"
   using btree ("is_void");
+
+
 
 copy "master"."cross_method" (
     "abbrev",
@@ -1148,10 +1225,10 @@ create table "master"."family" (
     "phase_id" integer not null,
     "female_product_id" integer not null,
     "male_product_id" integer not null,
-    "study_id" integer not null,
-    "cross_id" integer not null,
-    "female_entry_id" integer not null,
-    "male_entry_id" integer not null,
+    "study_id" integer,
+    "cross_id" integer,
+    "female_entry_id" integer,
+    "male_entry_id" integer,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -1163,6 +1240,17 @@ create table "master"."family" (
     oids = false
 );
 
+alter table "master"."family"
+  add constraint "family_female_product_id_fkey"
+  foreign key ("female_product_id") references "master"."product" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."family"
+  add constraint "family_male_product_id_fkey"
+  foreign key ("male_product_id") references "master"."product" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."family"
+  add constraint "family_female_product_id_male_product_id_ukey"
+  unique ("female_product_id", "male_product_id");
 alter table "master"."family"
   add constraint "family_id_pkey"
   primary key ("id");
@@ -1214,6 +1302,8 @@ alter table "master"."role"
 create index "role_is_void_idx"
   on "master"."role"
   using btree ("is_void");
+
+
 
 copy "master"."role" (
     "id",
@@ -1303,6 +1393,8 @@ create unique index "item_abbrev_idx"
 create index "item_is_void_idx"
   on "master"."item"
   using btree ("is_void");
+
+
 
 copy "master"."item" (
     "id",
@@ -1448,6 +1540,8 @@ create index "item_relation_is_void_idx"
   on "master"."item_relation"
   using btree ("is_void");
 
+
+
 copy "master"."item_relation" (
     "id",
     "parent_id",
@@ -1549,6 +1643,8 @@ alter table "master"."item_action"
 create index "item_action_is_void_idx"
   on "master"."item_action"
   using btree ("is_void");
+
+
 
 copy "master"."item_action" (
     "id",
@@ -1662,6 +1758,8 @@ create index "team_is_void_idx"
   on "master"."team"
   using btree ("is_void");
 
+
+
 copy "master"."team" (
     "id",
     "abbrev",
@@ -1736,6 +1834,8 @@ create index "user_item_item_id_idx"
 create index "user_item_is_void_idx"
   on "master"."user_item"
   using btree ("is_void");
+
+
 
 copy "master"."user_item" (
     "id",
@@ -1816,6 +1916,8 @@ create index "user_role_role_id_idx"
 create index "user_role_is_void_idx"
   on "master"."user_role"
   using btree ("is_void");
+
+
 
 copy "master"."user_role" (
     "id",
@@ -1924,6 +2026,8 @@ create index "user_session_user_id_idx"
 create index "user_session_is_void_idx"
   on "master"."user_session"
   using btree ("is_void");
+
+
 
 copy "master"."user_session" (
     "id",
@@ -2036,6 +2140,8 @@ create index "team_member_is_void_idx"
   on "master"."team_member"
   using btree ("is_void");
 
+
+
 copy "master"."team_member" (
     "id",
     "team_id",
@@ -2139,6 +2245,8 @@ create index "item_role_team_id_idx"
 create index "item_role_is_void_idx"
   on "master"."item_role"
   using btree ("is_void");
+
+
 
 copy "master"."item_role" (
     "id",
@@ -2288,6 +2396,8 @@ create unique index "tooltip_name_idx"
 create index "tooltip_is_void_idx"
   on "master"."tooltip"
   using btree ("is_void");
+
+
 
 copy "master"."tooltip" (
     "id",
@@ -2471,6 +2581,8 @@ create unique index "instruction_name_idx"
 create index "instruction_is_void_idx"
   on "master"."instruction"
   using btree ("is_void");
+
+
 
 copy "master"."instruction" (
     "id",
@@ -2674,6 +2786,8 @@ create index "change_log_key_person_id_idx"
 create index "change_log_is_void_idx"
   on "master"."change_log"
   using btree ("is_void");
+
+
 
 copy "master"."change_log" (
     "id",
@@ -5573,6 +5687,8 @@ create index "variable_is_void_idx"
   on "import"."variable"
   using btree ("is_void");
 
+
+
 copy "import"."variable" (
     "abbrev",
     "label",
@@ -5948,6 +6064,8 @@ create table "import"."hb_data" (
 ) with (
     oids = false
 );
+
+
 
 
 
@@ -11656,6 +11774,8 @@ create table "import"."f1_data" (
 
 
 
+
+
 copy "import"."f1_data" 
 from stdin
     csv
@@ -16466,6 +16586,8 @@ create table "import"."rga_data" (
 
 
 
+
+
 copy "import"."rga_data" 
 from stdin
     csv
@@ -16916,6 +17038,9 @@ comment on constraint "variable_creator_id_fkey" on "master"."variable"
 comment on constraint "variable_modifier_id_fkey" on "master"."variable"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
+comment on index "master"."variable_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
 comment on index "master"."variable_is_void_idx"
   is 'Index for the is_void column';
 
@@ -17180,8 +17305,8 @@ comment on constraint "program_creator_id_fkey" on "master"."program"
 comment on constraint "program_modifier_id_fkey" on "master"."program"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."program_key_idx"
-  is 'Index for the key column';
+comment on index "master"."program_abbrev_idx"
+  is 'Unique index for the abbrev column';
 
 comment on index "master"."program_is_void_idx"
   is 'Index for the is_void column';
@@ -17242,8 +17367,8 @@ comment on constraint "place_creator_id_fkey" on "master"."place"
 comment on constraint "place_modifier_id_fkey" on "master"."place"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."place_key_idx"
-  is 'Index for the key column';
+comment on index "master"."place_abbrev_idx"
+  is 'Unique index for the abbrev column';
 
 comment on index "master"."place_is_void_idx"
   is 'Index for the is_void column';
@@ -17296,8 +17421,8 @@ comment on constraint "phase_creator_id_fkey" on "master"."phase"
 comment on constraint "phase_modifier_id_fkey" on "master"."phase"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."phase_key_idx"
-  is 'Index for the key column';
+comment on index "master"."phase_abbrev_idx"
+  is 'Unique index for the abbrev column';
 
 comment on index "master"."phase_is_void_idx"
   is 'Index for the is_void column';
@@ -17379,7 +17504,7 @@ comment on column "master"."product_name"."id"
   is 'Locally unique primary key';
 
 comment on column "master"."product_name"."name_type"
-  is 'derivative, fixed_line, cultivar, common';
+  is 'derivative, fixed_line, cultivar, common, others';
 
 comment on column "master"."product_name"."language_code"
   is 'Reference: http://www.loc.gov/standards/iso639-2/php/code_list.php';
@@ -17430,7 +17555,7 @@ comment on column "master"."product_gid"."id"
   is 'Locally unique primary key';
 
 comment on column "master"."product_gid"."gid_type"
-  is 'fixed breeding line, cross, derivative, mgid (founding germplasm)';
+  is 'fixed breeding line, cross, derivative, mgid (founding germplasm; from gms)';
 
 comment on column "master"."product_gid"."remarks"
   is 'Additional details';
@@ -17555,8 +17680,8 @@ comment on constraint "season_creator_id_fkey" on "master"."season"
 comment on constraint "season_modifier_id_fkey" on "master"."season"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."season_key_idx"
-  is 'Index for the key column';
+comment on index "master"."season_abbrev_idx"
+  is 'Unique index for the abbrev column';
 
 comment on index "master"."season_is_void_idx"
   is 'Index for the is_void column';
