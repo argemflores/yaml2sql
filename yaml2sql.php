@@ -17,8 +17,21 @@ $inputFile = $argv[1];
 # require Spyc yaml loader/dumper
 require_once 'Spyc.php';
 
+$array = Spyc::YAMLLoad($inputFile);
+
 # load input file and convert yaml contents to array, then to object
-$input = json_decode(json_encode(Spyc::YAMLLoad($inputFile)));
+$object = json_decode(json_encode($array));
+
+if (isset($argv[2])) {
+    switch (strtolower($argv[2])) {
+        case 'array':
+            var_dump($array);
+            return;
+        case 'object':
+            var_dump($object);
+            return;
+    }
+}
 
 $sql = '';
 $dictArr = [];
@@ -26,8 +39,8 @@ $cmtSqlArr = [];
 
 $curDir = dirname(__FILE__);
 
-if (!empty($input->database)) {
-    $database = $input->database;
+if (!empty($object->database)) {
+    $database = $object->database;
     $dbSql = '';
     
     $dbName = pg_escape_string($database->name);
@@ -689,5 +702,3 @@ echo $schSql, "\n\n";
 echo $cmtSql, "\n\n";
 echo "\n\n-- --------------------------------\n\n",
     $postSql, "\n\n";
-
-// var_dump(json_encode(Spyc::YAMLLoad($inputFile)));
