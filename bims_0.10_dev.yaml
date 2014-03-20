@@ -1328,27 +1328,32 @@ database: &bims_0.10_dev-db
                         <<: *def-log-tbl-col
                     constraint:
                         -
-                            name: item_relation_parent_id_fkey
                             type: foreign_key
                             column: parent_id
                             other_attributes:
                                 foreign_table: master.item
                                 foreign_column: id
                         -
-                            name: item_relation_child_id_fkey
                             type: foreign_key
                             column: child_id
                             other_attributes:
                                 foreign_table: master.item
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - parent_id
+                                - child_id
                         <<: *def-log-tbl-cst
                     index:
                         -
-                            name: item_relation_parent_id_idx
                             column: parent_id
                         -
-                            name: item_relation_child_id_idx
                             column: child_id
+                        -
+                            column:
+                                - parent_id
+                                - child_id
                         <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
@@ -1383,14 +1388,26 @@ database: &bims_0.10_dev-db
                         <<: *def-log-tbl-col
                     constraint:
                         -
-                            name: item_action_item_id_fkey
                             type: foreign_key
                             column: item_id
                             other_attributes:
                                 foreign_table: master.item
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - item_id
+                                - module
+                                - controller
+                                - action
                         <<: *def-log-tbl-cst
                     index:
+                        -
+                            column:
+                                - item_id
+                                - module
+                                - controller
+                                - action
                         <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
@@ -1427,6 +1444,10 @@ database: &bims_0.10_dev-db
                                 foreign_table: master.user
                                 foreign_column: id
                         <<: *def-log-tbl-cst
+                    index:
+                        -
+                            column: type
+                        <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
                         column:
@@ -1461,12 +1482,20 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.item
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - user_id
+                                - item_id
                         <<: *def-log-tbl-col
                     index:
                         - *user_id-idx
                         -
-                            name: user_item_item_id_idx
                             column: item_id
+                        -
+                            column:
+                                - user_id
+                                - item_id
                         <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
@@ -1497,12 +1526,21 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.role
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - user_id
+                                - role_id
                         <<: *def-log-tbl-cst
                     index:
                         - *user_id-idx
                         -
                             name: user_role_role_id_idx
                             column: role_id
+                        -
+                            column:
+                                - user_id
+                                - role_id
                         <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
@@ -1607,6 +1645,17 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.user_role
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - team_id
+                                - member_id
+                        -
+                            type: unique_key
+                            column:
+                                - team_id
+                                - member_id
+                                - role_id
                         <<: *def-log-tbl-cst
                     index:
                         -
@@ -1621,6 +1670,15 @@ database: &bims_0.10_dev-db
                         -
                             name: team_member_user_role_id_idx
                             column: user_role_id
+                        -
+                            column:
+                                - team_id
+                                - member_id
+                        -
+                            column:
+                                - team_id
+                                - member_id
+                                - role_id
                         <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
@@ -1674,6 +1732,17 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.team
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - item_id
+                                - role_id
+                        -
+                            type: unique_key
+                            column:
+                                - item_id
+                                - role_id
+                                - team_id
                         <<: *def-log-tbl-col
                     index:
                         -
@@ -1685,6 +1754,15 @@ database: &bims_0.10_dev-db
                         -
                             name: item_role_team_id_idx
                             column: team_id
+                        -
+                            column:
+                                - item_id
+                                - role_id
+                        -
+                            column:
+                                - item_id
+                                - role_id
+                                - team_id
                         <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
@@ -1808,8 +1886,20 @@ database: &bims_0.10_dev-db
                         <<: *def-log-tbl-cst
                     index:
                         -
-                            name: audit_actor_id_idx
+                            column:
+                                - schema_name
+                                - table_name
+                                - column_name
+                                - record_id
+                        -
+                            column: action_type
+                        -
                             column: actor_id
+                        -
+                            column:
+                                - action_type
+                                - actor_id
+                                - action_timestamp
                         <<: *def-log-tbl-idx
                 - &master-change_log-tbl
                     <<: *def-tbl
