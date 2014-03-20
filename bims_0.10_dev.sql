@@ -1092,9 +1092,12 @@ create index "place_season_place_id_idx"
 create index "place_season_season_id_idx"
   on "master"."place_season"
   using btree ("season_id");
-create index "place_season_place_id_season_id_idx"
+create unique index "place_season_place_id_season_id_idx"
   on "master"."place_season"
   using btree ("place_id", "season_id");
+create unique index "place_season_place_id_order_number_idx"
+  on "master"."place_season"
+  using btree ("place_id", "order_number");
 
 
 
@@ -1263,6 +1266,9 @@ alter table "master"."family"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create unique index "family_female_product_id_male_product_id_idx"
+  on "master"."family"
+  using btree ("female_product_id", "male_product_id");
 create index "family_is_void_idx"
   on "master"."family"
   using btree ("is_void");
@@ -1519,6 +1525,9 @@ alter table "master"."item_relation"
   foreign key ("child_id") references "master"."item" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."item_relation"
+  add constraint "item_relation_parent_id_child_id_ukey"
+  unique ("parent_id", "child_id");
+alter table "master"."item_relation"
   add constraint "item_relation_id_pkey"
   primary key ("id");
 alter table "master"."item_relation"
@@ -1536,6 +1545,12 @@ create index "item_relation_parent_id_idx"
 create index "item_relation_child_id_idx"
   on "master"."item_relation"
   using btree ("child_id");
+create unique index "item_relation_parent_id_child_id_idx"
+  on "master"."item_relation"
+  using btree ("parent_id", "child_id");
+create unique index "item_relation_parent_id_order_number_idx"
+  on "master"."item_relation"
+  using btree ("parent_id", "order_number");
 create index "item_relation_is_void_idx"
   on "master"."item_relation"
   using btree ("is_void");
@@ -1629,6 +1644,9 @@ alter table "master"."item_action"
   foreign key ("item_id") references "master"."item" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."item_action"
+  add constraint "item_action_item_id_module_controller_action_ukey"
+  unique ("item_id", "module", "controller", "action");
+alter table "master"."item_action"
   add constraint "item_action_id_pkey"
   primary key ("id");
 alter table "master"."item_action"
@@ -1640,6 +1658,9 @@ alter table "master"."item_action"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "item_action_item_id_module_controller_action_idx"
+  on "master"."item_action"
+  using btree ("item_id", "module", "controller", "action");
 create index "item_action_is_void_idx"
   on "master"."item_action"
   using btree ("is_void");
@@ -1751,9 +1772,9 @@ alter table "master"."team"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "team_abbrev_idx"
+create index "team_type_idx"
   on "master"."team"
-  using btree ("abbrev");
+  using btree ("type");
 create index "team_is_void_idx"
   on "master"."team"
   using btree ("is_void");
@@ -1824,6 +1845,9 @@ alter table "master"."user_item"
   add constraint "user_item_item_id_fkey"
   foreign key ("item_id") references "master"."item" ("id")
   match simple on update cascade on delete cascade;
+alter table "master"."user_item"
+  add constraint "user_item_user_id_item_id_ukey"
+  unique ("user_id", "item_id");
 
 create index "user_item_user_id_idx"
   on "master"."user_item"
@@ -1831,6 +1855,9 @@ create index "user_item_user_id_idx"
 create index "user_item_item_id_idx"
   on "master"."user_item"
   using btree ("item_id");
+create unique index "user_item_user_id_item_id_idx"
+  on "master"."user_item"
+  using btree ("user_id", "item_id");
 create index "user_item_is_void_idx"
   on "master"."user_item"
   using btree ("is_void");
@@ -1913,6 +1940,9 @@ create index "user_role_user_id_idx"
 create index "user_role_role_id_idx"
   on "master"."user_role"
   using btree ("role_id");
+create index "user_role_user_id_role_id_idx"
+  on "master"."user_role"
+  using btree ("user_id", "role_id");
 create index "user_role_is_void_idx"
   on "master"."user_role"
   using btree ("is_void");
@@ -2113,6 +2143,12 @@ alter table "master"."team_member"
   foreign key ("user_role_id") references "master"."user_role" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."team_member"
+  add constraint "team_member_team_id_member_id_ukey"
+  unique ("team_id", "member_id");
+alter table "master"."team_member"
+  add constraint "team_member_team_id_member_id_role_id_ukey"
+  unique ("team_id", "member_id", "role_id");
+alter table "master"."team_member"
   add constraint "team_member_id_pkey"
   primary key ("id");
 alter table "master"."team_member"
@@ -2136,6 +2172,12 @@ create index "team_member_role_id_idx"
 create index "team_member_user_role_id_idx"
   on "master"."team_member"
   using btree ("user_role_id");
+create unique index "team_member_team_id_member_id_idx"
+  on "master"."team_member"
+  using btree ("team_id", "member_id");
+create unique index "team_member_team_id_member_id_role_id_idx"
+  on "master"."team_member"
+  using btree ("team_id", "member_id", "role_id");
 create index "team_member_is_void_idx"
   on "master"."team_member"
   using btree ("is_void");
@@ -2242,6 +2284,12 @@ create index "item_role_role_id_idx"
 create index "item_role_team_id_idx"
   on "master"."item_role"
   using btree ("team_id");
+create index "item_role_item_id_role_id_idx"
+  on "master"."item_role"
+  using btree ("item_id", "role_id");
+create index "item_role_item_id_role_id_team_id_idx"
+  on "master"."item_role"
+  using btree ("item_id", "role_id", "team_id");
 create index "item_role_is_void_idx"
   on "master"."item_role"
   using btree ("is_void");
@@ -2738,9 +2786,18 @@ alter table "master"."audit"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "audit_schema_name_table_name_column_name_record_id_idx"
+  on "master"."audit"
+  using btree ("schema_name", "table_name", "column_name", "record_id");
+create index "audit_action_type_idx"
+  on "master"."audit"
+  using btree ("action_type");
 create index "audit_actor_id_idx"
   on "master"."audit"
   using btree ("actor_id");
+create index "audit_action_type_actor_id_action_timestamp_idx"
+  on "master"."audit"
+  using btree ("action_type", "actor_id", "action_timestamp");
 create index "audit_is_void_idx"
   on "master"."audit"
   using btree ("is_void");
@@ -3566,13 +3623,13 @@ create schema "operational";
 
 create table "operational"."study" (
     "id" serial not null,
+    "key" bigint not null,
     "program_id" integer not null,
     "place_id" integer not null,
     "phase_id" integer not null,
     "year" integer not null,
     "season_id" integer not null,
-    "sequence_number" integer not null,
-    "key" bigint not null,
+    "number" integer not null,
     "name" varchar(256) not null,
     "title" varchar,
     "remarks" text,
@@ -3603,6 +3660,15 @@ alter table "operational"."study"
   foreign key ("season_id") references "master"."season" ("id")
   match simple on update cascade on delete cascade;
 alter table "operational"."study"
+  add constraint "study_key_ukey"
+  unique ("key");
+alter table "operational"."study"
+  add constraint "study_study_key_ukey"
+  unique ("program_id", "place_id", "phase_id", "year", "season_id", "number");
+alter table "operational"."study"
+  add constraint "study_name_ukey"
+  unique ("name");
+alter table "operational"."study"
   add constraint "study_id_pkey"
   primary key ("id");
 alter table "operational"."study"
@@ -3614,6 +3680,9 @@ alter table "operational"."study"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create unique index "study_key_idx"
+  on "operational"."study"
+  using btree ("key");
 create index "study_program_id_idx"
   on "operational"."study"
   using btree ("program_id");
@@ -3632,9 +3701,9 @@ create index "study_season_id_idx"
 create index "study_year_season_id_idx"
   on "operational"."study"
   using btree ("year", "season_id");
-create unique index "study_key_idx"
+create index "study_study_key_idx"
   on "operational"."study"
-  using btree ("key");
+  using btree ("program_id", "place_id", "phase_id", "year", "season_id", "number");
 create index "study_name_idx"
   on "operational"."study"
   using btree ("name");
@@ -3694,9 +3763,9 @@ create index "study_metadata_is_void_idx"
 
 create table "operational"."entry" (
     "id" serial not null,
+    "key" bigint not null,
     "study_id" integer not null,
     "number" integer not null default '1',
-    "key" bigint not null,
     "code" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
@@ -3715,6 +3784,9 @@ create table "operational"."entry" (
 );
 
 alter table "operational"."entry"
+  add constraint "entry_key_ukey"
+  unique ("key");
+alter table "operational"."entry"
   add constraint "entry_study_id_fkey"
   foreign key ("study_id") references "operational"."study" ("id")
   match simple on update cascade on delete cascade;
@@ -3722,6 +3794,12 @@ alter table "operational"."entry"
   add constraint "entry_product_id_fkey"
   foreign key ("product_id") references "master"."product" ("id")
   match simple on update cascade on delete cascade;
+alter table "operational"."entry"
+  add constraint "entry_study_id_number_ukey"
+  unique ("study_id", "number");
+alter table "operational"."entry"
+  add constraint "entry_study_id_product_id_ukey"
+  unique ("study_id", "product_id");
 alter table "operational"."entry"
   add constraint "entry_id_pkey"
   primary key ("id");
@@ -3734,15 +3812,21 @@ alter table "operational"."entry"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "entry_key_idx"
+  on "operational"."entry"
+  using btree ("key");
 create index "entry_study_id_idx"
   on "operational"."entry"
   using btree ("study_id");
-create unique index "entry_key_idx"
-  on "operational"."entry"
-  using btree ("key");
 create index "entry_product_id_idx"
   on "operational"."entry"
   using btree ("product_id");
+create index "entry_study_id_number_idx"
+  on "operational"."entry"
+  using btree ("study_id", "number");
+create index "entry_study_id_product_id_idx"
+  on "operational"."entry"
+  using btree ("study_id", "product_id");
 create index "entry_is_void_idx"
   on "operational"."entry"
   using btree ("is_void");
@@ -3863,11 +3947,12 @@ create index "entry_data_is_void_idx"
 
 create table "operational"."plot" (
     "id" serial not null,
+    "key" bigint not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "replication_number" integer,
-    "key" bigint not null,
     "code" varchar,
+    "plot_no" varchar,
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -3882,6 +3967,9 @@ create table "operational"."plot" (
 );
 
 alter table "operational"."plot"
+  add constraint "plot_key_ukey"
+  unique ("key");
+alter table "operational"."plot"
   add constraint "plot_study_id_fkey"
   foreign key ("study_id") references "operational"."study" ("id")
   match simple on update cascade on delete cascade;
@@ -3889,6 +3977,9 @@ alter table "operational"."plot"
   add constraint "plot_entry_id_fkey"
   foreign key ("entry_id") references "operational"."entry" ("id")
   match simple on update cascade on delete cascade;
+alter table "operational"."plot"
+  add constraint "plot_study_id_entry_id_replication_number_ukey"
+  unique ("study_id", "entry_id", "replication_number");
 alter table "operational"."plot"
   add constraint "plot_id_pkey"
   primary key ("id");
@@ -3901,15 +3992,18 @@ alter table "operational"."plot"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "plot_key_idx"
+  on "operational"."plot"
+  using btree ("key");
 create index "plot_study_id_idx"
   on "operational"."plot"
   using btree ("study_id");
 create index "plot_entry_id_idx"
   on "operational"."plot"
   using btree ("entry_id");
-create unique index "plot_key_idx"
+create index "plot_study_id_entry_id_replication_number_idx"
   on "operational"."plot"
-  using btree ("key");
+  using btree ("study_id", "entry_id", "replication_number");
 create index "plot_is_void_idx"
   on "operational"."plot"
   using btree ("is_void");
@@ -4046,11 +4140,11 @@ create index "plot_data_is_void_idx"
 
 create table "operational"."subplot" (
     "id" serial not null,
+    "key" bigint not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "plot_id" integer not null,
     "number" integer not null default '1',
-    "key" bigint not null,
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -4065,6 +4159,9 @@ create table "operational"."subplot" (
 );
 
 alter table "operational"."subplot"
+  add constraint "subplot_key_ukey"
+  unique ("key");
+alter table "operational"."subplot"
   add constraint "subplot_study_id_fkey"
   foreign key ("study_id") references "operational"."study" ("id")
   match simple on update cascade on delete cascade;
@@ -4077,6 +4174,9 @@ alter table "operational"."subplot"
   foreign key ("plot_id") references "operational"."plot" ("id")
   match simple on update cascade on delete cascade;
 alter table "operational"."subplot"
+  add constraint "subplot_study_id_entry_id_plot_id_number_ukey"
+  unique ("study_id", "entry_id", "plot_id", "number");
+alter table "operational"."subplot"
   add constraint "subplot_id_pkey"
   primary key ("id");
 alter table "operational"."subplot"
@@ -4088,6 +4188,9 @@ alter table "operational"."subplot"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "subplot_key_idx"
+  on "operational"."subplot"
+  using btree ("key");
 create index "subplot_study_id_idx"
   on "operational"."subplot"
   using btree ("study_id");
@@ -4097,9 +4200,9 @@ create index "subplot_entry_id_idx"
 create index "subplot_plot_id_idx"
   on "operational"."subplot"
   using btree ("plot_id");
-create unique index "subplot_key_idx"
+create index "subplot_study_id_entry_id_plot_id_number_idx"
   on "operational"."subplot"
-  using btree ("key");
+  using btree ("study_id", "entry_id", "plot_id", "number");
 create index "subplot_is_void_idx"
   on "operational"."subplot"
   using btree ("is_void");
@@ -4253,6 +4356,7 @@ create index "subplot_data_is_void_idx"
 create table "operational"."cross" (
     "id" serial not null,
     "study_id" integer not null,
+    "product_id" integer not null,
     "female_entry_id" integer not null,
     "female_product_id" integer not null,
     "female_product_name" varchar(256) not null,
@@ -4274,6 +4378,14 @@ create table "operational"."cross" (
 );
 
 alter table "operational"."cross"
+  add constraint "cross_study_id_fkey"
+  foreign key ("study_id") references "operational"."study" ("id")
+  match simple on update cascade on delete cascade;
+alter table "operational"."cross"
+  add constraint "cross_product_id_fkey"
+  foreign key ("product_id") references "master"."product" ("id")
+  match simple on update cascade on delete cascade;
+alter table "operational"."cross"
   add constraint "cross_female_entry_id_fkey"
   foreign key ("female_entry_id") references "operational"."entry" ("id")
   match simple on update cascade on delete cascade;
@@ -4294,6 +4406,15 @@ alter table "operational"."cross"
   foreign key ("cross_method_id") references "master"."cross_method" ("id")
   match simple on update cascade on delete cascade;
 alter table "operational"."cross"
+  add constraint "cross_study_id_product_id_ukey"
+  unique ("study_id", "product_id");
+alter table "operational"."cross"
+  add constraint "cross_study_id_female_product_id_male_product_id_ukey"
+  unique ("study_id", "female_product_id", "male_product_id");
+alter table "operational"."cross"
+  add constraint "cross_study_id_female_entry_id_male_entry_id_ukey"
+  unique ("study_id", "female_entry_id", "male_entry_id");
+alter table "operational"."cross"
   add constraint "cross_id_pkey"
   primary key ("id");
 alter table "operational"."cross"
@@ -4308,6 +4429,9 @@ alter table "operational"."cross"
 create index "cross_study_id_idx"
   on "operational"."cross"
   using btree ("study_id");
+create index "cross_product_id_idx"
+  on "operational"."cross"
+  using btree ("product_id");
 create index "cross_female_entry_id_idx"
   on "operational"."cross"
   using btree ("female_entry_id");
@@ -4323,6 +4447,15 @@ create index "cross_male_product_id_idx"
 create index "cross_cross_method_id_idx"
   on "operational"."cross"
   using btree ("cross_method_id");
+create index "cross_study_id_product_id_idx"
+  on "operational"."cross"
+  using btree ("study_id", "product_id");
+create index "cross_study_id_female_product_id_male_product_id_idx"
+  on "operational"."cross"
+  using btree ("study_id", "female_product_id", "male_product_id");
+create index "cross_study_id_female_entry_id_male_entry_id_idx"
+  on "operational"."cross"
+  using btree ("study_id", "female_entry_id", "male_entry_id");
 
 -- ----------------
 
@@ -4466,6 +4599,12 @@ alter table "operational"."seed_storage"
   foreign key ("product_id") references "master"."product" ("id")
   match simple on update cascade on delete cascade;
 alter table "operational"."seed_storage"
+  add constraint "seed_storage_product_id_seed_lot_id_ukey"
+  unique ("product_id", "seed_lot_id");
+alter table "operational"."seed_storage"
+  add constraint "seed_storage_product_id_gid_seed_lot_id_ukey"
+  unique ("product_id", "gid", "seed_lot_id");
+alter table "operational"."seed_storage"
   add constraint "seed_storage_id_pkey"
   primary key ("id");
 alter table "operational"."seed_storage"
@@ -4475,6 +4614,10 @@ alter table "operational"."seed_storage"
 alter table "operational"."seed_storage"
   add constraint "seed_storage_modifier_id_fkey"
   foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "operational"."seed_storage"
+  add constraint "seed_storage_original_storage_id_fkey"
+  foreign key ("original_storage_id") references "operational"."seed_storage" ("id")
   match simple on update cascade on delete cascade;
 
 create index "seed_storage_product_id_idx"
@@ -4489,6 +4632,9 @@ create unique index "seed_storage_gid_idx"
 create index "seed_storage_original_storage_id_idx"
   on "operational"."seed_storage"
   using btree ("original_storage_id");
+create index "seed_storage_product_id_seed_lot_id_idx"
+  on "operational"."seed_storage"
+  using btree ("product_id", "seed_lot_id");
 create index "seed_storage_is_void_idx"
   on "operational"."seed_storage"
   using btree ("is_void");
@@ -5401,6 +5547,9 @@ create table "warehouse"."study" (
 );
 
 alter table "warehouse"."study"
+  add constraint "study_key_ukey"
+  unique ("key");
+alter table "warehouse"."study"
   add constraint "study_program_id_fkey"
   foreign key ("program_id") references "master"."program" ("id")
   match simple on update cascade on delete cascade;
@@ -5417,6 +5566,12 @@ alter table "warehouse"."study"
   foreign key ("season_id") references "master"."season" ("id")
   match simple on update cascade on delete cascade;
 alter table "warehouse"."study"
+  add constraint "study_program_id_place_id_phase_id_year_season_id_number_ukey"
+  unique ("program_id", "place_id", "phase_id", "year", "season_id", "number");
+alter table "warehouse"."study"
+  add constraint "study_name_ukey"
+  unique ("name");
+alter table "warehouse"."study"
   add constraint "study_id_pkey"
   primary key ("id");
 alter table "warehouse"."study"
@@ -5428,6 +5583,9 @@ alter table "warehouse"."study"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create unique index "study_key_idx"
+  on "warehouse"."study"
+  using btree ("key");
 create index "study_program_id_idx"
   on "warehouse"."study"
   using btree ("program_id");
@@ -5446,12 +5604,12 @@ create index "study_season_id_idx"
 create index "study_year_season_id_idx"
   on "warehouse"."study"
   using btree ("year", "season_id");
-create unique index "study_key_idx"
-  on "warehouse"."study"
-  using btree ("key");
 create index "study_name_idx"
   on "warehouse"."study"
   using btree ("name");
+create index "study_program_id_place_id_phase_id_year_season_id_number_idx"
+  on "warehouse"."study"
+  using btree ("program_id", "place_id", "phase_id", "year", "season_id", "number");
 create index "study_is_void_idx"
   on "warehouse"."study"
   using btree ("is_void");
@@ -5481,6 +5639,9 @@ create table "warehouse"."entry" (
 );
 
 alter table "warehouse"."entry"
+  add constraint "entry_key_ukey"
+  unique ("key");
+alter table "warehouse"."entry"
   add constraint "entry_study_id_fkey"
   foreign key ("study_id") references "warehouse"."study" ("id")
   match simple on update cascade on delete cascade;
@@ -5488,6 +5649,12 @@ alter table "warehouse"."entry"
   add constraint "entry_product_id_fkey"
   foreign key ("product_id") references "master"."product" ("id")
   match simple on update cascade on delete cascade;
+alter table "warehouse"."entry"
+  add constraint "entry_study_id_number_ukey"
+  unique ("study_id", "number");
+alter table "warehouse"."entry"
+  add constraint "entry_study_id_product_id_ukey"
+  unique ("study_id", "product_id");
 alter table "warehouse"."entry"
   add constraint "entry_id_pkey"
   primary key ("id");
@@ -5500,15 +5667,21 @@ alter table "warehouse"."entry"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create index "entry_study_id_idx"
-  on "warehouse"."entry"
-  using btree ("study_id");
 create unique index "entry_key_idx"
   on "warehouse"."entry"
   using btree ("key");
+create index "entry_study_id_idx"
+  on "warehouse"."entry"
+  using btree ("study_id");
 create index "entry_product_id_idx"
   on "warehouse"."entry"
   using btree ("product_id");
+create index "entry_study_id_number_idx"
+  on "warehouse"."entry"
+  using btree ("study_id", "number");
+create index "entry_study_id_product_id_idx"
+  on "warehouse"."entry"
+  using btree ("study_id", "product_id");
 create index "entry_is_void_idx"
   on "warehouse"."entry"
   using btree ("is_void");
@@ -5537,6 +5710,9 @@ create table "warehouse"."plot" (
 );
 
 alter table "warehouse"."plot"
+  add constraint "plot_key_ukey"
+  unique ("key");
+alter table "warehouse"."plot"
   add constraint "plot_study_id_fkey"
   foreign key ("study_id") references "warehouse"."study" ("id")
   match simple on update cascade on delete cascade;
@@ -5544,6 +5720,9 @@ alter table "warehouse"."plot"
   add constraint "plot_entry_id_fkey"
   foreign key ("entry_id") references "warehouse"."entry" ("id")
   match simple on update cascade on delete cascade;
+alter table "warehouse"."plot"
+  add constraint "plot_study_id_entry_id_replication_number_ukey"
+  unique ("study_id", "entry_id", "replication_number");
 alter table "warehouse"."plot"
   add constraint "plot_id_pkey"
   primary key ("id");
@@ -5556,15 +5735,18 @@ alter table "warehouse"."plot"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create unique index "plot_key_idx"
+  on "warehouse"."plot"
+  using btree ("key");
 create index "plot_study_id_idx"
   on "warehouse"."plot"
   using btree ("study_id");
 create index "plot_entry_id_idx"
   on "warehouse"."plot"
   using btree ("entry_id");
-create unique index "plot_key_idx"
+create index "plot_study_id_entry_id_replication_number_idx"
   on "warehouse"."plot"
-  using btree ("key");
+  using btree ("study_id", "entry_id", "replication_number");
 create index "plot_is_void_idx"
   on "warehouse"."plot"
   using btree ("is_void");
@@ -5592,6 +5774,9 @@ create table "warehouse"."subplot" (
 );
 
 alter table "warehouse"."subplot"
+  add constraint "subplot_key_ukey"
+  unique ("key");
+alter table "warehouse"."subplot"
   add constraint "subplot_study_id_fkey"
   foreign key ("study_id") references "warehouse"."study" ("id")
   match simple on update cascade on delete cascade;
@@ -5604,6 +5789,9 @@ alter table "warehouse"."subplot"
   foreign key ("plot_id") references "warehouse"."plot" ("id")
   match simple on update cascade on delete cascade;
 alter table "warehouse"."subplot"
+  add constraint "subplot_study_id_entry_id_plot_id_number_ukey"
+  unique ("study_id", "entry_id", "plot_id", "number");
+alter table "warehouse"."subplot"
   add constraint "subplot_id_pkey"
   primary key ("id");
 alter table "warehouse"."subplot"
@@ -5615,6 +5803,9 @@ alter table "warehouse"."subplot"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create unique index "subplot_key_idx"
+  on "warehouse"."subplot"
+  using btree ("key");
 create index "subplot_study_id_idx"
   on "warehouse"."subplot"
   using btree ("study_id");
@@ -5624,9 +5815,9 @@ create index "subplot_entry_id_idx"
 create index "subplot_plot_id_idx"
   on "warehouse"."subplot"
   using btree ("plot_id");
-create unique index "subplot_key_idx"
+create index "subplot_study_id_entry_id_plot_id_number_idx"
   on "warehouse"."subplot"
-  using btree ("key");
+  using btree ("study_id", "entry_id", "plot_id", "number");
 create index "subplot_is_void_idx"
   on "warehouse"."subplot"
   using btree ("is_void");
@@ -18112,9 +18303,6 @@ comment on constraint "team_creator_id_fkey" on "master"."team"
 comment on constraint "team_modifier_id_fkey" on "master"."team"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."team_abbrev_idx"
-  is 'Unique index for the abbrev column';
-
 comment on index "master"."team_is_void_idx"
   is 'Index for the is_void column';
 
@@ -19514,14 +19702,14 @@ comment on table "operational"."entry"
 comment on column "operational"."entry"."id"
   is 'Locally unique primary key';
 
+comment on column "operational"."entry"."key"
+  is 'Logical key of the entry';
+
 comment on column "operational"."entry"."study_id"
   is 'ID referring to study';
 
 comment on column "operational"."entry"."number"
   is 'Number of the entry within the study';
-
-comment on column "operational"."entry"."key"
-  is 'Logical key of the entry';
 
 comment on column "operational"."entry"."code"
   is 'Code of the entry within the study';
@@ -19579,9 +19767,6 @@ comment on constraint "entry_modifier_id_fkey" on "operational"."entry"
 
 comment on index "operational"."entry_study_id_idx"
   is 'Index for the study_id column';
-
-comment on index "operational"."entry_key_idx"
-  is 'Index for the key column';
 
 comment on index "operational"."entry_product_id_idx"
   is 'Index for the product_id column';
@@ -19727,6 +19912,9 @@ comment on table "operational"."plot"
 comment on column "operational"."plot"."id"
   is 'Locally unique primary key';
 
+comment on column "operational"."plot"."key"
+  is 'Logical key of the plot';
+
 comment on column "operational"."plot"."study_id"
   is 'ID referring to study';
 
@@ -19735,9 +19923,6 @@ comment on column "operational"."plot"."entry_id"
 
 comment on column "operational"."plot"."replication_number"
   is 'Replication number of a plot';
-
-comment on column "operational"."plot"."key"
-  is 'Logical key of the plot';
 
 comment on column "operational"."plot"."code"
   is 'Code of the plot within the study';
@@ -19789,9 +19974,6 @@ comment on index "operational"."plot_study_id_idx"
 
 comment on index "operational"."plot_entry_id_idx"
   is 'Index for the entry_id column';
-
-comment on index "operational"."plot_key_idx"
-  is 'Index for the key column';
 
 comment on index "operational"."plot_is_void_idx"
   is 'Index for the is_void column';
@@ -19952,6 +20134,9 @@ comment on table "operational"."subplot"
 comment on column "operational"."subplot"."id"
   is 'Locally unique primary key';
 
+comment on column "operational"."subplot"."key"
+  is 'Logical key of the subplot';
+
 comment on column "operational"."subplot"."study_id"
   is 'ID referring to study';
 
@@ -19963,9 +20148,6 @@ comment on column "operational"."subplot"."plot_id"
 
 comment on column "operational"."subplot"."number"
   is 'Number of the subplot within the plot';
-
-comment on column "operational"."subplot"."key"
-  is 'Logical key of the subplot';
 
 comment on column "operational"."subplot"."description"
   is 'Description';
@@ -20020,9 +20202,6 @@ comment on index "operational"."subplot_entry_id_idx"
 
 comment on index "operational"."subplot_plot_id_idx"
   is 'Index for the plot_id column';
-
-comment on index "operational"."subplot_key_idx"
-  is 'Index for the key column';
 
 comment on index "operational"."subplot_is_void_idx"
   is 'Index for the is_void column';
@@ -20204,6 +20383,9 @@ comment on column "operational"."cross"."id"
 comment on column "operational"."cross"."study_id"
   is 'ID referring to study';
 
+comment on column "operational"."cross"."product_id"
+  is 'ID of the product in the product table';
+
 comment on column "operational"."cross"."female_entry_id"
   is 'ID of the female entry in the cross';
 
@@ -20249,6 +20431,12 @@ comment on column "operational"."cross"."notes"
 comment on column "operational"."cross"."is_void"
   is 'Indicator whether the record is deleted or not';
 
+comment on constraint "cross_study_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the study_id column, which refers to the id column of the study table';
+
+comment on constraint "cross_product_id_fkey" on "operational"."cross"
+  is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
+
 comment on constraint "cross_female_entry_id_fkey" on "operational"."cross"
   is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
 
@@ -20275,6 +20463,9 @@ comment on constraint "cross_modifier_id_fkey" on "operational"."cross"
 
 comment on index "operational"."cross_study_id_idx"
   is 'Index for the study_id column';
+
+comment on index "operational"."cross_product_id_idx"
+  is 'Index for the product_id column';
 
 comment on index "operational"."cross_female_entry_id_idx"
   is 'Foreign key constraint for the entry_id column, which refers to the id column of the entry table';
@@ -21554,11 +21745,11 @@ comment on constraint "entry_creator_id_fkey" on "warehouse"."entry"
 comment on constraint "entry_modifier_id_fkey" on "warehouse"."entry"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "warehouse"."entry_study_id_idx"
-  is 'Index for the study_id column';
-
 comment on index "warehouse"."entry_key_idx"
   is 'Index for the key column';
+
+comment on index "warehouse"."entry_study_id_idx"
+  is 'Index for the study_id column';
 
 comment on index "warehouse"."entry_product_id_idx"
   is 'Index for the product_id column';
@@ -21629,14 +21820,14 @@ comment on constraint "plot_creator_id_fkey" on "warehouse"."plot"
 comment on constraint "plot_modifier_id_fkey" on "warehouse"."plot"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
+comment on index "warehouse"."plot_key_idx"
+  is 'Index for the key column';
+
 comment on index "warehouse"."plot_study_id_idx"
   is 'Index for the study_id column';
 
 comment on index "warehouse"."plot_entry_id_idx"
   is 'Index for the entry_id column';
-
-comment on index "warehouse"."plot_key_idx"
-  is 'Index for the key column';
 
 comment on index "warehouse"."plot_is_void_idx"
   is 'Index for the is_void column';
@@ -21707,6 +21898,9 @@ comment on constraint "subplot_creator_id_fkey" on "warehouse"."subplot"
 comment on constraint "subplot_modifier_id_fkey" on "warehouse"."subplot"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
+comment on index "warehouse"."subplot_key_idx"
+  is 'Index for the key column';
+
 comment on index "warehouse"."subplot_study_id_idx"
   is 'Index for the study_id column';
 
@@ -21715,9 +21909,6 @@ comment on index "warehouse"."subplot_entry_id_idx"
 
 comment on index "warehouse"."subplot_plot_id_idx"
   is 'Index for the plot_id column';
-
-comment on index "warehouse"."subplot_key_idx"
-  is 'Index for the key column';
 
 comment on index "warehouse"."subplot_is_void_idx"
   is 'Index for the is_void column';
