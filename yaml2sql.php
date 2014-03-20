@@ -379,7 +379,7 @@ EOD
                                         # default constraint name
                                         $cstName = pg_escape_string(strtr('{table}_{column}_{suffix}', [
                                             '{table}' => $tblName,
-                                            '{column}' => $constraint->column,
+                                            '{column}' => $cstColumnName,
                                             '{suffix}' => $cstSuffix,
                                         ]));
                                     }
@@ -387,7 +387,7 @@ EOD
                                         # custom constraint name
                                         $cstName = pg_escape_string(strtr($constraint->name, [
                                             '{table}' => $tblName,
-                                            '{column}' => $constraint->column,
+                                            '{column}' => $cstColumnName,
                                         ]));
                                     }
                                     
