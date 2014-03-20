@@ -625,6 +625,7 @@ EOD
                         
                         # table has one or more sequences
                         $seqSql = '';
+                        $seqSqlPost = '';
                         if (!empty($table->sequence)) {
                             $sequence = $table->sequence;
                             
@@ -664,6 +665,12 @@ EOD
                                     '{seqStartWith}' => $seqStartWith,
                                 ]
                             );
+                            
+                            $seqStartWith = 1;
+                            if (!empty($sequence->restart)) {
+                                $seqSqlPost = $seqSql;
+                                $seqSql = '';
+                            }
                         }
                         
                         # other sql commans to be executed after the table has been created
@@ -679,7 +686,7 @@ EOD
                         }
                         
                         # add table sql commands to list
-                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $copySql . "\n\n" . $seqSql . "\n\n" . $tblpostSql;
+                        $tblSqlArr[$tblIdx] .= "\n\n" . $cstSql . "\n\n" . $idxSql . "\n\n" . $seqSql . "\n\n" . $copySql . "\n\n" . $seqSqlPost . "\n\n" . $tblpostSql;
                     }
                 }
                 
