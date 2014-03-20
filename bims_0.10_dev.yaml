@@ -1153,9 +1153,15 @@ database: &bims_0.10_dev-db
                         -
                             column: season_id
                         -
+                            unique: true
                             column:
                                 - place_id
                                 - season_id
+                        -
+                            unique: true
+                            column:
+                                - place_id
+                                - order_number
                     copy:
                         <<: *copy-val
                         column:
@@ -1245,6 +1251,11 @@ database: &bims_0.10_dev-db
                                 - male_product_id
                         <<: *def-log-tbl-cst
                     index:
+                        -
+                            unique: true
+                            column:
+                                - female_product_id
+                                - male_product_id
                         <<: *def-log-tbl-idx
             # system tables
                 - &master-role-tbl
@@ -1351,9 +1362,15 @@ database: &bims_0.10_dev-db
                         -
                             column: child_id
                         -
+                            unique: true
                             column:
                                 - parent_id
                                 - child_id
+                        -
+                            unique: true
+                            column:
+                                - parent_id
+                                - order_number
                         <<: *def-log-tbl-idx
                     copy:
                         <<: *copy-val
@@ -1493,6 +1510,7 @@ database: &bims_0.10_dev-db
                         -
                             column: item_id
                         -
+                            unique: true
                             column:
                                 - user_id
                                 - item_id
@@ -1526,11 +1544,11 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.role
                                 foreign_column: id
-                        -
-                            type: unique_key
-                            column:
-                                - user_id
-                                - role_id
+                        # -
+                        #     type: unique_key
+                        #     column:
+                        #         - user_id
+                        #         - role_id
                         <<: *def-log-tbl-cst
                     index:
                         - *user_id-idx
@@ -1538,6 +1556,7 @@ database: &bims_0.10_dev-db
                             name: user_role_role_id_idx
                             column: role_id
                         -
+                            # unique: true
                             column:
                                 - user_id
                                 - role_id
@@ -1671,10 +1690,12 @@ database: &bims_0.10_dev-db
                             name: team_member_user_role_id_idx
                             column: user_role_id
                         -
+                            unique: true
                             column:
                                 - team_id
                                 - member_id
                         -
+                            unique: true
                             column:
                                 - team_id
                                 - member_id
@@ -1732,17 +1753,17 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.team
                                 foreign_column: id
-                        -
-                            type: unique_key
-                            column:
-                                - item_id
-                                - role_id
-                        -
-                            type: unique_key
-                            column:
-                                - item_id
-                                - role_id
-                                - team_id
+                        # -
+                        #     type: unique_key
+                        #     column:
+                        #         - item_id
+                        #         - role_id
+                        # -
+                        #     type: unique_key
+                        #     column:
+                        #         - item_id
+                        #         - role_id
+                        #         - team_id
                         <<: *def-log-tbl-col
                     index:
                         -
@@ -1755,10 +1776,12 @@ database: &bims_0.10_dev-db
                             name: item_role_team_id_idx
                             column: team_id
                         -
+                            # unique: true
                             column:
                                 - item_id
                                 - role_id
                         -
+                            # unique: true
                             column:
                                 - item_id
                                 - role_id
@@ -2475,6 +2498,9 @@ database: &bims_0.10_dev-db
                     comment: Studies
                     column:
                         <<: *def-id-tbl-col
+                        - &study-key-col
+                            <<: *key-col
+                            comment: Logical key of the study
                         - &study-program_id-col
                             name: program_id
                             data_type: integer
@@ -2495,13 +2521,10 @@ database: &bims_0.10_dev-db
                             name: season_id
                             data_type: integer
                             not_null: true
-                        - &study-sequence_number-col
-                            name: sequence_number
+                        - &study-number-col
+                            name: number
                             data_type: integer
                             not_null: true
-                        - &study-key-col
-                            <<: *key-col
-                            comment: Logical key of the study
                         - &study-name-col
                             <<: *name-col
                             comment: Logical name of the study
@@ -2538,8 +2561,28 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.season
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - key
+                        -
+                            name: study_study_key_ukey
+                            type: unique_key
+                            column:
+                                - program_id
+                                - place_id
+                                - phase_id
+                                - year
+                                - season_id
+                                - number
+                        -
+                            type: unique_key
+                            column:
+                                - name
                         <<: *def-tbl-cst
                     index:
+                        - &study-key-idx
+                            <<: *key-idx
                         - &study-program_id-idx
                             name: study_program_id_idx
                             column: program_id
@@ -2560,8 +2603,15 @@ database: &bims_0.10_dev-db
                             column:
                                 - year
                                 - season_id
-                        - &study-key-idx
-                            <<: *key-idx
+                        -
+                            name: study_study_key_idx
+                            column:
+                                - program_id
+                                - place_id
+                                - phase_id
+                                - year
+                                - season_id
+                                - number
                         - &study-name-idx
                             name: study_name_idx
                             column: name
@@ -2590,13 +2640,13 @@ database: &bims_0.10_dev-db
                     comment: Entries of a study
                     column:
                         <<: *def-id-tbl-col
+                        - &entry-key-col
+                            <<: *key-col
+                            comment: Logical key of the entry
                         - *study_id-col
                         - &entry-number-col
                             <<: *number-col
                             comment: Number of the entry within the study
-                        - &entry-key-col
-                            <<: *key-col
-                            comment: Logical key of the entry
                         - &entry-code-col
                             <<: *code-col
                             comment: Code of the entry within the study
@@ -2613,19 +2663,42 @@ database: &bims_0.10_dev-db
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
+                        -
+                            type: unique_key
+                            column:
+                                - key
                         - &entry-study_id-fkey-cst
                             <<: *study_id-fkey-cst
                         - &entry-product_id-fkey-cst
                             <<: *product_id-fkey-cst
                         # - &entry-seed_storage_id-fkey-cst
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - number
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - product_id
                         <<: *def-tbl-cst
                     index:
+                        -
+                            column:
+                                - key
                         - &entry-study_id-idx
                             <<: *study_id-idx
-                        - &entry-key-idx
-                            <<: *key-idx
                         - &entry-product_id-idx
                             <<: *product_id-idx
+                        -
+                            column:
+                                - study_id
+                                - number
+                        -
+                            column:
+                                - study_id
+                                - product_id
                         <<: *def-log-tbl-idx
                 - &operational-entry_metadata-tbl
                     <<: *def-tbl
@@ -2675,33 +2748,52 @@ database: &bims_0.10_dev-db
                     comment: Plot of a study entry
                     column:
                         <<: *def-id-tbl-col
+                        - &plot-key-col
+                            <<: *key-col
+                            comment: Logical key of the plot
                         - *study_id-col
                         - *entry_id-col
                         - &plot-replication_number-col
                             name: replication_number
                             data_type: integer
                             comment: Replication number of a plot
-                        - &plot-key-col
-                            <<: *key-col
-                            comment: Logical key of the plot
                         - &plot-code-col
                             <<: *code-col
                             comment: Code of the plot within the study
+                        - &plot-no-col
+                            name: plot_no
+                            data_type: varchar
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
+                        -
+                            type: unique_key
+                            column:
+                                - key
                         - &plot-study_id-fkey-cst
                             <<: *study_id-fkey-cst
                         - &plot-entry_id-fkey-cst
                             <<: *entry_id-fkey-cst
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - entry_id
+                                - replication_number
                         <<: *def-tbl-cst
                     index:
+                        -
+                            column:
+                                - key
                         - &plot-study_id-idx
                             <<: *study_id-idx
                         - &plot-entry_id-idx
                             <<: *entry_id-idx
-                        - &plot-key-idx
-                            <<: *key-idx
+                        -
+                            column:
+                                - study_id
+                                - entry_id
+                                - replication_number
                         <<: *def-log-tbl-idx
                 - &operational-plot_metadata-tbl
                     <<: *def-tbl
@@ -2757,34 +2849,52 @@ database: &bims_0.10_dev-db
                     comment: Subplot of a study entry's plot
                     column:
                         <<: *def-id-tbl-col
+                        - &subplot-key-col
+                            <<: *key-col
+                            comment: Logical key of the subplot
                         - *study_id-col
                         - *entry_id-col
                         - *plot_id-col
                         - &subplot-number-col
                             <<: *number-col
                             comment: Number of the subplot within the plot
-                        - &subplot-key-col
-                            <<: *key-col
-                            comment: Logical key of the subplot
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
+                        -
+                            type: unique_key
+                            column:
+                                - key
                         - &subplot-study_id-fkey-cst
                             <<: *study_id-fkey-cst
                         - &subplot-entry_id-fkey-cst
                             <<: *entry_id-fkey-cst
                         - &subplot-plot_id-fkey-cst
                             <<: *plot_id-fkey-cst
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - entry_id
+                                - plot_id
+                                - number
                         <<: *def-tbl-cst
                     index:
+                        -
+                            column:
+                                - key
                         - &subplot-study_id-idx
                             <<: *study_id-idx
                         - &subplot-entry_id-idx
                             <<: *entry_id-idx
                         - &subplot-plot_id-idx
                             <<: *plot_id-idx
-                        - &subplot-key-idx
-                            <<: *key-idx
+                        -
+                            column:
+                                - study_id
+                                - entry_id
+                                - plot_id
+                                - number
                         <<: *def-log-tbl-idx
                 - &operational-subplot_metadata-tbl
                     <<: *def-tbl
@@ -2848,6 +2958,8 @@ database: &bims_0.10_dev-db
                         <<: *def-id-tbl-col
                         - &cross-study_id-col
                             <<: *study_id-col
+                        - &cross-product_id-col
+                            <<: *product_id-col
                         - &cross-female_entry_id-col
                             <<: *entry_id-col
                             name: female_entry_id
@@ -2879,8 +2991,10 @@ database: &bims_0.10_dev-db
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
-                        - &cross-study_id-col
-                            <<: *study_id-col
+                        - &cross-study_id-fkey-cst
+                            <<: *study_id-fkey-cst
+                        - &cross-product_id-fkey-cst
+                            <<: *product_id-fkey-cst
                         - &cross-female_entry_id-fkey-cst
                             <<: *entry_id-fkey-cst
                             name: cross_female_entry_id_fkey
@@ -2905,10 +3019,29 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.cross_method
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - product_id
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - female_product_id
+                                - male_product_id
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - female_entry_id
+                                - male_entry_id
                         <<: *def-tbl-cst
                     index:
                         - &cross-study_id-idx
                             <<: *study_id-idx
+                        - &cross-product_id-idx
+                            <<: *product_id-idx
                         - &cross-female_entry_id-idx
                             <<: *entry_id-fkey-cst
                             name: cross_female_entry_id_idx
@@ -2928,6 +3061,20 @@ database: &bims_0.10_dev-db
                         - &cross-cross_method_id-idx
                             name: cross_cross_method_id_idx
                             column: cross_method_id
+                        -
+                            column:
+                                - study_id
+                                - product_id
+                        -
+                            column:
+                                - study_id
+                                - female_product_id
+                                - male_product_id
+                        -
+                            column:
+                                - study_id
+                                - female_entry_id
+                                - male_entry_id
                 - &operational-cross_metadata-tbl
                     <<: *def-tbl
                     name: cross_metadata
@@ -3058,7 +3205,24 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.product
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - product_id
+                                - seed_lot_id
+                        -
+                            type: unique_key
+                            column:
+                                - product_id
+                                - gid
+                                - seed_lot_id
                         <<: *def-log-tbl-cst
+                        -
+                            type: foreign_key
+                            column: original_storage_id
+                            other_attributes:
+                                foreign_table: operational.seed_storage
+                                foreign_column: id
                     index:
                         - &seed_storage-product_id-idx
                             name: seed_storage_product_id_idx
@@ -3074,6 +3238,10 @@ database: &bims_0.10_dev-db
                         - &seed_storage-original_storage_id-idx
                             name: seed_storage_original_storage_id_idx
                             column: original_storage_id
+                        -
+                            column:
+                                - product_id
+                                - seed_lot_id
                         <<: *def-log-tbl-idx
                 - &operational-seed_storage_log-tbl
                     <<: *def-tbl
@@ -3752,6 +3920,10 @@ database: &bims_0.10_dev-db
                             comment: Title of the study
                         <<: *def-log-tbl-col
                     constraint:
+                        -
+                            type: unique_key
+                            column:
+                                - key
                         - &study-program_id-fkey-cst
                             name: study_program_id_fkey
                             type: foreign_key
@@ -3780,8 +3952,23 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.season
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - program_id
+                                - place_id
+                                - phase_id
+                                - year
+                                - season_id
+                                - number
+                        -
+                            type: unique_key
+                            column:
+                                - name
                         <<: *def-tbl-cst
                     index:
+                        - &study-key-idx
+                            <<: *key-idx
                         - &study-program_id-idx
                             name: study_program_id_idx
                             column: program_id
@@ -3802,11 +3989,17 @@ database: &bims_0.10_dev-db
                             column:
                                 - year
                                 - season_id
-                        - &study-key-idx
-                            <<: *key-idx
                         - &study-name-idx
                             name: study_name_idx
                             column: name
+                        -
+                            column:
+                                - program_id
+                                - place_id
+                                - phase_id
+                                - year
+                                - season_id
+                                - number
                         <<: *def-log-tbl-idx
                 - &warehouse-entry-tbl
                     <<: *def-tbl
@@ -3837,19 +4030,40 @@ database: &bims_0.10_dev-db
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
+                        -
+                            type: unique_key
+                            column: key
                         - &entry-study_id-fkey-cst
                             <<: *study_id-fkey-cst
                         - &entry-product_id-fkey-cst
                             <<: *product_id-fkey-cst
                         # - &entry-seed_storage_id-fkey-cst
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - number
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - product_id
                         <<: *def-tbl-cst
                     index:
-                        - &entry-study_id-idx
-                            <<: *study_id-idx
                         - &entry-key-idx
                             <<: *key-idx
+                        - &entry-study_id-idx
+                            <<: *study_id-idx
                         - &entry-product_id-idx
                             <<: *product_id-idx
+                        -
+                            column:
+                                - study_id
+                                - number
+                        -
+                            column:
+                                - study_id
+                                - product_id
                         <<: *def-log-tbl-idx
                 - &warehouse-plot-tbl
                     <<: *def-tbl
@@ -3875,18 +4089,32 @@ database: &bims_0.10_dev-db
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
+                        -
+                            type: unique_key
+                            column: key
                         - &plot-study_id-fkey-cst
                             <<: *study_id-fkey-cst
                         - &plot-entry_id-fkey-cst
                             <<: *entry_id-fkey-cst
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - entry_id
+                                - replication_number
                         <<: *def-tbl-cst
                     index:
+                        - &plot-key-idx
+                            <<: *key-idx
                         - &plot-study_id-idx
                             <<: *study_id-idx
                         - &plot-entry_id-idx
                             <<: *entry_id-idx
-                        - &plot-key-idx
-                            <<: *key-idx
+                        -
+                            column:
+                                - study_id
+                                - entry_id
+                                - replication_number
                         <<: *def-log-tbl-idx
                 - &warehouse-subplot-tbl
                     <<: *def-tbl
@@ -3906,22 +4134,38 @@ database: &bims_0.10_dev-db
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
+                        -
+                            type: unique_key
+                            column: key
                         - &subplot-study_id-fkey-cst
                             <<: *study_id-fkey-cst
                         - &subplot-entry_id-fkey-cst
                             <<: *entry_id-fkey-cst
                         - &subplot-plot_id-fkey-cst
                             <<: *plot_id-fkey-cst
+                        -
+                            type: unique_key
+                            column:
+                                - study_id
+                                - entry_id
+                                - plot_id
+                                - number
                         <<: *def-tbl-cst
                     index:
+                        - &subplot-key-idx
+                            <<: *key-idx
                         - &subplot-study_id-idx
                             <<: *study_id-idx
                         - &subplot-entry_id-idx
                             <<: *entry_id-idx
                         - &subplot-plot_id-idx
                             <<: *plot_id-idx
-                        - &subplot-key-idx
-                            <<: *key-idx
+                        -
+                            column:
+                                - study_id
+                                - entry_id
+                                - plot_id
+                                - number
                         <<: *def-log-tbl-idx
         - &import-sch
             name: import
