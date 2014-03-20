@@ -257,7 +257,7 @@ EOD
                                         
                                         # unique constraint
                                         # no two records of the same value can be added to a column
-                                        case 'unique':
+                                        case 'unique_key':
                                             $cstType = 'unique';
                                             $cstSuffix = 'ukey';
                                             $objType = 'constraint';
@@ -648,15 +648,15 @@ EOD
                             $seqSql .= strtr(
 <<<EOD
 alter sequence "{schName}"."{seqName}"
-  RESTART {seqStartWith};
+  restart {seqStartWith};
 
-ALTER SEQUENCE "{schName}"."{seqName}"
-  START WITH {seqStartWith}
-  NO MINVALUE
-  MAXVALUE 9223372036854775807
-  INCREMENT BY 1
-  CACHE 1
-  NO CYCLE;
+alter sequence "{schName}"."{seqName}"
+  start with {seqStartWith}
+  minvalue 1
+  maxvalue 9223372036854775807
+  increment by 1
+  cache 1
+  no cycle;
 EOD
                                 , [
                                     '{schName}' => $schName,
