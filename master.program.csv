@@ -1,2 +1,8 @@
 "abbrev";"name";"description"
-"IRSEA";"Irrigated South-East Asia";"Irrigated South-East Asia"
+"IRSEA";"Irrigated South-East Asia";
+"RFSEA";"Rainfed Lowland South-East Asia";
+"IRSA";"Irrigated South Asia";
+"RFSA";"Rainfed Lowland South Asia";
+"ESA";"Eastern Southern Africa";"Rainfed and Irrigated TVPs"
+"HYB";"Hybrid";
+"JAP";"Japonica";"Temperate and Tropical TVPs"
