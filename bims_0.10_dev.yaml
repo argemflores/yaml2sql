@@ -455,7 +455,9 @@ dictionary:
                 <<: *def-log-tbl-idx
 database: &bims_0.10_dev-db
     name: bims_0.10_dev
-    comment: 'BIMS: Breeding Information Management System'
+    comment: |
+        BIMS: Breeding Information Management System
+        https://sites.google.com/a/irri.org/bim/conceptual-model
     encoding: UTF8
     lc_collate: C
     lc_ctype: C
@@ -570,6 +572,9 @@ database: &bims_0.10_dev-db
                             name: name
                             data_type: varchar
                         <<: *def-desc-tbl-col
+                        -
+                            name: formula
+                            data_type: varchar
                         <<: *def-log-tbl-col
                 - &master-scale-tbl
                     <<: *def-tbl
@@ -2489,8 +2494,8 @@ database: &bims_0.10_dev-db
         - &operational-sch
             name: operational
             comment: |
-                Consist the basic study, entry, plot, and subplot data, the study meta, observation data and the audit data
-                produced in day to day data production events (knowledge work) in the product development programs
+                Consist of the basic study, entry, plot, and subplot data, the study metadata, observation data and audit data
+                produced in day-to-day data production events (knowledge work) in the product development programs
             table:
                 - &operational-study-tbl
                     <<: *def-tbl
@@ -3876,7 +3881,7 @@ database: &bims_0.10_dev-db
         - &warehouse-sch
             name: warehouse
             comment: |
-                Validated data from the operational schema
+                Stores validated operational data
             table:
                 - &warehouse-study-tbl
                     <<: *def-tbl
