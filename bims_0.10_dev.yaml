@@ -827,6 +827,8 @@ database: &bims_0.10_dev-db
                             - description
                     sequence:
                         start_with: 101
+                        minvalue: 101
+                        maxvalue: 999
                 - &master-place-tbl
                     <<: *def-tbl
                     name: place
@@ -847,7 +849,9 @@ database: &bims_0.10_dev-db
                             - name
                             - description
                     sequence:
-                        start_with: 100001
+                        start_with: 10001
+                        minvalue: 10001
+                        maxvalue: 99999
                 - &master-phase-tbl
                     <<: *def-tbl
                     name: phase
@@ -860,6 +864,8 @@ database: &bims_0.10_dev-db
                             - description
                     sequence:
                         start_with: 101
+                        minvalue: 101
+                        maxvalue: 999
                 - &master-product-tbl
                     <<: *def-tbl
                     name: product
@@ -1106,6 +1112,8 @@ database: &bims_0.10_dev-db
                             - description
                     sequence:
                         start_with: 11
+                        minvalue: 11
+                        maxvalue: 99
                 - &master-place_season-tbl
                     <<: *def-tbl
                     name: place_season
