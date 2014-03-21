@@ -629,12 +629,6 @@ EOD
                         if (!empty($table->sequence)) {
                             $sequence = $table->sequence;
                             
-                            # default starting number of sequence
-                            $seqStartWith = 1;
-                            if (!empty($sequence->start_with)) {
-                                $seqStartWith = $sequence->start_with;
-                            }
-                            
                             # name of sequnce
                             if (!empty($sequence->name)) {
                                 # custom sequence name
@@ -645,6 +639,42 @@ EOD
                                 $seqName = pg_escape_string($tblName . '_id_seq');
                             }
                             
+                            # starting number of sequence
+                            $seqStartWith = 1;
+                            if (!empty($sequence->start_with)) {
+                                $seqStartWith = $sequence->start_with;
+                            }
+                            
+                            # minimum value
+                            $seqMinValue = 1;
+                            if (!empty($sequence->minvalue)) {
+                                $seqMinValue = $sequence->minvalue;
+                            }
+                            
+                            # maximum value
+                            $seqMaxValue = '9223372036854775807';
+                            if (!empty($sequence->maxvalue)) {
+                                $seqMaxValue = $sequence->maxvalue;
+                            }
+                            
+                            # incrementing value
+                            $seqIncrementBy = 1;
+                            if (!empty($sequence->increment_by)) {
+                                $seqIncrementBy = $sequence->increment_by;
+                            }
+                            
+                            # incrementing value
+                            $seqCache = 1;
+                            if (!empty($sequence->cache)) {
+                                $seqIncrementBy = $sequence->cache;
+                            }
+                            
+                            # incrementing value
+                            $seqNoCycle = 'no cycle';
+                            if (!empty($sequence->cycle)) {
+                                $seqNoCycle = 'cycle';
+                            }
+                            
                             # generate alter sequence command to table
                             $seqSql .= strtr(
 <<<EOD
@@ -653,16 +683,21 @@ alter sequence "{schName}"."{seqName}"
 
 alter sequence "{schName}"."{seqName}"
   start with {seqStartWith}
-  minvalue 1
-  maxvalue 9223372036854775807
-  increment by 1
-  cache 1
-  no cycle;
+  minvalue {seqMinValue}
+  maxvalue {seqMaxValue}
+  increment by {seqIncrementBy}
+  cache {seqCache}
+  {seqNoCycle};
 EOD
                                 , [
                                     '{schName}' => $schName,
                                     '{seqName}' => $seqName,
                                     '{seqStartWith}' => $seqStartWith,
+                                    '{seqMinValue}' => $seqMinValue,
+                                    '{seqMaxValue}' => $seqMaxValue,
+                                    '{seqIncrementBy}' => $seqIncrementBy,
+                                    '{seqCache}' => $seqCache,
+                                    '{seqNoCycle}' => $seqNoCycle,
                                 ]
                             );
                             
