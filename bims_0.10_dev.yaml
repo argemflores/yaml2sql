@@ -4532,11 +4532,33 @@ database: &bims_0.10_dev-db
             options:
                 skip_drop: false
                 skip: false
+        - &test-sch
+            name: test
+            comment: Temporary schema used for testing purposes only
+            table:
+                - &test-lookup-tbl
+                    <<: *def-tbl
+                    name: lookup
+                    column:
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        -
+                            name: category
+                            data_type: varchar
+                        -
+                            name: value
+                            data_type: varchar
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
+                    constraint:
+                        <<: *def-log-tbl-col
     options:
         drop_schema: true
         terminate_connections: true
         skip_append_sql: false
         append_sql: |
+            create extension tablefunc;
+            
             -- ---------------------------------------------------
             
             -- DROP TRIGGER add_variable_column ON master."variable";
