@@ -14,6 +14,8 @@ drop schema if exists "warehouse" cascade;
 
 drop schema if exists "import" cascade;
 
+drop schema if exists "test" cascade;
+
 -- --------------------------------
 
 create schema "master";
@@ -16933,6 +16935,38 @@ create table "import"."f2_data" (
     oids = false
 );
 
+-- --------------------------------
+
+create schema "test";
+
+create table "test"."lookup" (
+    "id" serial not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(256) not null,
+    "category" varchar,
+    "value" varchar,
+    "description" text,
+    "display_name" varchar(256),
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+
+
+create unique index "lookup_abbrev_idx"
+  on "test"."lookup"
+  using btree ("abbrev");
+create index "lookup_is_void_idx"
+  on "test"."lookup"
+  using btree ("is_void");
+
 comment on database "bims_0.10_dev"
   is 'BIMS: Breeding Information Management System
 https://sites.google.com/a/irri.org/bim/conceptual-model';
@@ -21963,14 +21997,61 @@ comment on constraint "variable_modifier_id_fkey" on "import"."variable"
 comment on index "import"."variable_is_void_idx"
   is 'Index for the is_void column';
 
+comment on schema "test"
+  is 'Temporary schema used for testing purposes only';
+
+comment on table "test"."lookup"
+  is '{table}';
+
+comment on column "test"."lookup"."id"
+  is 'Locally unique primary key';
+
+comment on column "test"."lookup"."abbrev"
+  is 'Short name identifier or abbreviation';
+
+comment on column "test"."lookup"."name"
+  is 'Name identifier';
+
+comment on column "test"."lookup"."description"
+  is 'Description';
+
+comment on column "test"."lookup"."display_name"
+  is 'Name to display to users';
+
+comment on column "test"."lookup"."remarks"
+  is 'Additional details';
+
+comment on column "test"."lookup"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "test"."lookup"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "test"."lookup"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "test"."lookup"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "test"."lookup"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "test"."lookup"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "test"."lookup_abbrev_idx"
+  is 'Unique index for the abbrev column';
+
+comment on index "test"."lookup_is_void_idx"
+  is 'Index for the is_void column';
+
 
 
 -- --------------------------------
 
--- ---------------------------------------------------
+create extension tablefunc;
 
--- DROP TRIGGER add_variable_column ON master."variable";
--- DROP FUNCTION public.add_variable_column();
+-- ---------------------------------------------------
 
 create or replace function "master"."add_variable_column"() returns trigger as $add_var_col$
 declare
