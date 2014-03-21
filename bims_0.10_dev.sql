@@ -584,8 +584,8 @@ alter sequence "master"."program_id_seq"
 
 alter sequence "master"."program_id_seq"
   start with 101
-  minvalue 1
-  maxvalue 9223372036854775807
+  minvalue 101
+  maxvalue 999
   increment by 1
   cache 1
   no cycle;
@@ -652,12 +652,12 @@ create index "place_is_void_idx"
   using btree ("is_void");
 
 alter sequence "master"."place_id_seq"
-  restart 100001;
+  restart 10001;
 
 alter sequence "master"."place_id_seq"
-  start with 100001
-  minvalue 1
-  maxvalue 9223372036854775807
+  start with 10001
+  minvalue 10001
+  maxvalue 99999
   increment by 1
   cache 1
   no cycle;
@@ -722,8 +722,8 @@ alter sequence "master"."phase_id_seq"
 
 alter sequence "master"."phase_id_seq"
   start with 101
-  minvalue 1
-  maxvalue 9223372036854775807
+  minvalue 101
+  maxvalue 999
   increment by 1
   cache 1
   no cycle;
@@ -1026,8 +1026,8 @@ alter sequence "master"."season_id_seq"
 
 alter sequence "master"."season_id_seq"
   start with 11
-  minvalue 1
-  maxvalue 9223372036854775807
+  minvalue 11
+  maxvalue 99
   increment by 1
   cache 1
   no cycle;
@@ -1124,8 +1124,8 @@ from stdin
     null ''
 ;
 "place_id";"season_id";"order_number"
-"100001";"11";"1"
-"100001";"12";"2"
+"10001";"11";"1"
+"10001";"12";"2"
 \.
 
 -- ----------------
@@ -22052,6 +22052,9 @@ comment on index "test"."lookup_is_void_idx"
 create extension tablefunc;
 
 -- ---------------------------------------------------
+
+-- DROP TRIGGER add_variable_column ON master."variable";
+-- DROP FUNCTION public.add_variable_column();
 
 create or replace function "master"."add_variable_column"() returns trigger as $add_var_col$
 declare
