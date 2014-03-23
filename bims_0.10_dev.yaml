@@ -442,7 +442,7 @@ dictionary:
     table:
         - &def-tbl
             name: {table}
-            comment: '{table}'
+            comment:
             column: &def-tbl-col
                 <<: *def-id-tbl-col
                 <<: *def-meta-tbl-col
@@ -457,7 +457,9 @@ database: &bims_0.10_dev-db
     name: bims_0.10_dev
     comment: |
         BIMS: Breeding Information Management System
-        https://sites.google.com/a/irri.org/bim/conceptual-model
+        
+        Wiki: https://sites.google.com/a/irri.org/bim/conceptual-model
+        Concepts: https://docs.google.com/a/irri.org/document/d/1hSNKmbFLMzLrYyGLxBvBwRMQWpYzXeqpf8v_v0Hhpo0/edit#
     encoding: UTF8
     lc_collate: C
     lc_ctype: C
@@ -874,13 +876,12 @@ database: &bims_0.10_dev-db
                         Every record has a unique key and unique product name. It contains the identity of a material.
                     column:
                         <<: *def-id-tbl-col
-                        <<: *def-meta-tbl-col
                         - &product-program_id-col
                             name: program_id
                             data_type: integer
                             not_null: true
                             comment: |
-                                Foreign key to the product development program table
+                                Program where the product was created; foreign key referring to master.program table
                         - &product-designation-col
                             name: designation
                             data_type: varchar
@@ -890,20 +891,24 @@ database: &bims_0.10_dev-db
                             data_type: varchar
                             not_null: true
                             comment: |
-                                Name types: breeding_line, fixed_line, derivative, common, cultivar
-                        - &product-type-col
-                            name: type
+                                Name type of the designation: breeding_line, fixed_line, derivative, common, cultivar
+                        - &product-product_type-col
+                            name: product_type
                             data_type: varchar
                             not_null: true
                             comment: |
-                                Product types: progeny, fixed_line
+                                Type of the product: progeny, fixed_line
                         - &product-year-col
                             name: year
                             data_type: integer
                             not_null: true
+                            comment: |
+                                Year when the product was created or acquired
                         - &product-season_id-col
                             name: season_id
                             data_type: integer
+                            comment: |
+                                Season when the product was created or acquired; foreign key referring to the master.season table
                         - &product-mta_status-col
                             name: mta_status
                             data_type: varchar
@@ -913,15 +918,19 @@ database: &bims_0.10_dev-db
                         - &product-parentage-col
                             name: parentage
                             data_type: varchar
+                            comment: |
+                                Pedigree details of the product
                         - &product-cross_id-col
                             name: cross_id
                             data_type: integer
+                            comment: |
+                                Refers to the cross id where the product was crossed; needs clarification
                         - &product-generation-col
                             name: generation
                             data_type: varchar
                             not_null: true
                             comment: |
-                                Generations: UNKNOWN, F1, BC1F1, BC2F1, BC3F1, F2, F3, F4, FIXED
+                                Generation of the product: UNKNOWN, F1, BC1F1, BC2F1, BC3F1, F2, F3, F4, FIXED
                         - &product-iris_preferred_id-col
                             name: iris_preferred_id
                             data_type: varchar
@@ -937,6 +946,8 @@ database: &bims_0.10_dev-db
                         - &product-selection_method-col
                             name: selection_method
                             data_type: varchar
+                            comment: |
+                                Method of selection of the product
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
@@ -4416,16 +4427,16 @@ database: &bims_0.10_dev-db
                             name: season
                             data_type: varchar
                         -
-                            name: family_gid
+                            name: family_id
                             data_type: varchar
                         -
-                            name: family_designation
+                            name: cross_number
                             data_type: varchar
                         -
                             name: gid
                             data_type: varchar
                         -
-                            name: derivative_name
+                            name: derive_name
                             data_type: varchar
                         -
                             name: code
@@ -4434,7 +4445,7 @@ database: &bims_0.10_dev-db
                             name: purpose
                             data_type: varchar
                         -
-                            name: pedigree_name
+                            name: pedigree
                             data_type: varchar
                         -
                             name: current_generation
@@ -4461,7 +4472,7 @@ database: &bims_0.10_dev-db
                             name: t1_fertilizer_type
                             data_type: varchar
                         -
-                            name: days_after_seeding_1
+                            name: das_1
                             data_type: varchar
                         -
                             name: t1_fertilizer_date
@@ -4476,7 +4487,7 @@ database: &bims_0.10_dev-db
                             name: t2_fertilizer_type
                             data_type: varchar
                         -
-                            name: days_after_seeding_2
+                            name: das_2
                             data_type: varchar
                         -
                             name: t2_fertilizer_date
@@ -4504,6 +4515,9 @@ database: &bims_0.10_dev-db
                             data_type: varchar
                         -
                             name: remarks
+                            data_type: varchar
+                        -
+                            name: for_checking_or_clarification
                             data_type: varchar
                     copy:
                         <<: *copy-val
