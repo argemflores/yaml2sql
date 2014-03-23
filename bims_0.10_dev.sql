@@ -16748,13 +16748,13 @@ from stdin
 create table "import"."rga_data" (
     "year" varchar,
     "season" varchar,
-    "family_gid" varchar,
-    "family_designation" varchar,
+    "family_id" varchar,
+    "cross_number" varchar,
     "gid" varchar,
-    "derivative_name" varchar,
+    "derive_name" varchar,
     "code" varchar,
     "purpose" varchar,
-    "pedigree_name" varchar,
+    "pedigree" varchar,
     "current_generation" varchar,
     "seeding_date" varchar,
     "seed_number" varchar,
@@ -16763,12 +16763,12 @@ create table "import"."rga_data" (
     "recommended_rate" varchar,
     "time_of_application_1" varchar,
     "t1_fertilizer_type" varchar,
-    "days_after_seeding_1" varchar,
+    "das_1" varchar,
     "t1_fertilizer_date" varchar,
     "t1_fertilizer_amount" varchar,
     "time_of_application_2" varchar,
     "t2_fertilizer_type" varchar,
-    "days_after_seeding_2" varchar,
+    "das_2" varchar,
     "t2_fertilizer_date" varchar,
     "t2_fertilizer_amount" varchar,
     "harvest_date" varchar,
@@ -16777,7 +16777,8 @@ create table "import"."rga_data" (
     "flowering_date" varchar,
     "flowering_date_earliest" varchar,
     "flowering_date_latest" varchar,
-    "remarks" varchar
+    "remarks" varchar,
+    "for_checking_or_clarification" varchar
 ) with (
     oids = false
 );
@@ -16797,126 +16798,126 @@ from stdin
     escape e'\\'
     null ''
 ;
-"year";"season";"family_gid";"family_designation";"gid";"derivative_name";"code";"purpose";"pedigree_name";"current_generation";"seeding_date";"seed_number";"transplanting_date";"transplanting_seed_number";"recommended_date";"time_of_application_1";"t1_fertilizer_type";"days_after_seeding_1";"t1_fertilizer_date";"t1_fertilizer_amount";"time_of_application_2";"t2_fertilizer_type";"days_after_seeding_2";"t2_fertilizer_date";"t2_fertilizer_amount";"harvest_date";"plant_number";"germination_date";"flowering_date";"flowering_date_earliest";"flowering_date_latest";"remarks"
-"2013";"WS";"3731530";"IR 100043";"4135432";"IR 100043-B";;"Advancement";"IR 06N234/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731585";"IR 100090";"4189609";"IR 100090-B";;"Advancement";"IR 09N542/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731631";"IR 100136";"4135434";"IR 100136-B";;"Advancement";"IR 10A125/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731643";"IR 100148";"4135435";"IR 100148-B";;"Advancement";"IR 09N514/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731655";"IR 100160";"4135436";"IR 100160-B";;"Advancement";"IR 08N128/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731666";"IR 100171";"4135437";"IR 100171-B";;"Advancement";"IR 08A176/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3891613";"IR 103761";"4135438";"IR 103761-B";;"Advancement";"PR 37866-113-1-4/Milyang 23/OM 4498";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2013";"WS";"3731484";"IR 99997";"4135439";"IR 99997-B";;"Advancement";"IRRI 151/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
-"2012";"WS";"3383303";"IR 96892";"3559541";"IR 96892";;"Breeding";"IR 09F120/IR 04A25";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121113";"448";;;;;
-"2012";"WS";"3383303";"IR 96892";"4135483";"IR 96892-B-B RGA";;"Breeding";"IR 09F120/IR 04A25";"F3";"20121004";"448";;;;;;;;;;;;;;;;;;;;"Sown in cell trays (5 blue trays)"
-"2012";"WS";"3383326";"IR 96915";"3559525";"IR 96915";;"Breeding";"IR 09F436/IR 10F365";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121114";"419";;;;;
-"2012";"WS";"3383326";"IR 96915";"4135484";"IR 96915-B-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F3";"20121213";"615";;;;;;;;;;;;;;"20130405";"558";;;;;"8 green trays"
-"2013";"DS";"3383326";"IR 96915";"4135519";"IR 96915-B-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130311";"548";;;;;;;;;;;;;;"20130715";"518";;;;;"Sowed in small cell, in blue trays"
-"2013";"DS";"3383326";"IR 96915";"4135519";"IR 96915-B-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130422";"548";;;;;;;;;;;;;;;;;;;;
-"2013";"WS";"3383326";"IR 96915";"4135539";"IR 96915-B-B RGA-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F5";"20130819";"518";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"518 seeds are sow in small cell, blue trays. The remnants are in bulk brown paper bag"
-"2012";"WS";"3383332";"IR 96921";"3559526";"IR 96921";;"Breeding";"IR 09F437/IR 10F328";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"320";;;;;
-"2012";"WS";"3383332";"IR 96921";"4135485";"IR 96921-B-B RGA";;"Breeding";"IR 09F437/IR 10F328";"F3";"20121217";"320";;;;;;;;;;;;;;"20130404";"257";;;;;
-"2012";"WS";"3383333";"IR 96922";"3559527";"IR 96922";;"Breeding";"IR 09F437/IR 10F365";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121114";"420";;;;;
-"2012";"WS";"3383333";"IR 96922";"4135486";"IR 96922-B-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F3";"20121211";"448";;;;;;;;;;;;;;"20130404";"376";;;;;"6 green trays"
-"2013";"DS";"3383333";"IR 96922";"4135520";"IR 96922-B-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F4";"20130312";"424";;;;;;;;;;;;;;"20130715";"364";;;;;"Now the harvest seeds are in (F5) stage. The remnants are in bulk, brown paper bag"
-"2013";"WS";"3383333";"IR 96922";"4135537";"IR 96922-B-B RGA-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F5";"20130823";"364";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in small cell"
-"2012";"WS";"3383336";"IR 96925";"3559530";"IR 96925";;"Breeding";"IR 09F437/IR 10F388";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"360";;;;;
-"2012";"WS";"3383336";"IR 96925";"4135487";"IR 96925-B-B RGA";;"Breeding";"IR 09F437/IR 10F388";"F3";"20121220";"360";;;;;;;;;;;;;;"20130408";"332";;;;;"5 green trays"
-"2013";"WS";"3383336";"IR 96925";"4135521";"IR 96925-B-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F388";"F4";"20131004";"332";;;;;;;;;;;;;;;;;;;;"Sown in small cells, 3 1/4 blue trays"
-"2012";"WS";"3383361";"IR 96950";"3559537";"IR 96950";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"228";;;;;
-"2013";"DS";"3383361";"IR 96950";"4135488";"IR 96950-B-B RGA";;"Breeding";;"F3";"20130423";"228";;;;;;;;;;;;;;"20130826";"110";;;;;"Remnants per panicle, 5 seeds per envelop. Also remnant in bulk"
-"2013";"WS";"3383361";"IR 96950";"4135522";"IR 96950-B-B RGA-B RGA";;"Breeding";;"F4";"20130907";"110";;;;;;;;;;;;;;;;;;;;"Sowed in cell tray"
-"2012";"WS";"3383362";"IR 96951";"3559538";"IR 96951";;"Breeding";"IR 09F436/IR 10F365";"F2";"20121001";"240";;;;;;;;;;;;;;"20130128";"215";;;;;
-"2013";"DS";"3383362";"IR 96951";"4135489";"IR 96951-B-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F3";"20130422";"215";;;;;;;;;;;;;;"20130826";"85";;;;;"Large cell 6 trays. Remants: per panicle, 5 seeds per envelop. Plus remnant per bulk"
-"2013";"WS";"3383362";"IR 96951";"4135523";"IR 96951-B-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130907";"85";;;;;;;;;;;;;;;;;;;;"Sowed in trays (cell)"
-"2012";"WS";"3383764";"IR 97337";"3554459";"IR 97337";;"Breeding";"IR 09F164/MTU 1064//IR 10F205";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121113";"407";;;;;
-"2012";"WS";"3383770";"IR 97343";"3554464";"IR 97343";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"520";;;;;
-"2012";"WS";"3383770";"IR 97343";"4135490";"IR 97343-B-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F3";"20121207";"240";;;;;;;;;;;;;;"20130403";"354";;;;;"3 small trays"
-"2012";"WS";"3383770";"IR 97343";"4135490";"IR 97343-B-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F3";"20121214";"400";;;;;;;;;;;;;;"20130405";"362";;;;;"5 small trays"
-"2013";"WS";"3383770";"IR 97343";"4135524";"IR 97343-B-B RGA-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F4";"20131010";"716";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 7 blue trays"
-"2012";"WS";"3383771";"IR 97344";"3554465";"IR 97344";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121110";"456";;;;;
-"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121206";"240";;;;;;;;;;;;;;"20130402";"170";;;;;
-"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121207";"240";;;;;;;;;;;;;;"20130404";"192";;;;;
-"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121218";"320";;;;;;;;;;;;;;"20130405";"264";;;;;
-"2012";"WS";"3383773";"IR 97346";"3554466";"IR 97346";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F2";"20120802";"1142";;;;;;;;;;;;;;"20121110";"480";;;;;
-"2012";"WS";"3383773";"IR 97346";"4135492";"IR 97346-B-B RGA";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F3";"20121207";"240";;;;;;;;;;;;;;"20130403";"227";;;;;
-"2012";"WS";"3383773";"IR 97346";"4135492";"IR 97346-B-B RGA";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F3";"20121212";"400";;;;;;;;;;;;;;"20130404";"372";;;;;
-"2012";"WS";"3383794";"IR 97367";"3554463";"IR 97367";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121110";"415";;;;;
-"2012";"WS";"3383794";"IR 97367";"4135493";"IR 97367-B-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F3";"20121207";;;;;;;;;;;;;;;"20130403";"167";;;;;
-"2012";"WS";"3383794";"IR 97367";"4135493";"IR 97367-B-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F3";"20121219";;;;;;;;;;;;;;;"20130402";"268";;;;;"The rest of the remnants were in bulk (F5). 204 panicles (DOH 20130810)"
-"2013";"DS";"3383794";"IR 97367";"4135525";"IR 97367-B-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F4";"20130422";"832";;;;;;;;;;;;;;"20130810";"260";;;;;"Also the remnants of 25 panicles were in bulk as well (DOH 20130808). Breeding in small cell trays. Molecular breeding big cell trays."
-"2013";"DS";"3383794";"IR 97367";"4135525";"IR 97367-B-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F4";"20130423";"210";;;;;;;;;;;;;;"20130808";"25";;;;;
-"2013";"WS";"3383794";"IR 97367";"4135538";"IR 97367-B-B RGA-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F5";"20130819";"200";;;;"Topdress1";;;"20130917";;;;;;;;;;;;;"One seed per pot. So 200 seeds have been sown in pots. Rest of the remnants (F5 seeds) are in bulk. "
-"2012";"WS";"3568780";"IR 98466";"4135452";"IR 98466-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"155";;;;;
-"2012";"WS";"3568806";"IR 98492";"4135453";"IR 98492-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"223";;;;;
-"2013";"DS";"3568806";"IR 98492";"4135494";"IR 98492-B-B RGA";;"Breeding";;"F3";"20130422";"223";;;;;;;;;;;;;;"20130820";"117";;;;;"Almost 1/2 of the population were contaminated cause of the BPH insects and disease. Now the seeds are F4 seeds. Per panicle has remnants of 5 seeds are placed in each coing envelop. Also with remnants of bulk."
-"2013";"DS";"3568806";"IR 98492";"4135494";"IR 98492-B-B RGA";;"Breeding";;"F3";"20130422";"223";;;;;;;;;;;;;;"20130831";"2";;;;;"Late harvest"
-"2013";"WS";"3568806";"IR 98492";"4135526";"IR 98492-B-B RGA-B RGA";;"Breeding";;"F4";"20130824";"117";;;;"Topdress1";;;"20130917";;;;;;;;;;;;;"Sown in white pots. Seed are sowed per pot for molecular purpose."
-"2012";"WS";"3568838";"IR 98524";"4135454";"IR 98524-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130106";"197";;;;;
-"2013";"WS";"3568838";"IR 98524";"4135495";"IR 98524-B-B RGA";;"Breeding";;"F3";"20131005";"197";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 2 blue trays"
-"2012";"WS";"3568843";"IR 98529";"4135455";"IR 98529-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130114";"189";;;;;
-"2013";"WS";"3568843";"IR 98529";"4135496";"IR 98529-B-B RGA";;"Breeding";;"F3";"20131009";"189";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 2 blue trays"
-"2012";"WS";"3568904";"IR 98590";"3798919";"IR 98590";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"217";;;;;
-"2013";"DS";"3568904";"IR 98590";"4135497";"IR 98590-B-B RGA";;"Breeding";;"F3";"20130423";"217";;;;;;;;;;;;;;"20130829";"80";;;;;"Large cell trays"
-"2013";"WS";"3568904";"IR 98590";"4135527";"IR 98590-B-B RGA-B RGA";;"Breeding";;"F4";"20130913";"80";;;;;;;;;;;;;;;;;;;;
-"2012";"WS";"3568905";"IR 98591";"4135457";"IR 98591-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"212";;;;;
-"2012";"WS";"3568908";"IR 98594";"3798920";"IR 98594";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130207";"187";;;;;
-"2013";"DS";"3568908";"IR 98594";"4135498";"IR 98594-B-B RGA";;"Breeding";;"F3";"20130308";"187";;;;;;;;;;;;;;"20130704";"147";;;;;"35 no plants. 4 sterile plants no seeds"
-"2013";"WS";"3568908";"IR 98594";"4135528";"IR 98594-B-B RGA-B RGA";;"Breeding";;"F4";"20130823";"147";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in small cell. Remnants seeds are in small envelop, has its own number cause it was sow before in small pots"
-"2012";"WS";"3568909";"IR 98595";"4135459";"IR 98595-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"160";;;;;
-"2013";"DS";"3568909";"IR 98595";"4135499";"IR 98595-B-B RGA";;"Breeding";;"F3";"20130308";"160";;;;;;;;;;;;;;"20130704";"143";;;;;"16 no plants. 2 sterile plants no seeds"
-"2013";"WS";"3568909";"IR 98595";"4135529";"IR 98595-B-B RGA-B RGA";;"Breeding";;"F4";"20130822";"143";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Each panicle that have been harvested the remnants seeds has its own coin envelop. Not in bulk."
-"2012";"WS";"3568913";"IR 98599";"4135460";"IR 98599-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"183";;;;;
-"2012";"WS";"3569476";"IR 99124";"3798926";"IR 99124";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"223";;;;;
-"2013";"DS";"3569476";"IR 99124";"4135500";"IR 99124-B-B RGA";;"Breeding";;"F3";"20130423";"223";;;;;;;;;;;;;;"20130826";"142";;;;;"Remants per panicle in coin envelop consist of 5 seeds. Also remnants in bulk."
-"2013";"WS";"3569476";"IR 99124";"4135530";"IR 99124-B-B RGA-B RGA";;"Breeding";;"F4";"20130907";"139";;;;;;;;;;;;;;;;;;;;"Sowed in small cell tray"
-"2012";"WS";"3569481";"IR 99129";"3798930";"IR 99129";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"223";;;;;
-"2013";"DS";"3569481";"IR 99129";"4135501";"IR 99129-B-B RGA";"PI2";"Breeding";;"F3";;;"20130123";"243";;;;;;;;;;;;"20130416";"180";;;;;
-"2013";"DS";"3569481";"IR 99129";"4135501";"IR 99129-B-B RGA";"PI2";"Breeding";;"F3";;;"20130522";"362";;;;;;;;;;;;"20130831";"19";;;;;"The 19 panicles note as F4 seeds"
-"2013";"WS";"3569481";"IR 99129";"4135531";"IR 99129-B-B RGA-B RGA";"PI2";"Breeding";;"F4";"20130815";"180";;;;"Topdress1";"Urea";;"20130906";;;;;;;;;;;;;"1 seed per pot"
-"2013";"DS";"3731494";"IR 100007";"3846488";"IR 100007";;"Breeding";"IR 05N412/IRRI 105";"F2";"20130307";"400";;;;;;;;;;;;;;"20130716";"363";;;;;
-"2013";"DS";"3731494";"IR 100007";"3846488";"IR 100007";;"Breeding";;"F2";"20130525";"320";;;;;;;;;;;;;;"20130824";"40";;;;;
-"2013";"WS";"3731494";"IR 100007";"4135502";"IR 100007-B-B RGA";;"Breeding";;"F3";"20130814";"288";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"The seed were planted in white pot. 1 seed per pot. Remnants in "
-"2013";"WS";"3731494";"IR 100007";"4135502";"IR 100007-B-B RGA";;"Breeding";;"F3";"20130909";"40";;;;;;;;;;;;;;;;;;;;
-"2013";"DS";"3731516";"IR 100029";"3846430";"IR 100029";;"Breeding";;"F2";"20130307";"400";;;;;;;;;;;;;;"20130715";"379";;;;;
-"2013";"WS";"3731516";"IR 100029";"4135503";"IR 100029-B-B RGA";;"Breeding";;"F3";"20130814";"288";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"Seeds were planted in white pots. 1 seed per pot."
-"2013";"DS";"3731604";"IR 100109";"3879509";"IR 100109";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130821";"500";;;;;"1/2 of the population did not survive cause of the BPH insents/disease virus"
-"2013";"WS";"3731604";"IR 100109";"4135504";"IR 100109-B-B RGA";;"Breeding";;"F3";"20130903";"500";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell trays for advancement. Early flowering only 2 months, started to flower 20131105 (20130903 to 20131105)"
-"2013";"DS";"3731605";"IR 100110";"3879510";"IR 100110";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130813";"790";;;;;"Remants for each panicle have its own envelop. In it has 5 seeds. Includes bulk seeds remants in brown bag."
-"2013";"WS";"3731605";"IR 100110";"4135505";"IR 100110-B-B RGA";;"Breeding";;"F3";"20130831";"790";;;;"Topdress1";;;"20130923";;;;;;;;;;;;;"Sowed in small cell for advancement"
-"2013";"DS";"3731607";"IR 100112";"3879511";"IR 100112";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130821";"205";;;;;"Due to less (plants) panicles been harvest cause by insect (BPH) pest/disease. The problem may have occur during early growth. Remants for each panicle has its own envelop with 5 seeds in it. That also have remnants in bulk."
-"2013";"WS";"3731607";"IR 100112";"4135506";"IR 100112-B-B RGA";;"Breeding";;"F3";"20130903";"205";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell trays"
-"2013";"DS";"3731616";"IR 100121";"3879514";"IR 100121";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130814";"589";;;;;"Remants for each panicle has its own envelop which has 5 seeds in it. Also include remanants for bulk seeds in brown bag."
-"2013";"WS";"3731616";"IR 100121";"4135507";"IR 100121-B-B RGA";;"Breeding";;"F3";"20130826";"589";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in cell blue trays"
-"2013";"DS";"3731617";"IR 100122";"3879515";"IR 100122";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130812";"772";;;;;"remnants for each panicle has its own envelop which has 5 seeds in it. Also it has bulk remants in brown bag"
-"2013";"WS";"3731617";"IR 100122";"4135508";"IR 100122-B-B RGA";;"Breeding";;"F3";"20130826";"725";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in cell blue trays"
-"2013";"DS";"3731619";"IR 100124";"3879516";"IR 100124";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130812";"693";;;;;"Remnants for each panicle have its own envelop, in it has 5 seeds. Which also includes a remants bulk seeds in brown paper bag"
-"2013";"WS";"3731619";"IR 100124";"4135509";"IR 100124-B-B RGA";;"Breeding";;"F3";"20130827";"554";;;;"Topdress1";;;"20130920";;;;;;;;;;;;;"Sowed in cell blue trays for advancement"
-"2013";"DS";"3731799";"IR 100304 Super Basmati RBB 66";"3932687";"IR 100304";;"Breeding";;"F2";"20130301";"210";;;;;;;;;;;;;;"20130716";"185";;;;;"Sowed in green small pots. 210 per square pot"
-"2013";"WS";"3731799";"IR 100304 Super Basmati RBB 66";"4135510";"IR 100304-B-B RGA";;"Breeding";;"F3";"20130813";"185";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"Seeds were planted in white pots. 1 seed per pot. Remnants for each panicle (seeds) has its own envelop. "
-"2013";"DS";"3731801";"IR 100306";"4135471";"IR 100306-B-B RGA";;"Breeding";"F122713";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"571";;;;;
-"2013";"DS";"3731801";"IR 100306";"4135511";"IR 100306-B-B RGA-B RGA";;"Breeding";"F122713";"F4";"20130506";"300";;;;;;;;;;;;;;"20130827";"57";;;;;"Lowest amount of plants were harvested caused by PBH insects"
-"2013";"WS";"3731801";"IR 100306";"4135532";"IR 100306-B-B RGA-B RGA-B RGA";;"Breeding";"F122713";"F5";"20130913";"57";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)"
-"2013";"DS";"3732217";"IR 100722";"3879528";"IR 100722";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130827";"378";;;;;"Lowest amount of plants were harvest cause by BPH insects (pest)"
-"2013";"WS";"3732217";"IR 100722";"4135512";"IR 100722-B-B RGA";;"Breeding";;"F3";"20130913";"378";;;;;;;;;;;;;;;;;;;;"Sown in cell (4 trays)"
-"2013";"DS";"3732218";"IR 100723";"3879529";"IR 100723";;"Breeding";;"F2";"20130430";"1000";;;;"Topdress1";"Urea";;"20130523";"5gm";;;;;;"20130821";"82";;;;;"This population were also infected by (BPH) insect pest. Reason why small number of panicles been harvest."
-"2013";"WS";"3732218";"IR 100723";"4135513";"IR 100723-B-B RGA";;"Breeding";;"F3";"20130903";"82";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell blue trays for advancement"
-"2013";"DS";"3732316";"IR 100821";"4135475";"IR 100821-B-B RGA";;"Breeding";"F122730";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"586";;;;;
-"2013";"DS";"3732316";"IR 100821";"4135514";"IR 100821-B-B RGA-B RGA";;"Breeding";"F122730";"F4";"20130506";"300";;;;;;;;;;;;;;"20130829";"54";;;;;"The reason why small amount fo plants were harvest due to a damage of BPH pest"
-"2013";"WS";"3732316";"IR 100821";"4135533";"IR 100821-B-B RGA-B RGA-B RGA";;"Breeding";"F122730";"F5";"20130909";"54";;;;;;;;;;;;;;;;;;;;"Sowed in pots"
-"2013";"DS";"3732317";"IR 100822";"4135476";"IR 100822-B-B RGA";;"Breeding";"F122731";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"528";;;;;"Remants: 5 seeds per panicle/coin envelop"
-"2013";"DS";"3732317";"IR 100822";"4135515";"IR 100822-B-B RGA-B RGA";;"Breeding";"F122731";"F4";"20130506";"300";;;;;;;;;;;;;;"20130829";"33";;;;;"Sowed in pots"
-"2013";"WS";"3732317";"IR 100822";"4135534";"IR 100822-B-B RGA-B RGA-B RGA";;"Breeding";"F122731";"F5";"20130909";"33";;;;;;;;;;;;;;;;;;;;
-"2013";"DS";"3732336";"IR 100841";"4135477";"IR 100841-B-B RGA";;"Breeding";"F122749";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"508";;;;;
-"2013";"DS";"3732336";"IR 100841";"4135516";"IR 100841-B-B RGA-B RGA";;"Breeding";"F122749";"F4";"20130506";"300";;;;;;;;;;;;;;"20130828";"86";;;;;"Not much plants survive due to BPH pest (insect)"
-"2013";"WS";"3732336";"IR 100841";"4135535";"IR 100841-B-B RGA-B RGA-B RGA";;"Breeding";"F122749";"F5";"20130913";"86";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)"
-"2013";"DS";"3732337";"IR 100842";"4135478";"IR 100842-B-B RGA";;"Breeding";"F122750";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"549";;;;;
-"2013";"DS";"3732337";"IR 100842";"4135517";"IR 100842-B-B RGA-B RGA";;"Breeding";"F122750";"F4";"20130506";"300";;;;;;;;;;;;;;"201308";"38";;;;;"Severely damaged by insect (BPH)"
-"2013";"WS";"3732337";"IR 100842";"4135536";"IR 100842-B-B RGA-B RGA-B RGA";;"Breeding";"F122750";"F5";"20130913";"38";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)"
-"2013";"DS";"3568777";"IR 98463";"3779140";"IR 98463";;"Standard Generation Advancement";"IRRI 119/IR 42";"F2";"20130620";"1040";;;;"Topdress1";;;"20130630";;"Topdress2";;;"20130704";;;;;;;;
-"2013";"DS";"3568778";"IR 98464";"3779141";"IR 98464";;"Standard Generation Advancement";"IRRI 119/IR 24";"F2";"20130620";"1040";;;;"Topdress1";;;"20130630";;"Topdress2";;;"20130704";;;;;;;;
-"2013";"DS";"3731470";"IR 99983";"3846487";"IR 99983";;;;"F2";"20130307";"400";;;;;;;;;;;;;;"20130715";"381";;;;;"Remnants are in bulk"
-"2013";"WS";"3731470";"IR 99983";"4135518";"IR 99983-B-B RGA";;;;"F3";"20130831";"381";;;;"Topdress1";;;"20130923";;;;;;;;;;;;;"Sowed in small cell for advancement"
-"2013";"WS";"3891567";"IR 103715";"4189641";"IR 103715-B";;;;"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays"
+"year";"season";"family_id";"cross_number";"gid";"derive_name";"code";"purpose";"pedigree";"current_generation";"seeding_date";"seed_number";"transplanting_date";"seed_number_transplanting";"recommended_rate";"time_of_application_1";"t1_fertilizer_type";"das_1";"t1_fertilizer_date";"t1_fertilizer_amount";"time_of_application_2";"t2_fertilizer_type";"das_2";"t2_fertilizer_date";"t2_fertilizer_amount";"harvest_date";"plant_number";"germination_date";"flowering_date";"flowering_date_earliest";"flowering_date_latest";"remarks";"for_checking_or_clarification"
+"2013";"WS";"3731530";"IR 100043";"4135432";"IR 100043-B";;"Advancement";"IR 06N234/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";
+"2013";"WS";"3731585";"IR 100090";"4189609";"IR 100090-B";;"Advancement";"IR 09N542/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";
+"2013";"WS";"3731631";"IR 100136";"4135434";"IR 100136-B";;"Advancement";"IR 10A125/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";
+"2013";"WS";"3731643";"IR 100148";"4135435";"IR 100148-B";;"Advancement";"IR 09N514/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";
+"2013";"WS";"3731655";"IR 100160";"4135436";"IR 100160-B";;"Advancement";"IR 08N128/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";
+"2013";"WS";"3731666";"IR 100171";"4135437";"IR 100171-B";;"Advancement";"IR 08A176/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";
+"2013";"WS";"3891613";"IR 103761";"4135438";"IR 103761-B";;"Advancement";"PR 37866-113-1-4/Milyang 23/OM 4498";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";"Please check how pedigree was written"
+"2013";"WS";"3731484";"IR 99997";"4135439";"IR 99997-B";;"Advancement";"IRRI 151/Milyang 23";"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";
+"2012";"WS";"3383303";"IR 96892";"3559541";"IR 96892";;"Breeding";"IR 09F120/IR 04A25";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121113";"448";;;;;;
+"2012";"WS";"3383303";"IR 96892";"4135483";"IR 96892-B RGA";;"Breeding";"IR 09F120/IR 04A25";"F3";"20121004";"448";;;;;;;;;;;;;;;;;;;;"Sown in cell trays (5 blue trays)";
+"2012";"WS";"3383326";"IR 96915";"3559525";"IR 96915";;"Breeding";"IR 09F436/IR 10F365";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121114";"419";;;;;;
+"2012";"WS";"3383326";"IR 96915";"4135484";"IR 96915-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F3";"20121213";"615";;;;;;;;;;;;;;"20130405";"558";;;;;"8 green trays";
+"2013";"WS";"3383326";"IR 96915";"4135519";"IR 96915-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130311";"548";;;;;;;;;;;;;;"20130715";"518";;;;;"Sowed in small cell, in blue trays";
+"2013";"WS";"3383326";"IR 96915";"4135519";"IR 96915-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130422";"548";;;;;;;;;;;;;;;;;;;;;
+"2013";"WS";"3383326";"IR 96915";"4135539";"IR 96915-B RGA-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F5";"20130819";"518";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"518 seeds are sow in small cell, blue trays. The remnants are in bulk brown paper bag";"Will wait for the harvest data to complete the expansion needed"
+"2012";"WS";"3383332";"IR 96921";"3559526";"IR 96921";;"Breeding";"IR 09F437/IR 10F328";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"320";;;;;;
+"2012";"WS";"3383332";"IR 96921";"4135485";"IR 96921-B RGA";;"Breeding";"IR 09F437/IR 10F328";"F3";"20121217";"320";;;;;;;;;;;;;;"20130404";"257";;;;;;
+"2012";"WS";"3383333";"IR 96922";"3559527";"IR 96922";;"Breeding";"IR 09F437/IR 10F365";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121114";"420";;;;;;
+"2012";"WS";"3383333";"IR 96922";"4135486";"IR 96922-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F3";"20121211";"448";;;;;;;;;;;;;;"20130404";"376";;;;;"6 green trays";
+"2013";"WS";"3383333";"IR 96922";"4135520";"IR 96922-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F4";"20130312";"424";;;;;;;;;;;;;;"20130715";"364";;;;;"Now the harvest seeds are in (F5) stage. The remnants are in bulk, brown paper bag";
+"2013";"WS";"3383333";"IR 96922";"4135537";"IR 96922-B RGA-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F365";"F5";"20130823";"364";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in small cell";"Will wait for the harvest data to complete the expansion needed"
+"2012";"WS";"3383336";"IR 96925";"3559530";"IR 96925";;"Breeding";"IR 09F437/IR 10F388";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"360";;;;;;
+"2012";"WS";"3383336";"IR 96925";"4135487";"IR 96925-B RGA";;"Breeding";"IR 09F437/IR 10F388";"F3";"20121220";"360";;;;;;;;;;;;;;"20130408";"332";;;;;"5 green trays";
+"2013";"WS";"3383336";"IR 96925";"4135521";"IR 96925-B RGA-B RGA";;"Breeding";"IR 09F437/IR 10F388";"F4";"20131004";"332";;;;;;;;;;;;;;;;;;;;"Sown in small cells, 3 1/4 blue trays";
+"2012";"WS";"3383361";"IR 96950";"3559537";"IR 96950";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"228";;;;;;
+"2013";"WS";"3383361";"IR 96950";"4135488";"IR 96950-B RGA";;"Breeding";;"F3";"20130423";"228";;;;;;;;;;;;;;"20130826";"110";;;;;"Remnants per panicle, 5 seeds per envelop. Also remnant in bulk";
+"2013";"WS";"3383361";"IR 96950";"4135522";"IR 96950-B RGA-B RGA";;"Breeding";;"F4";"20130907";"110";;;;;;;;;;;;;;;;;;;;"Sowed in cell tray";
+"2012";"WS";"3383362";"IR 96951";"3559538";"IR 96951";;"Breeding";"IR 09F436/IR 10F365";"F2";"20121001";"240";;;;;;;;;;;;;;"20130128";"215";;;;;;
+"2013";"WS";"3383362";"IR 96951";"4135489";"IR 96951-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F3";"20130422";"215";;;;;;;;;;;;;;"20130826";"85";;;;;"Large cell 6 trays. Remants: per panicle, 5 seeds per envelop. Plus remnant per bulk";
+"2013";"WS";"3383362";"IR 96951";"4135523";"IR 96951-B RGA-B RGA";;"Breeding";"IR 09F436/IR 10F365";"F4";"20130907";"85";;;;;;;;;;;;;;;;;;;;"Sowed in trays (cell)";
+"2012";"WS";"3383764";"IR 97337";"3554459";"IR 97337";;"Breeding";"IR 09F164/MTU 1064//IR 10F205";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121113";"407";;;;;;
+"2012";"WS";"3383770";"IR 97343";"3554464";"IR 97343";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121112";"520";;;;;;"Please check how pedigree was written"
+"2012";"WS";"3383770";"IR 97343";"4135490";"IR 97343-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F3";"20121207";"240";;;;;;;;;;;;;;"20130403";"354";;;;;"3 small trays";
+"2012";"WS";"3383770";"IR 97343";"4135490";"IR 97343-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F3";"20121214";"400";;;;;;;;;;;;;;"20130405";"362";;;;;"5 small trays";
+"2013";"WS";"3383770";"IR 97343";"4135524";"IR 97343-B RGA-B RGA";;"Breeding";"IR 09F436/IR 08N194/IR 10F382";"F4";"20131010";"716";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 7 blue trays";
+"2012";"WS";"3383771";"IR 97344";"3554465";"IR 97344";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121110";"456";;;;;;"Please check how pedigree was written"
+"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121206";"240";;;;;;;;;;;;;;"20130402";"170";;;;;;
+"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121207";"240";;;;;;;;;;;;;;"20130404";"192";;;;;;
+"2012";"WS";"3383771";"IR 97344";"4135491";"IR 97344-B RGA";;"Breeding";"IR 09F436/IR 09N538/IR 10F382";"F3";"20121218";"320";;;;;;;;;;;;;;"20130405";"264";;;;;;
+"2012";"WS";"3383773";"IR 97346";"3554466";"IR 97346";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F2";"20120802";"1142";;;;;;;;;;;;;;"20121110";"480";;;;;;"Please check how pedigree  was written"
+"2012";"WS";"3383773";"IR 97346";"4135492";"IR 97346-B RGA";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F3";"20121207";"240";;;;;;;;;;;;;;"20130403";"227";;;;;;
+"2012";"WS";"3383773";"IR 97346";"4135492";"IR 97346-B RGA";;"Breeding";"IR 09F436/NSIC Rc158/IR 10F388";"F3";"20121212";"400";;;;;;;;;;;;;;"20130404";"372";;;;;;
+"2012";"WS";"3383794";"IR 97367";"3554463";"IR 97367";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F2";"20120803";"1142";;;;;;;;;;;;;;"20121110";"415";;;;;;
+"2012";"WS";"3383794";"IR 97367";"4135493";"IR 97367-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F3";"20121207";;;;;;;;;;;;;;;"20130403";"167";;;;;;"Please check number of seeds sown at F3 stage"
+"2012";"WS";"3383794";"IR 97367";"4135493";"IR 97367-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F3";"20121219";;;;;;;;;;;;;;;"20130402";"268";;;;;"The rest of the remnants were in bulk (F5). 204 panicles (DOH 20130810)";
+"2013";"WS";"3383794";"IR 97367";"4135525";"IR 97367-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F4";"20130422";"832";;;;;;;;;;;;;;"20130810";"260";;;;;"Also the remnants of 25 panicles were in bulk as well (DOH 20130808). Breeding in small cell trays. Molecular breeding big cell trays.";
+"2013";"WS";"3383794";"IR 97367";"4135525";"IR 97367-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F4";"20130423";"210";;;;;;;;;;;;;;"20130808";"25";;;;;;
+"2013";"DS";"3731801";"IR 100306";"4135471";"IR 100306-B-B RGA";;"Breeding";"F122713";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"571";;;;;;
+"2013";"WS";"3383794";"IR 97367";"4135538";"IR 97367-B RGA-B RGA-B RGA";;"Breeding";"IRRI 119/IR 02A127//IR 10F379";"F5";"20130819";"200";;;;"Topdress1";;;"20130917";;;;;;;;;;;;;"One seed per pot. So 200 seeds have been sown in pots. Rest of the remnants (F5 seeds) are in bulk. ";"Will wait for the harvest data to complete the expansion needed"
+"2012";"WS";"3568780";"IR 98466";"4135452";"IR 98466-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"155";;;;;;
+"2012";"WS";"3568806";"IR 98492";"4135453";"IR 98492-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"223";;;;;;
+"2013";"WS";"3568806";"IR 98492";"4135494";"IR 98492-B-B RGA";;"Breeding";;"F3";"20130422";"223";;;;;;;;;;;;;;"20130820";"117";;;;;"Almost 1/2 of the population were contaminated cause of the BPH insects and disease. Now the seeds are F4 seeds. Per panicle has remnants of 5 seeds are placed in each coing envelop. Also with remnants of bulk.";
+"2013";"WS";"3568806";"IR 98492";"4135494";"IR 98492-B-B RGA";;"Breeding";;"F3";"20130422";"223";;;;;;;;;;;;;;"20130831";"2";;;;;"Late harvest";
+"2013";"WS";"3568806";"IR 98492";"4135526";"IR 98492-B-B RGA-B RGA";;"Breeding";;"F4";"20130824";"117";;;;"Topdress1";;;"20130917";;;;;;;;;;;;;"Sown in white pots. Seed are sowed per pot for molecular purpose.";
+"2012";"WS";"3568838";"IR 98524";"4135454";"IR 98524-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130106";"197";;;;;;
+"2013";"WS";"3568838";"IR 98524";"4135495";"IR 98524-B-B RGA";;"Breeding";;"F3";"20131005";"197";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 2 blue trays";
+"2012";"WS";"3568843";"IR 98529";"4135455";"IR 98529-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130114";"189";;;;;;
+"2013";"WS";"3568843";"IR 98529";"4135496";"IR 98529-B-B RGA";;"Breeding";;"F3";"20131009";"189";;;;;;;;;;;;;;;;;;;;"Sown in small cell, 2 blue trays";
+"2012";"WS";"3568904";"IR 98590";"3798919";"IR 98590";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130218";"217";;;;;;
+"2013";"WS";"3568904";"IR 98590";"4135497";"IR 98590-B RGA";;"Breeding";;"F3";"20130423";"217";;;;;;;;;;;;;;"20130829";"80";;;;;"Large cell trays";
+"2013";"WS";"3568904";"IR 98590";"4135527";"IR 98590-B RGA-B RGA";;"Breeding";;"F4";"20130913";"80";;;;;;;;;;;;;;;;;;;;;
+"2012";"WS";"3568905";"IR 98591";"4135457";"IR 98591-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"212";;;;;;
+"2012";"WS";"3568908";"IR 98594";"3798920";"IR 98594";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130207";"187";;;;;;
+"2013";"WS";"3568908";"IR 98594";"4135498";"IR 98594-B RGA";;"Breeding";;"F3";"20130308";"187";;;;;;;;;;;;;;"20130704";"147";;;;;"35 no plants. 4 sterile plants no seeds";
+"2013";"WS";"3568908";"IR 98594";"4135528";"IR 98594-B RGA-B RGA";;"Breeding";;"F4";"20130823";"147";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in small cell. Remnants seeds are in small envelop, has its own number cause it was sow before in small pots";
+"2012";"WS";"3568909";"IR 98595";"4135459";"IR 98595-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"160";;;;;;
+"2013";"WS";"3568909";"IR 98595";"4135499";"IR 98595-B-B RGA";;"Breeding";;"F3";"20130308";"160";;;;;;;;;;;;;;"20130704";"143";;;;;"16 no plants. 2 sterile plants no seeds";
+"2013";"WS";"3568909";"IR 98595";"4135529";"IR 98595-B-B RGA-B RGA";;"Breeding";;"F4";"20130822";"143";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Each panicle that have been harvested the remnants seeds has its own coin envelop. Not in bulk.";
+"2012";"WS";"3568913";"IR 98599";"4135460";"IR 98599-B";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130209";"183";;;;;;
+"2012";"WS";"3569476";"IR 99124";"3798926";"IR 99124";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"223";;;;;;
+"2013";"WS";"3569476";"IR 99124";"4135500";"IR 99124-B RGA";;"Breeding";;"F3";"20130423";"223";;;;;;;;;;;;;;"20130826";"142";;;;;"Remants per panicle in coin envelop consist of 5 seeds. Also remnants in bulk.";
+"2013";"WS";"3569476";"IR 99124";"4135530";"IR 99124-B RGA-B RGA";;"Breeding";;"F4";"20130907";"139";;;;;;;;;;;;;;;;;;;;"Sowed in small cell tray";
+"2012";"WS";"3569481";"IR 99129";"3798930";"IR 99129";;"Breeding";;"F2";"20121001";"240";;;;;;;;;;;;;;"20130219";"223";;;;;;
+"2013";"DS";"3569481";"IR 99129";"4135501";"IR 99129-B RGA";"PI2";"Breeding";;"F3";;;"20130123";"243";;;;;;;;;;;;"20130416";"180";;;;;;
+"2013";"DS";"3569481";"IR 99129";"4135501";"IR 99129-B RGA";"PI2";"Breeding";;"F3";;;"20130522";"362";;;;;;;;;;;;"20130831";"19";;;;;"The 19 panicles note as F4 seeds";
+"2013";"WS";"3569481";"IR 99129";"4135531";"IR 99129-B RGA-B RGA";"PI2";"Breeding";;"F4";"20130815";"180";;;;"Topdress1";"Urea";;"20130906";;;;;;;;;;;;;"1 seed per pot";
+"2013";"WS";"3731494";"IR 100007";"3846488";"IR 100007";;"Breeding";"IR 05N412/IRRI 105";"F2";"20130307";"400";;;;;;;;;;;;;;"20130716";"363";;;;;;
+"2013";"WS";"3731494";"IR 100007";"3846488";"IR 100007";;"Breeding";;"F2";"20130525";"320";;;;;;;;;;;;;;"20130824";"40";;;;;;
+"2013";"WS";"3731494";"IR 100007";"4135502";"IR 100007-B RGA";;"Breeding";;"F3";"20130814";"288";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"The seed were planted in white pot. 1 seed per pot. Remnants in ";
+"2013";"WS";"3731494";"IR 100007";"4135502";"IR 100007-B RGA";;"Breeding";;"F3";"20130909";"40";;;;;;;;;;;;;;;;;;;;;
+"2013";"WS";"3731516";"IR 100029";"3846430";"IR 100029";;"Breeding";;"F2";"20130307";"400";;;;;;;;;;;;;;"20130715";"379";;;;;;
+"2013";"WS";"3731516";"IR 100029";"4135503";"IR 100029-B RGA";;"Breeding";;"F3";"20130814";"288";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"Seeds were planted in white pots. 1 seed per pot.";
+"2013";"WS";"3731604";"IR 100109";"3879509";"IR 100109";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130821";"500";;;;;"1/2 of the population did not survive cause of the BPH insents/disease virus";
+"2013";"WS";"3731604";"IR 100109";"4135504";"IR 100109-B RGA";;"Breeding";;"F3";"20130903";"500";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell trays for advancement. Early flowering only 2 months, started to flower 20131105 (20130903 to 20131105)";
+"2013";"WS";"3731605";"IR 100110";"3879510";"IR 100110";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130813";"790";;;;;"Remants for each panicle have its own envelop. In it has 5 seeds. Includes bulk seeds remants in brown bag.";
+"2013";"WS";"3731605";"IR 100110";"4135505";"IR 100110-B RGA";;"Breeding";;"F3";"20130831";"790";;;;"Topdress1";;;"20130923";;;;;;;;;;;;;"Sowed in small cell for advancement";
+"2013";"WS";"3731607";"IR 100112";"3879511";"IR 100112";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130821";"205";;;;;"Due to less (plants) panicles been harvest cause by insect (BPH) pest/disease. The problem may have occur during early growth. Remants for each panicle has its own envelop with 5 seeds in it. That also have remnants in bulk.";
+"2013";"WS";"3731607";"IR 100112";"4135506";"IR 100112-B RGA";;"Breeding";;"F3";"20130903";"205";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell trays";
+"2013";"WS";"3731616";"IR 100121";"3879514";"IR 100121";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130814";"589";;;;;"Remants for each panicle has its own envelop which has 5 seeds in it. Also include remanants for bulk seeds in brown bag.";
+"2013";"WS";"3731616";"IR 100121";"4135507";"IR 100121-B RGA";;"Breeding";;"F3";"20130826";"589";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in cell blue trays";
+"2013";"WS";"3731617";"IR 100122";"3879515";"IR 100122";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130812";"772";;;;;"remnants for each panicle has its own envelop which has 5 seeds in it. Also it has bulk remants in brown bag";
+"2013";"WS";"3731617";"IR 100122";"4135508";"IR 100122-B RGA";;"Breeding";;"F3";"20130826";"725";;;;"Topdress1";;;"20130912";;;;;;;;;;;;;"Sowed in cell blue trays";
+"2013";"WS";"3731619";"IR 100124";"3879516";"IR 100124";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130812";"693";;;;;"Remnants for each panicle have its own envelop, in it has 5 seeds. Which also includes a remants bulk seeds in brown paper bag";
+"2013";"WS";"3731619";"IR 100124";"4135509";"IR 100124-B RGA";;"Breeding";;"F3";"20130827";"554";;;;"Topdress1";;;"20130920";;;;;;;;;;;;;"Sowed in cell blue trays for advancement";
+"2013";"WS";"3731799";"IR 100304 Super Basmati RBB 66";"3932687";"IR 100304";;"Breeding";;"F2";"20130301";"210";;;;;;;;;;;;;;"20130716";"185";;;;;"Sowed in green small pots. 210 per square pot";
+"2013";"WS";"3731799";"IR 100304 Super Basmati RBB 66";"4135510";"IR 100304-B RGA";;"Breeding";;"F3";"20130813";"185";;;;"Topdress1";;;"20130905";;;;;;;;;;;;;"Seeds were planted in white pots. 1 seed per pot. Remnants for each panicle (seeds) has its own envelop. ";
+"2013";"WS";"3731801";"IR 100306";"4135511";"IR 100306-B-B RGA-B RGA";;"Breeding";"F122713";"F4";"20130506";"300";;;;;;;;;;;;;;"20130827";"57";;;;;"Lowest amount of plants were harvested caused by PBH insects";
+"2013";"WS";"3731801";"IR 100306";"4135532";"IR 100306-B-B RGA-B RGA-B RGA";;"Breeding";"F122713";"F5";"20130913";"57";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)";"Will wait for the harvest data to complete the expansion needed"
+"2013";"WS";"3732217";"IR 100722";"3879528";"IR 100722";;"Breeding";;"F2";"20130426";"1000";;;;;;;;;;;;;;"20130827";"378";;;;;"Lowest amount of plants were harvest cause by BPH insects (pest)";
+"2013";"WS";"3732217";"IR 100722";"4135512";"IR 100722-B RGA";;"Breeding";;"F3";"20130913";"378";;;;;;;;;;;;;;;;;;;;"Sown in cell (4 trays)";
+"2013";"WS";"3732218";"IR 100723";"3879529";"IR 100723";;"Breeding";;"F2";"20130430";"1000";;;;"Topdress1";"Urea";;"20130523";"5gm";;;;;;"20130821";"82";;;;;"This population were also infected by (BPH) insect pest. Reason why small number of panicles been harvest.";
+"2013";"WS";"3732218";"IR 100723";"4135513";"IR 100723-B RGA";;"Breeding";;"F3";"20130903";"82";;;;"Topdress1";;;"20130924";;;;;;;;;;;;;"Sowed in cell blue trays for advancement";
+"2013";"DS";"3732316";"IR 100821";"4135475";"IR 100821-B-B RGA";;"Breeding";"F122730";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"586";;;;;;
+"2013";"WS";"3732316";"IR 100821";"4135514";"IR 100821-B-B RGA-B RGA";;"Breeding";"F122730";"F4";"20130506";"300";;;;;;;;;;;;;;"20130829";"54";;;;;"The reason why small amount fo plants were harvest due to a damage of BPH pest";
+"2013";"WS";"3732316";"IR 100821";"4135533";"IR 100821-B-B RGA-B RGA-B RGA";;"Breeding";"F122730";"F5";"20130909";"54";;;;;;;;;;;;;;;;;;;;"Sowed in pots";"Will wait for the harvest data to complete the expansion needed"
+"2013";"DS";"3732317";"IR 100822";"4135476";"IR 100822-B-B RGA";;"Breeding";"F122731";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"528";;;;;"Remants: 5 seeds per panicle/coin envelop";"Please check number of seeds transplanted"
+"2013";"WS";"3732317";"IR 100822";"4135515";"IR 100822-B-B RGA-B RGA";;"Breeding";"F122731";"F4";"20130506";"300";;;;;;;;;;;;;;"20130829";"33";;;;;"Sowed in pots";
+"2013";"WS";"3732317";"IR 100822";"4135534";"IR 100822-B-B RGA-B RGA-B RGA";;"Breeding";"F122731";"F5";"20130909";"33";;;;;;;;;;;;;;;;;;;;;"Will wait for the harvest data to complete the expansion needed"
+"2013";"DS";"3732336";"IR 100841";"4135477";"IR 100841-B-B RGA";;"Breeding";"F122749";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"508";;;;;;"Pleasce check number of seeds transplanted"
+"2013";"WS";"3732336";"IR 100841";"4135516";"IR 100841-B-B RGA-B RGA";;"Breeding";"F122749";"F4";"20130506";"300";;;;;;;;;;;;;;"20130828";"86";;;;;"Not much plants survive due to BPH pest (insect)";
+"2013";"WS";"3732336";"IR 100841";"4135535";"IR 100841-B-B RGA-B RGA-B RGA";;"Breeding";"F122749";"F5";"20130913";"86";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)";"Will wait for the harvest data to complete the expansion needed"
+"2013";"DS";"3732337";"IR 100842";"4135478";"IR 100842-B-B RGA";;"Breeding";"F122750";"F3";;;"20130123";"400";;;;;;;;;;;;"20130415";"549";;;;;;"Please check number of seeds transplanted"
+"2013";"WS";"3732337";"IR 100842";"4135517";"IR 100842-B-B RGA-B RGA";;"Breeding";"F122750";"F4";"20130506";"300";;;;;;;;;;;;;;"201308";"38";;;;;"Severely damaged by insect (BPH)";"Please check date of harvest"
+"2013";"WS";"3732337";"IR 100842";"4135536";"IR 100842-B-B RGA-B RGA-B RGA";;"Breeding";"F122750";"F5";"20130913";"38";;;;;;;;;;;;;;;;;;;;"Sown in cell (1 tray)";"Will wait for the harvest data to complete the expansion needed"
+"2013";"WS";"3568777";"IR 98463";"3779140";"IR 98463";;"Standard Generation Advancement";"IRRI 119/IR 42";"F2";"20130620";"1040";;;;"Topdress1";;;"20130630";;"Topdress2";;;"20130704";;;;;;;;;
+"2013";"WS";"3568778";"IR 98464";"3779141";"IR 98464";;"Standard Generation Advancement";"IRRI 119/IR 24";"F2";"20130620";"1040";;;;"Topdress1";;;"20130630";;"Topdress2";;;"20130704";;;;;;;;;
+"2013";"WS";"3731470";"IR 99983";"3846487";"IR 99983";;;;"F2";"20130307";"400";;;;;;;;;;;;;;"20130715";"381";;;;;"Remnants are in bulk";"Please check purpose"
+"2013";"WS";"3731470";"IR 99983";"4135518";"IR 99983-B RGA";;;;"F3";"20130831";"381";;;;"Topdress1";;;"20130923";;;;;;;;;;;;;"Sowed in small cell for advancement";
+"2013";"WS";"3891567";"IR 103715";"4189641";"IR 103715-B";;;;"F2";"20131009";"1040";;;;;;;;;;;;;;;;;;;;"Sown in small cell. 10 blue trays";"Please check Purpose and Pedigree"
 \.
 
 -- ----------------
@@ -18009,9 +18010,6 @@ comment on index "master"."cross_method_abbrev_idx"
 comment on index "master"."cross_method_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."country"
-  is '{table}';
-
 comment on column "master"."country"."id"
   is 'Locally unique primary key';
 
@@ -18062,9 +18060,6 @@ comment on index "master"."country_abbrev_idx"
 
 comment on index "master"."country_is_void_idx"
   is 'Index for the is_void column';
-
-comment on table "master"."family"
-  is '{table}';
 
 comment on column "master"."family"."id"
   is 'Locally unique primary key';
@@ -18255,9 +18250,6 @@ comment on constraint "item_relation_modifier_id_fkey" on "master"."item_relatio
 comment on index "master"."item_relation_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."item_action"
-  is '{table}';
-
 comment on column "master"."item_action"."id"
   is 'Locally unique primary key';
 
@@ -18293,9 +18285,6 @@ comment on constraint "item_action_modifier_id_fkey" on "master"."item_action"
 
 comment on index "master"."item_action_is_void_idx"
   is 'Index for the is_void column';
-
-comment on table "master"."team"
-  is '{table}';
 
 comment on column "master"."team"."id"
   is 'Locally unique primary key';
@@ -18348,9 +18337,6 @@ comment on constraint "team_modifier_id_fkey" on "master"."team"
 comment on index "master"."team_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."user_item"
-  is '{table}';
-
 comment on column "master"."user_item"."id"
   is 'Locally unique primary key';
 
@@ -18386,9 +18372,6 @@ comment on index "master"."user_item_user_id_idx"
 
 comment on index "master"."user_item_is_void_idx"
   is 'Index for the is_void column';
-
-comment on table "master"."user_role"
-  is '{table}';
 
 comment on column "master"."user_role"."id"
   is 'Locally unique primary key';
@@ -18435,9 +18418,6 @@ comment on index "master"."user_role_user_id_idx"
 comment on index "master"."user_role_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."user_session"
-  is '{table}';
-
 comment on column "master"."user_session"."id"
   is 'Locally unique primary key';
 
@@ -18483,9 +18463,6 @@ comment on index "master"."user_session_user_id_idx"
 comment on index "master"."user_session_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."team_member"
-  is '{table}';
-
 comment on column "master"."team_member"."id"
   is 'Locally unique primary key';
 
@@ -18522,9 +18499,6 @@ comment on constraint "team_member_modifier_id_fkey" on "master"."team_member"
 comment on index "master"."team_member_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."item_role"
-  is '{table}';
-
 comment on column "master"."item_role"."id"
   is 'Locally unique primary key';
 
@@ -18551,9 +18525,6 @@ comment on column "master"."item_role"."is_void"
 
 comment on index "master"."item_role_is_void_idx"
   is 'Index for the is_void column';
-
-comment on table "master"."tooltip"
-  is '{table}';
 
 comment on column "master"."tooltip"."id"
   is 'Locally unique primary key';
@@ -18591,9 +18562,6 @@ comment on column "master"."tooltip"."is_void"
 comment on index "master"."tooltip_is_void_idx"
   is 'Index for the is_void column';
 
-comment on table "master"."instruction"
-  is '{table}';
-
 comment on column "master"."instruction"."id"
   is 'Locally unique primary key';
 
@@ -18629,9 +18597,6 @@ comment on column "master"."instruction"."is_void"
 
 comment on index "master"."instruction_is_void_idx"
   is 'Index for the is_void column';
-
-comment on table "master"."audit"
-  is '{table}';
 
 comment on column "master"."audit"."id"
   is 'Locally unique primary key';
@@ -18671,9 +18636,6 @@ comment on constraint "audit_modifier_id_fkey" on "master"."audit"
 
 comment on index "master"."audit_is_void_idx"
   is 'Index for the is_void column';
-
-comment on table "master"."change_log"
-  is '{table}';
 
 comment on column "master"."change_log"."id"
   is 'Locally unique primary key';
@@ -21999,9 +21961,6 @@ comment on index "import"."variable_is_void_idx"
 
 comment on schema "test"
   is 'Temporary schema used for testing purposes only';
-
-comment on table "test"."lookup"
-  is '{table}';
 
 comment on column "test"."lookup"."id"
   is 'Locally unique primary key';
