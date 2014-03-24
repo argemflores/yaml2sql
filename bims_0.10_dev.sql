@@ -24,15 +24,15 @@ create table "master"."user" (
     "id" serial not null,
     "email" varchar(64) not null,
     "username" varchar(64) not null,
+    "user_type" integer not null,
+    "status" varchar not null default 'active',
     "last_name" varchar(32) not null,
     "first_name" varchar(32) not null,
     "middle_name" varchar(32),
     "display_name" varchar(64) not null,
-    "status" varchar not null default 'active',
     "salutation" varchar(16),
     "valid_start_date" date,
     "valid_end_date" date,
-    "user_type" integer not null,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -276,6 +276,9 @@ alter table "master"."scale_value"
   foreign key ("scale_id") references "master"."scale" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."scale_value"
+  add constraint "scale_value_scale_id_value_ukey"
+  unique ("scale_id", "value");
+alter table "master"."scale_value"
   add constraint "scale_value_id_pkey"
   primary key ("id");
 alter table "master"."scale_value"
@@ -444,6 +447,9 @@ alter table "master"."variable_set_member"
   add constraint "variable_set_member_variable_set_id_variable_id_ukey"
   unique ("variable_set_id", "variable_id");
 alter table "master"."variable_set_member"
+  add constraint "variable_set_member_variable_set_id_order_number_ukey"
+  unique ("variable_set_id", "order_number");
+alter table "master"."variable_set_member"
   add constraint "variable_set_member_id_pkey"
   primary key ("id");
 alter table "master"."variable_set_member"
@@ -547,6 +553,7 @@ create table "master"."program" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
+    "type" varchar,
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -763,12 +770,10 @@ from stdin
 
 create table "master"."product" (
     "id" serial not null,
-    "abbrev" varchar(128) not null,
-    "name" varchar(256) not null,
     "program_id" integer not null,
     "designation" varchar not null,
     "name_type" varchar not null,
-    "type" varchar not null,
+    "product_type" varchar not null,
     "year" integer not null,
     "season_id" integer,
     "mta_status" varchar not null,
@@ -903,8 +908,8 @@ create index "product_name_is_void_idx"
 
 create table "master"."product_gid" (
     "id" serial not null,
-    "product_id" integer,
-    "gid" integer,
+    "product_id" integer not null,
+    "gid" integer not null,
     "gid_type" varchar,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -1189,44 +1194,6 @@ from stdin
 "C3W";"three-way cross";"Three-way cross";"Three-way cross"
 "C2W";"double cross";"Double cross";"Double cross"
 \.
-
--- ----------------
-
-create table "master"."country" (
-    "id" serial not null,
-    "abbrev" varchar(128) not null,
-    "name" varchar(256) not null,
-    "description" text,
-    "display_name" varchar(256),
-    "remarks" text,
-    "creation_timestamp" timestamp not null default now(),
-    "creator_id" integer not null default '1',
-    "modification_timestamp" timestamp,
-    "modifier_id" integer,
-    "notes" text,
-    "is_void" boolean not null default false
-) with (
-    oids = false
-);
-
-alter table "master"."country"
-  add constraint "country_id_pkey"
-  primary key ("id");
-alter table "master"."country"
-  add constraint "country_creator_id_fkey"
-  foreign key ("creator_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-alter table "master"."country"
-  add constraint "country_modifier_id_fkey"
-  foreign key ("modifier_id") references "master"."user" ("id")
-  match simple on update cascade on delete cascade;
-
-create unique index "country_abbrev_idx"
-  on "master"."country"
-  using btree ("abbrev");
-create index "country_is_void_idx"
-  on "master"."country"
-  using btree ("is_void");
 
 -- ----------------
 
@@ -2763,10 +2730,10 @@ create table "master"."audit" (
     "action_type" varchar,
     "record_id" bigint,
     "old_value" varchar,
-    "new_value" varchar,
+    "value" varchar,
     "actor_id" integer,
     "action_timestamp" timestamp,
-    "description" text,
+    "remarks" text,
     "status" varchar(32),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -2813,7 +2780,7 @@ create index "audit_is_void_idx"
 
 -- ----------------
 
-create table "master"."change_log" (
+create table "master"."changelog" (
     "id" serial not null,
     "name" varchar(256) not null,
     "description" text,
@@ -2830,67 +2797,37 @@ create table "master"."change_log" (
     oids = false
 );
 
-alter table "master"."change_log"
+alter table "master"."changelog"
   add constraint "change_log_key_person_id_fkey"
   foreign key ("key_person_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
-alter table "master"."change_log"
-  add constraint "change_log_id_pkey"
+alter table "master"."changelog"
+  add constraint "changelog_id_pkey"
   primary key ("id");
-alter table "master"."change_log"
-  add constraint "change_log_creator_id_fkey"
+alter table "master"."changelog"
+  add constraint "changelog_creator_id_fkey"
   foreign key ("creator_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
-alter table "master"."change_log"
-  add constraint "change_log_modifier_id_fkey"
+alter table "master"."changelog"
+  add constraint "changelog_modifier_id_fkey"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
 create index "change_log_key_person_id_idx"
-  on "master"."change_log"
+  on "master"."changelog"
   using btree ("key_person_id");
-create index "change_log_is_void_idx"
-  on "master"."change_log"
+create index "changelog_is_void_idx"
+  on "master"."changelog"
   using btree ("is_void");
 
 
 
-copy "master"."change_log" (
-    "id",
-    "name",
-    "description",
-    "key_person_id",
-    "date_done",
-    "is_void"
-)
-from stdin
-    csv
-    header
-    delimiter ';'
-    quote '"'
-    escape e'\\'
-    null ''
-;
-"id";"name";"description";"key_person_id";"date_done";"is_void"
-2;"Temporary Non-Admin";"Admin can act like a non-admin user temporarily";2;"2014-02-18";"False"
-3;"Lorem Impsum";"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc purus libero, porttitor et rhoncus sed, fringilla nec felis. Pellentesque a mi nec velit viverra euismod. Nullam tincidunt dictum elit, non laoreet arcu faucibus dictum. Duis sed porta nunc. Phasellus varius nunc ut lacus lacinia pulvinar. Duis vitae varius felis.";3;"2014-02-19";"True"
-4;"Test2";"Test description";6;"2014-02-13";"True"
-5;"feature name";"this is a feature description";2;"2014-02-22";"True"
-6;"BIMS Wiki";"Initial site for BIMS concepts knowledgebase.";7;"2014-02-25";"False"
-7;"Guided Tour";"Initial implementation of a guided tour for users.";7;"2014-02-28";"False"
-8;"Data Management Module";"New entry point for data management tools to be used by data managers.";7;"2014-02-25";"False"
-9;"Create Production Plan";"An improved user interface and validation for creating, updating, and viewing production plans. This includes a timeline where users can view the summary of dates for tasks and edit the number of days before or after the seeding date for each task.";10;"2014-02-28";"True"
-10;"Create Progeny List";"Validation in creating new progeny lists where users can only create a list if all required information is provided. A checklist is provided to guide the user.";8;"2014-02-28";"False"
-11;"Data validation for RGA knowledge work tools";"Basic business logic or validation rules for RGA knowledge work tasks.";8;"2014-02-27";"False"
-12;"Variable Management";"Tool for data managaers that allows adding of new variables to the system. This also provides a data browser where the user can view, update, or delete variable items.";2;"2014-02-28";"False"
-13;"Create Production Plan";"An improved user interface and validation for creating, updating, and viewing production plans. This includes a timeline where users can view the summary of dates for tasks and edit the number of days before or after the seeding date for each task.";10;"2014-03-28";"False"
-\.
 
 
-alter sequence "master"."change_log_id_seq"
+alter sequence "master"."changelog_id_seq"
   restart 14;
 
-alter sequence "master"."change_log_id_seq"
+alter sequence "master"."changelog_id_seq"
   start with 14
   minvalue 1
   maxvalue 9223372036854775807
@@ -3959,7 +3896,7 @@ create table "operational"."plot" (
     "key" bigint not null,
     "study_id" integer not null,
     "entry_id" integer not null,
-    "replication_number" integer,
+    "rep" integer,
     "code" varchar,
     "plot_no" varchar,
     "description" text,
@@ -16970,16 +16907,51 @@ create index "lookup_is_void_idx"
 
 comment on database "bims_0.10_dev"
   is 'BIMS: Breeding Information Management System
-https://sites.google.com/a/irri.org/bim/conceptual-model';
+
+Wiki: https://sites.google.com/a/irri.org/bim/conceptual-model
+Concepts: https://docs.google.com/a/irri.org/document/d/1hSNKmbFLMzLrYyGLxBvBwRMQWpYzXeqpf8v_v0Hhpo0/edit#';
 
 comment on schema "master"
   is 'Stores master data, which are absolutely correct data that does not change frequently';
 
 comment on table "master"."user"
-  is 'Users';
+  is 'Registered users in the system are granted with roles and are assigned to one or more teams.';
 
 comment on column "master"."user"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."user"."email"
+  is 'Active email address of the user. Currently supports IRRI email addresses.';
+
+comment on column "master"."user"."username"
+  is 'Unique username of the user taken from email address by removing all characters after and including the ''@'' sign';
+
+comment on column "master"."user"."user_type"
+  is 'Administrator (admin) or non-admin';
+
+comment on column "master"."user"."status"
+  is 'Whether the user can log in to the system (active) or not (inactive)';
+
+comment on column "master"."user"."last_name"
+  is 'Last name or family name of the user';
+
+comment on column "master"."user"."first_name"
+  is 'First or given name of the user';
+
+comment on column "master"."user"."middle_name"
+  is 'Middle name of the user';
+
+comment on column "master"."user"."display_name"
+  is 'Name of the user to be displayed in the system';
+
+comment on column "master"."user"."salutation"
+  is 'Name to address the user in some parts of the system like the user profile';
+
+comment on column "master"."user"."valid_start_date"
+  is 'Start date to allow the user to use the system';
+
+comment on column "master"."user"."valid_end_date"
+  is 'Last date allowed for the user to use the system';
 
 comment on column "master"."user"."remarks"
   is 'Additional details';
@@ -17018,10 +16990,10 @@ comment on table "master"."property"
   is 'Property describes the context of the sampling unit and experimental material, or the trait being measured.';
 
 comment on column "master"."property"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."property"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."property"."name"
   is 'Name identifier';
@@ -17030,7 +17002,7 @@ comment on column "master"."property"."description"
   is 'Description';
 
 comment on column "master"."property"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."property"."remarks"
   is 'Additional details';
@@ -17072,16 +17044,22 @@ comment on table "master"."method"
   is 'Method describes how the property is applied or the protocol by which a variable is measured.';
 
 comment on column "master"."method"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."method"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name for the method';
+
+comment on column "master"."method"."name"
+  is 'Name of the method or protocol to be applied';
 
 comment on column "master"."method"."description"
   is 'Description';
 
 comment on column "master"."method"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
+
+comment on column "master"."method"."formula"
+  is 'Formula needed to compute for a property';
 
 comment on column "master"."method"."remarks"
   is 'Additional details';
@@ -17123,13 +17101,16 @@ comment on table "master"."scale"
   is 'Scale describes the units in which the variables are recorded.';
 
 comment on column "master"."scale"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."scale"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."scale"."name"
   is 'Name identifier';
+
+comment on column "master"."scale"."unit"
+  is 'Unit to use to measure a property';
 
 comment on column "master"."scale"."type"
   is 'categorical; continuous; discrete';
@@ -17141,7 +17122,7 @@ comment on column "master"."scale"."description"
   is 'Description';
 
 comment on column "master"."scale"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."scale"."remarks"
   is 'Additional details';
@@ -17183,16 +17164,22 @@ comment on table "master"."scale_value"
   is 'Discrete values a scale can have.';
 
 comment on column "master"."scale_value"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."scale_value"."scale_id"
+  is 'Scale to use the allowable value';
+
+comment on column "master"."scale_value"."value"
+  is 'Value in the scale';
 
 comment on column "master"."scale_value"."order_number"
-  is 'Ordering number';
+  is 'Order of the value in the scale; -1 if order is not significant';
 
 comment on column "master"."scale_value"."description"
-  is 'Description';
+  is 'Additional information about the scale value';
 
 comment on column "master"."scale_value"."display_name"
-  is 'Name to display to users';
+  is 'Name to display or label of the scale value';
 
 comment on column "master"."scale_value"."remarks"
   is 'Additional details';
@@ -17228,10 +17215,11 @@ comment on index "master"."scale_value_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."variable"
-  is 'Variables';
+  is 'A variable is a data element, which has precise meaning throughout the data model.
+Each variable has a set of mandatory attributes, which are inherited by the children through the data model.';
 
 comment on column "master"."variable"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."variable"."abbrev"
   is 'Column name of the variable in the warehouse tables';
@@ -17240,7 +17228,52 @@ comment on column "master"."variable"."label"
   is 'Abbrev of the variable''s property';
 
 comment on column "master"."variable"."name"
-  is 'Name of the variable''s property';
+  is 'Name of the variable or the variable''s property';
+
+comment on column "master"."variable"."data_type"
+  is 'Type of data a variable can accept';
+
+comment on column "master"."variable"."not_null"
+  is 'Whether the variable can not be null (true) or nullable (false)';
+
+comment on column "master"."variable"."type"
+  is 'Type of the variable in the system
+1. system: contains values which are (usually) not displayed to the users of the system.
+  For example study_id which is a surrogate key or a product_id which is a reference key to product catalog.
+  This is automatically generated by the system.
+2. identification: has values which are used as keys or part of a key, which will be used to verify the data integrity in study, entry and plot level.
+  For instance entry_code, replication number. This is also automatically generated by the system.
+3. metadata: has a wide range of data types aimed to store values, which will be useful to interpret the observation variable values.
+  For instance entry count of a study, harvest date, remarks and pictures.
+4. observation: used to store the values produced (measured, observed, computed, predicted) in various data production events,
+  like for instance single trial analysis or plant height observation';
+
+comment on column "master"."variable"."status"
+  is 'Whether a variable is being actively used in the system (active) or not (deprecated)';
+
+comment on column "master"."variable"."display_name"
+  is 'Name of the variable to display in different parts of the system';
+
+comment on column "master"."variable"."ontology_reference"
+  is 'Reference of the variable to the Rice Crop Ontology (http://www.cropontology.org/ontology/CO_320/Rice)';
+
+comment on column "master"."variable"."bibliographical_reference"
+  is 'Reference to books (version, year, chapter, page, etc.) like SES or RD, where the variable was taken from';
+
+comment on column "master"."variable"."property_id"
+  is 'Property of the variable';
+
+comment on column "master"."variable"."method_id"
+  is 'Method to measure the property of the variable';
+
+comment on column "master"."variable"."scale_id"
+  is 'Scale and allowable values a variable can have';
+
+comment on column "master"."variable"."variable_set"
+  is 'Variable set where the variable belongs to';
+
+comment on column "master"."variable"."synonym"
+  is 'Additional entries about the synonyms of the variable';
 
 comment on column "master"."variable"."remarks"
   is 'Additional details';
@@ -17279,13 +17312,13 @@ comment on index "master"."variable_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."variable_set"
-  is 'Groups of variables';
+  is 'Groups related variables together';
 
 comment on column "master"."variable_set"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."variable_set"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."variable_set"."name"
   is 'Name identifier';
@@ -17294,7 +17327,7 @@ comment on column "master"."variable_set"."description"
   is 'Description';
 
 comment on column "master"."variable_set"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."variable_set"."remarks"
   is 'Additional details';
@@ -17333,10 +17366,19 @@ comment on index "master"."variable_set_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."variable_set_member"
-  is 'variables';
+  is 'List of variables belonging to a variable set';
 
 comment on column "master"."variable_set_member"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."variable_set_member"."variable_set_id"
+  is 'Variable set where the variables belong to';
+
+comment on column "master"."variable_set_member"."variable_id"
+  is 'Variable belonging to variable set';
+
+comment on column "master"."variable_set_member"."order_number"
+  is 'Order of the variable within the variable set';
 
 comment on column "master"."variable_set_member"."remarks"
   is 'Additional details';
@@ -17374,19 +17416,19 @@ comment on index "master"."variable_set_member_is_void_idx"
 comment on table "master"."pipeline"
   is 'A product development schema designed to develop breeding products to a certain demand (market segment).
 At IRRI, VDPs are structured based on major regions and production ecologies
-  - Irrigated South East Asia (IR SEA)
-  - Rainfed lowland South East Asia (RF SEA)
-  - Irrigated South Asia (IR SA)
-  - Rainfed lowland South Asia (RF SA)
-  - Hybrid
+  - Irrigated South East Asia (IRSEA)
+  - Rainfed lowland South East Asia (RFSEA)
+  - Irrigated South Asia (IRSA)
+  - Rainfed lowland South Asia (RFSA)
+  - Hybrid (HYB)
   - Eastern Southern Africa (ESA) - has Rainfed and Irrigated TVP''s,
-  - Japonica - has Temperate and Tropical TVP''s';
+  - Japonica (JAP) - has Temperate and Tropical TVP''s';
 
 comment on column "master"."pipeline"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."pipeline"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."pipeline"."name"
   is 'Name identifier';
@@ -17395,7 +17437,7 @@ comment on column "master"."pipeline"."description"
   is 'Description';
 
 comment on column "master"."pipeline"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."pipeline"."remarks"
   is 'Additional details';
@@ -17438,10 +17480,10 @@ comment on table "master"."crosscutting"
 CCRD consists of a team of experts, the CCRD facility, and operational and capital resources.';
 
 comment on column "master"."crosscutting"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."crosscutting"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."crosscutting"."name"
   is 'Name identifier';
@@ -17450,7 +17492,7 @@ comment on column "master"."crosscutting"."description"
   is 'Description';
 
 comment on column "master"."crosscutting"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."crosscutting"."remarks"
   is 'Additional details';
@@ -17495,19 +17537,22 @@ Products of trait development are discovered trait donors, QTL''s and genes, and
 Trait development products work through different type IP-solutions than variety development.';
 
 comment on column "master"."program"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."program"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."program"."name"
   is 'Name identifier';
+
+comment on column "master"."program"."type"
+  is 'Type of program: pipeline, crosscutting';
 
 comment on column "master"."program"."description"
   is 'Description';
 
 comment on column "master"."program"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."program"."remarks"
   is 'Additional details';
@@ -17557,10 +17602,10 @@ comment on table "master"."place"
   - Storage';
 
 comment on column "master"."place"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."place"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."place"."name"
   is 'Name identifier';
@@ -17569,7 +17614,7 @@ comment on column "master"."place"."description"
   is 'Description';
 
 comment on column "master"."place"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."place"."remarks"
   is 'Additional details';
@@ -17608,13 +17653,13 @@ comment on index "master"."place_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."phase"
-  is 'Breeding development phases';
+  is 'Breeding development phases; a step having agreed name in an agreed breeding schema';
 
 comment on column "master"."phase"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."phase"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."phase"."name"
   is 'Name identifier';
@@ -17623,7 +17668,7 @@ comment on column "master"."phase"."description"
   is 'Description';
 
 comment on column "master"."phase"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."phase"."remarks"
   is 'Additional details';
@@ -17666,34 +17711,43 @@ comment on table "master"."product"
 Every record has a unique key and unique product name. It contains the identity of a material.';
 
 comment on column "master"."product"."id"
-  is 'Locally unique primary key';
-
-comment on column "master"."product"."abbrev"
-  is 'Short name identifier or abbreviation';
-
-comment on column "master"."product"."name"
-  is 'Name identifier';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."product"."program_id"
-  is 'Foreign key to the product development program table';
+  is 'Program where the product was created; foreign key referring to master.program table';
 
 comment on column "master"."product"."name_type"
-  is 'Name types: breeding_line, fixed_line, derivative, common, cultivar';
+  is 'Name type of the designation: breeding_line, fixed_line, derivative, common, cultivar';
 
-comment on column "master"."product"."type"
-  is 'Product types: progeny, fixed_line';
+comment on column "master"."product"."product_type"
+  is 'Type of the product: progeny, fixed_line';
+
+comment on column "master"."product"."year"
+  is 'Year when the product was created or acquired';
+
+comment on column "master"."product"."season_id"
+  is 'Season when the product was created or acquired; foreign key referring to the master.season table';
 
 comment on column "master"."product"."mta_status"
   is 'Refers to the set of defined terms to guide the legal use of material i.e. SMTA, CMTA, OMTA, Confidential';
 
+comment on column "master"."product"."parentage"
+  is 'Pedigree details of the product';
+
+comment on column "master"."product"."cross_id"
+  is 'Refers to the cross id where the product was crossed; needs clarification';
+
 comment on column "master"."product"."generation"
-  is 'Generations: UNKNOWN, F1, BC1F1, BC2F1, BC3F1, F2, F3, F4, FIXED';
+  is 'Generation of the product: UNKNOWN, F1, BC1F1, BC2F1, BC3F1, F2, F3, F4, FIXED';
+
+comment on column "master"."product"."selection_method"
+  is 'Method of selection of the product';
 
 comment on column "master"."product"."description"
   is 'Description';
 
 comment on column "master"."product"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."product"."remarks"
   is 'Additional details';
@@ -17732,22 +17786,28 @@ comment on index "master"."product_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."product_name"
-  is 'Names of a product';
+  is 'Different names and name types given to a product';
 
 comment on column "master"."product_name"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."product_name"."product_id"
+  is 'Product given with a particular name';
 
 comment on column "master"."product_name"."name_type"
-  is 'derivative, fixed_line, cultivar, common, others';
+  is 'Type of the name: derivative, fixed_line, cultivar, common, others';
+
+comment on column "master"."product_name"."value"
+  is 'Value of the name';
 
 comment on column "master"."product_name"."language_code"
-  is 'Reference: http://www.loc.gov/standards/iso639-2/php/code_list.php';
+  is 'Language of the given name to the product (refer to: http://www.loc.gov/standards/iso639-2/php/code_list.php)';
 
 comment on column "master"."product_name"."description"
   is 'Description';
 
 comment on column "master"."product_name"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."product_name"."remarks"
   is 'Additional details';
@@ -17783,13 +17843,19 @@ comment on index "master"."product_name_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."product_gid"
-  is 'List of GIDs of a product';
+  is 'List of GIDs of a product; refers to its seed storage';
 
 comment on column "master"."product_gid"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."product_gid"."product_id"
+  is 'Product assigned with a particular GID';
+
+comment on column "master"."product_gid"."gid"
+  is 'GID assigned to a product';
 
 comment on column "master"."product_gid"."gid_type"
-  is 'fixed breeding line, cross, derivative, mgid (founding germplasm; from gms)';
+  is 'Type of GID of the product: fixed breeding line, cross, derivative, mgid (founding germplasm, from gms)';
 
 comment on column "master"."product_gid"."remarks"
   is 'Additional details';
@@ -17828,10 +17894,10 @@ comment on index "master"."product_gid_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "master"."product_metadata"
-  is 'Additional information about products';
+  is 'Additional information about a product';
 
 comment on column "master"."product_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."product_metadata"."remarks"
   is 'Additional details';
@@ -17870,10 +17936,10 @@ comment on table "master"."season"
   is 'List of seasons';
 
 comment on column "master"."season"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."season"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."season"."name"
   is 'Name identifier';
@@ -17882,7 +17948,7 @@ comment on column "master"."season"."description"
   is 'Description';
 
 comment on column "master"."season"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."season"."remarks"
   is 'Additional details';
@@ -17924,7 +17990,13 @@ comment on table "master"."place_season"
   is 'List of seasons in a place';
 
 comment on column "master"."place_season"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."place_season"."place_id"
+  is 'Place having that particular season';
+
+comment on column "master"."place_season"."season_id"
+  is 'Season in a given place';
 
 comment on column "master"."place_season"."remarks"
   is 'Additional details';
@@ -17960,10 +18032,10 @@ comment on table "master"."cross_method"
   is 'Methods used in crossing studies';
 
 comment on column "master"."cross_method"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."cross_method"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."cross_method"."name"
   is 'Name identifier';
@@ -17972,7 +18044,7 @@ comment on column "master"."cross_method"."description"
   is 'Description';
 
 comment on column "master"."cross_method"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."cross_method"."remarks"
   is 'Additional details';
@@ -18010,62 +18082,26 @@ comment on index "master"."cross_method_abbrev_idx"
 comment on index "master"."cross_method_is_void_idx"
   is 'Index for the is_void column';
 
-comment on column "master"."country"."id"
-  is 'Locally unique primary key';
-
-comment on column "master"."country"."abbrev"
-  is 'Short name identifier or abbreviation';
-
-comment on column "master"."country"."name"
-  is 'Name identifier';
-
-comment on column "master"."country"."description"
-  is 'Description';
-
-comment on column "master"."country"."display_name"
-  is 'Name to display to users';
-
-comment on column "master"."country"."remarks"
-  is 'Additional details';
-
-comment on column "master"."country"."creation_timestamp"
-  is 'Timestamp when the record was added to the table';
-
-comment on column "master"."country"."creator_id"
-  is 'ID of the user who added the record to the table';
-
-comment on column "master"."country"."modification_timestamp"
-  is 'Timestamp when the record was last modified';
-
-comment on column "master"."country"."modifier_id"
-  is 'ID of the user who last modified the record';
-
-comment on column "master"."country"."notes"
-  is 'Additional details added by an admin; can be technical or advanced details';
-
-comment on column "master"."country"."is_void"
-  is 'Indicator whether the record is deleted or not';
-
-comment on index "master"."country_id_pkey"
-  is 'Primary key constraint for the id column';
-
-comment on constraint "country_creator_id_fkey" on "master"."country"
-  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
-
-comment on constraint "country_modifier_id_fkey" on "master"."country"
-  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
-
-comment on index "master"."country_abbrev_idx"
-  is 'Unique index for the abbrev column';
-
-comment on index "master"."country_is_void_idx"
-  is 'Index for the is_void column';
-
 comment on column "master"."family"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."family"."female_product_id"
+  is 'Product used as female parent in the family';
+
+comment on column "master"."family"."male_product_id"
+  is 'Product used as male parent in the family';
 
 comment on column "master"."family"."study_id"
-  is 'ID referring to study';
+  is 'Study where the family came from';
+
+comment on column "master"."family"."cross_id"
+  is 'Cross of the family in a study';
+
+comment on column "master"."family"."female_entry_id"
+  is 'Study entry used as female in the family';
+
+comment on column "master"."family"."male_entry_id"
+  is 'Study entry used as male in the family';
 
 comment on column "master"."family"."remarks"
   is 'Additional details';
@@ -18104,10 +18140,10 @@ comment on table "master"."role"
   is 'Titles of privileged users that can perform definite actions';
 
 comment on column "master"."role"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."role"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."role"."name"
   is 'Name identifier';
@@ -18116,7 +18152,7 @@ comment on column "master"."role"."description"
   is 'Description';
 
 comment on column "master"."role"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."role"."rank"
   is '0: System admin; >0: Other users; <0: Guest/undefined';
@@ -18158,10 +18194,10 @@ comment on table "master"."item"
   is 'Processes, activities, tasks, and steps of the system';
 
 comment on column "master"."item"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."item"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."item"."name"
   is 'Name identifier';
@@ -18173,7 +18209,7 @@ comment on column "master"."item"."description"
   is 'Description';
 
 comment on column "master"."item"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."item"."remarks"
   is 'Additional details';
@@ -18215,7 +18251,16 @@ comment on table "master"."item_relation"
   is 'Hierarchical relationships of items (process -> activity -> task -> step)';
 
 comment on column "master"."item_relation"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."item_relation"."parent_id"
+  is 'Parent item';
+
+comment on column "master"."item_relation"."child_id"
+  is 'Child item of the parent item';
+
+comment on column "master"."item_relation"."order_number"
+  is 'Order of the child in the list of children of the parent item';
 
 comment on column "master"."item_relation"."remarks"
   is 'Additional details';
@@ -18250,8 +18295,23 @@ comment on constraint "item_relation_modifier_id_fkey" on "master"."item_relatio
 comment on index "master"."item_relation_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."item_action"
+  is 'Module, controller, and action IDs assigned to an item';
+
 comment on column "master"."item_action"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."item_action"."item_id"
+  is 'Item which can be accessed by visiting module-controller-action';
+
+comment on column "master"."item_action"."module"
+  is 'Name of the module';
+
+comment on column "master"."item_action"."controller"
+  is 'Name of the controller in a module (if applicable)';
+
+comment on column "master"."item_action"."action"
+  is 'Name of action in the controller';
 
 comment on column "master"."item_action"."remarks"
   is 'Additional details';
@@ -18286,23 +18346,29 @@ comment on constraint "item_action_modifier_id_fkey" on "master"."item_action"
 comment on index "master"."item_action_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."team"
+  is 'Groups users together in a pipeline or crosscutting team';
+
 comment on column "master"."team"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."team"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "master"."team"."name"
   is 'Name identifier';
 
+comment on column "master"."team"."leader_id"
+  is 'User who leads the team';
+
 comment on column "master"."team"."type"
-  is 'pipeline; crosscutting';
+  is 'Type of the team: pipeline; crosscutting';
 
 comment on column "master"."team"."description"
   is 'Description';
 
 comment on column "master"."team"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "master"."team"."remarks"
   is 'Additional details';
@@ -18337,11 +18403,17 @@ comment on constraint "team_modifier_id_fkey" on "master"."team"
 comment on index "master"."team_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."user_item"
+  is 'Items assigned to users';
+
 comment on column "master"."user_item"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."user_item"."user_id"
-  is 'ID of user';
+  is 'User assigned with a role';
+
+comment on column "master"."user_item"."item_id"
+  is 'Item assigned to user';
 
 comment on column "master"."user_item"."remarks"
   is 'Additional details';
@@ -18373,11 +18445,17 @@ comment on index "master"."user_item_user_id_idx"
 comment on index "master"."user_item_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."user_role"
+  is 'Roles assigned to users';
+
 comment on column "master"."user_role"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."user_role"."user_id"
-  is 'ID of user';
+  is 'User assigned with a role';
+
+comment on column "master"."user_role"."role_id"
+  is 'Role assigned to a user';
 
 comment on column "master"."user_role"."remarks"
   is 'Additional details';
@@ -18418,11 +18496,29 @@ comment on index "master"."user_role_user_id_idx"
 comment on index "master"."user_role_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."user_session"
+  is 'Session data of users';
+
 comment on column "master"."user_session"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."user_session"."user_id"
   is 'ID of user';
+
+comment on column "master"."user_session"."data"
+  is 'Session data saved in JSON format';
+
+comment on column "master"."user_session"."selected_pipeline_id"
+  is 'Pipeline where the user is currently into';
+
+comment on column "master"."user_session"."last_visited_url"
+  is 'Last visited page of the user';
+
+comment on column "master"."user_session"."is_default_redirect_yes"
+  is 'Redirect the user to the last visited page';
+
+comment on column "master"."user_session"."is_default_redirect_no"
+  is 'Do not redirect the user to the last visited page';
 
 comment on column "master"."user_session"."remarks"
   is 'Additional details';
@@ -18463,8 +18559,23 @@ comment on index "master"."user_session_user_id_idx"
 comment on index "master"."user_session_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."team_member"
+  is 'Users belonging to teams';
+
 comment on column "master"."team_member"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."team_member"."team_id"
+  is 'Team with one or more members';
+
+comment on column "master"."team_member"."member_id"
+  is 'User belonging to a team';
+
+comment on column "master"."team_member"."role_id"
+  is 'Role of the user within the team';
+
+comment on column "master"."team_member"."user_role_id"
+  is 'Refers to the role assigned to user in the user_role table';
 
 comment on column "master"."team_member"."remarks"
   is 'Additional details';
@@ -18500,7 +18611,16 @@ comment on index "master"."team_member_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "master"."item_role"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "master"."item_role"."item_id"
+  is 'Item assigned with the role';
+
+comment on column "master"."item_role"."role_id"
+  is 'Role that can access the item';
+
+comment on column "master"."item_role"."team_id"
+  is 'Team with the role that can access the item';
 
 comment on column "master"."item_role"."remarks"
   is 'Additional details';
@@ -18527,16 +18647,13 @@ comment on index "master"."item_role_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "master"."tooltip"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."tooltip"."name"
-  is 'Name identifier';
+  is 'Name of the tooltip';
 
 comment on column "master"."tooltip"."value"
-  is 'Value of a variable';
-
-comment on column "master"."tooltip"."description"
-  is 'Description';
+  is 'Value of the tooltip';
 
 comment on column "master"."tooltip"."remarks"
   is 'Additional details';
@@ -18562,17 +18679,20 @@ comment on column "master"."tooltip"."is_void"
 comment on index "master"."tooltip_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."instruction"
+  is 'Instructions for users on how to use a feature in the system';
+
 comment on column "master"."instruction"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "master"."instruction"."name"
-  is 'Name identifier';
+  is 'Name of the instruction';
 
 comment on column "master"."instruction"."value"
-  is 'Value of a variable';
+  is 'Value of the instruction to display';
 
 comment on column "master"."instruction"."description"
-  is 'Description';
+  is 'Additional details about the instruction';
 
 comment on column "master"."instruction"."remarks"
   is 'Additional details';
@@ -18599,10 +18719,40 @@ comment on index "master"."instruction_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "master"."audit"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
-comment on column "master"."audit"."description"
-  is 'Description';
+comment on column "master"."audit"."schema_name"
+  is 'Schema name';
+
+comment on column "master"."audit"."table_name"
+  is 'Table name';
+
+comment on column "master"."audit"."column_name"
+  is 'Column name';
+
+comment on column "master"."audit"."action_type"
+  is 'Type of action performed on the record: insert, update, delete';
+
+comment on column "master"."audit"."record_id"
+  is 'Record subjected to the action';
+
+comment on column "master"."audit"."old_value"
+  is 'Old value of the record before the update';
+
+comment on column "master"."audit"."value"
+  is 'For insert, new value to be inserted; for update, new value of the updated record; for delete, value of the record to be deleted';
+
+comment on column "master"."audit"."actor_id"
+  is 'User who performed the action';
+
+comment on column "master"."audit"."action_timestamp"
+  is 'Timestamp when the action was performed';
+
+comment on column "master"."audit"."remarks"
+  is 'Additional details about the audit record';
+
+comment on column "master"."audit"."status"
+  is 'Needs clarification (forgotten why it''s here)';
 
 comment on column "master"."audit"."remarks"
   is 'Additional details';
@@ -18637,56 +18787,65 @@ comment on constraint "audit_modifier_id_fkey" on "master"."audit"
 comment on index "master"."audit_is_void_idx"
   is 'Index for the is_void column';
 
-comment on column "master"."change_log"."id"
-  is 'Locally unique primary key';
+comment on column "master"."changelog"."id"
+  is 'Primary key of the record in the table';
 
-comment on column "master"."change_log"."name"
-  is 'Name identifier';
+comment on column "master"."changelog"."name"
+  is 'Display name of the changelog record';
 
-comment on column "master"."change_log"."description"
-  is 'Description';
+comment on column "master"."changelog"."description"
+  is 'More details about the changes';
 
-comment on column "master"."change_log"."remarks"
+comment on column "master"."changelog"."key_person_id"
+  is 'User who implemented the feature';
+
+comment on column "master"."changelog"."date_done"
+  is 'Date when the feature was done';
+
+comment on column "master"."changelog"."remarks"
   is 'Additional details';
 
-comment on column "master"."change_log"."creation_timestamp"
+comment on column "master"."changelog"."creation_timestamp"
   is 'Timestamp when the record was added to the table';
 
-comment on column "master"."change_log"."creator_id"
+comment on column "master"."changelog"."creator_id"
   is 'ID of the user who added the record to the table';
 
-comment on column "master"."change_log"."modification_timestamp"
+comment on column "master"."changelog"."modification_timestamp"
   is 'Timestamp when the record was last modified';
 
-comment on column "master"."change_log"."modifier_id"
+comment on column "master"."changelog"."modifier_id"
   is 'ID of the user who last modified the record';
 
-comment on column "master"."change_log"."notes"
+comment on column "master"."changelog"."notes"
   is 'Additional details added by an admin; can be technical or advanced details';
 
-comment on column "master"."change_log"."is_void"
+comment on column "master"."changelog"."is_void"
   is 'Indicator whether the record is deleted or not';
 
-comment on index "master"."change_log_id_pkey"
+comment on index "master"."changelog_id_pkey"
   is 'Primary key constraint for the id column';
 
-comment on constraint "change_log_creator_id_fkey" on "master"."change_log"
+comment on constraint "changelog_creator_id_fkey" on "master"."changelog"
   is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
 
-comment on constraint "change_log_modifier_id_fkey" on "master"."change_log"
+comment on constraint "changelog_modifier_id_fkey" on "master"."changelog"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "master"."change_log_is_void_idx"
+comment on index "master"."changelog_is_void_idx"
   is 'Index for the is_void column';
+
+comment on view "master".""master"."variable_list""
+  is 'Master list of variables, with their property, method, and scale values';
 
 comment on table "dictionary"."database"
   is 'Data sources';
 
 comment on column "dictionary"."database"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."database"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."database"."name"
   is 'Name identifier';
@@ -18734,13 +18893,13 @@ comment on table "dictionary"."schema"
   is 'Schemas in a database';
 
 comment on column "dictionary"."schema"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."schema"."database_id"
   is 'ID of the database to use as reference key';
 
 comment on column "dictionary"."schema"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."schema"."name"
   is 'Name identifier';
@@ -18752,7 +18911,7 @@ comment on column "dictionary"."schema"."description"
   is 'Description';
 
 comment on column "dictionary"."schema"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "dictionary"."schema"."remarks"
   is 'Additional details';
@@ -18797,7 +18956,7 @@ comment on table "dictionary"."table"
   is 'Tables in a schema';
 
 comment on column "dictionary"."table"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."table"."database_id"
   is 'ID of the database to use as reference key';
@@ -18806,7 +18965,7 @@ comment on column "dictionary"."table"."schema_id"
   is 'ID of the schema to use as reference key';
 
 comment on column "dictionary"."table"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."table"."name"
   is 'Name identifier';
@@ -18818,7 +18977,7 @@ comment on column "dictionary"."table"."description"
   is 'Description';
 
 comment on column "dictionary"."table"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "dictionary"."table"."remarks"
   is 'Additional details';
@@ -18866,7 +19025,7 @@ comment on table "dictionary"."column"
   is 'Columns of a table';
 
 comment on column "dictionary"."column"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."column"."database_id"
   is 'ID of the database to use as reference key';
@@ -18878,7 +19037,7 @@ comment on column "dictionary"."column"."table_id"
   is 'ID of the table to use as reference key';
 
 comment on column "dictionary"."column"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."column"."name"
   is 'Name identifier';
@@ -18947,7 +19106,7 @@ comment on table "dictionary"."constraint"
   is 'Constraints of table columns';
 
 comment on column "dictionary"."constraint"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."constraint"."database_id"
   is 'ID of the database to use as reference key';
@@ -18959,7 +19118,7 @@ comment on column "dictionary"."constraint"."table_id"
   is 'ID of the table to use as reference key';
 
 comment on column "dictionary"."constraint"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."constraint"."name"
   is 'Name identifier';
@@ -19034,7 +19193,7 @@ comment on table "dictionary"."index"
   is 'Indexes of table columns';
 
 comment on column "dictionary"."index"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."index"."database_id"
   is 'ID of the database to use as reference key';
@@ -19046,7 +19205,7 @@ comment on column "dictionary"."index"."table_id"
   is 'ID of the table to use as reference key';
 
 comment on column "dictionary"."index"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."index"."name"
   is 'Name identifier';
@@ -19118,7 +19277,7 @@ comment on table "dictionary"."rule"
   is 'Rules';
 
 comment on column "dictionary"."rule"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."rule"."database_id"
   is 'ID of the database to use as reference key';
@@ -19127,7 +19286,7 @@ comment on column "dictionary"."rule"."schema_id"
   is 'ID of the schema to use as reference key';
 
 comment on column "dictionary"."rule"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."rule"."name"
   is 'Name identifier';
@@ -19193,7 +19352,7 @@ comment on table "dictionary"."trigger"
   is 'Triggers';
 
 comment on column "dictionary"."trigger"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."trigger"."database_id"
   is 'ID of the database to use as reference key';
@@ -19202,7 +19361,7 @@ comment on column "dictionary"."trigger"."schema_id"
   is 'ID of the schema to use as reference key';
 
 comment on column "dictionary"."trigger"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."trigger"."name"
   is 'Name identifier';
@@ -19268,7 +19427,7 @@ comment on table "dictionary"."view"
   is 'Views';
 
 comment on column "dictionary"."view"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."view"."database_id"
   is 'ID of the database to use as reference key';
@@ -19277,7 +19436,7 @@ comment on column "dictionary"."view"."schema_id"
   is 'ID of the schema to use as reference key';
 
 comment on column "dictionary"."view"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."view"."name"
   is 'Name identifier';
@@ -19334,7 +19493,7 @@ comment on table "dictionary"."sequence"
   is 'Sequences';
 
 comment on column "dictionary"."sequence"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."sequence"."database_id"
   is 'ID of the database to use as reference key';
@@ -19343,7 +19502,7 @@ comment on column "dictionary"."sequence"."schema_id"
   is 'ID of the schema to use as reference key';
 
 comment on column "dictionary"."sequence"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."sequence"."name"
   is 'Name identifier';
@@ -19397,7 +19556,7 @@ comment on table "dictionary"."function"
   is 'Functions';
 
 comment on column "dictionary"."function"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."function"."database_id"
   is 'ID of the database to use as reference key';
@@ -19406,7 +19565,7 @@ comment on column "dictionary"."function"."schema_id"
   is 'ID of the schema to use as reference key';
 
 comment on column "dictionary"."function"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."function"."name"
   is 'Name identifier';
@@ -19460,7 +19619,7 @@ comment on table "dictionary"."domain"
   is 'Domains';
 
 comment on column "dictionary"."domain"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."domain"."database_id"
   is 'ID of the database to use as reference key';
@@ -19469,7 +19628,7 @@ comment on column "dictionary"."domain"."schema_id"
   is 'ID of the schema to use as reference key';
 
 comment on column "dictionary"."domain"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."domain"."name"
   is 'Name identifier';
@@ -19523,7 +19682,7 @@ comment on table "dictionary"."aggregate"
   is 'Aggregates';
 
 comment on column "dictionary"."aggregate"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "dictionary"."aggregate"."database_id"
   is 'ID of the database to use as reference key';
@@ -19532,7 +19691,7 @@ comment on column "dictionary"."aggregate"."schema_id"
   is 'ID of the schema to use as reference key';
 
 comment on column "dictionary"."aggregate"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "dictionary"."aggregate"."name"
   is 'Name identifier';
@@ -19596,13 +19755,31 @@ comment on table "operational"."study"
   is 'Studies';
 
 comment on column "operational"."study"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."study"."key"
   is 'Logical key of the study';
 
+comment on column "operational"."study"."program_id"
+  is 'Product development program';
+
+comment on column "operational"."study"."place_id"
+  is 'Place where the study is conducted';
+
+comment on column "operational"."study"."phase_id"
+  is 'Breeding stage (HB, F1, F2, etc.) or special experiment (RGA, SI, etc.)';
+
+comment on column "operational"."study"."year"
+  is 'Year when the study was conducted';
+
+comment on column "operational"."study"."season_id"
+  is 'Season of the place when the study is conducted';
+
+comment on column "operational"."study"."number"
+  is 'Sequence number of the study; used to uniquely distinguish studies within the same program, place, phase, year, and season';
+
 comment on column "operational"."study"."name"
-  is 'Logical name of the study';
+  is 'Logical name of the study, which consists of the abbrev of the program, place, phase, year, season, and study number';
 
 comment on column "operational"."study"."title"
   is 'Title of the study';
@@ -19644,13 +19821,13 @@ comment on index "operational"."study_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "operational"."study_metadata"
-  is 'Metadata of a study';
+  is 'Metadata details of a study';
 
 comment on column "operational"."study_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."study_metadata"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."study_metadata"."value"
   is 'Value of a variable';
@@ -19704,13 +19881,13 @@ comment on table "operational"."entry"
   is 'Entries of a study';
 
 comment on column "operational"."entry"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."entry"."key"
   is 'Logical key of the entry';
 
 comment on column "operational"."entry"."study_id"
-  is 'ID referring to study';
+  is 'Study where the entry belongs to';
 
 comment on column "operational"."entry"."number"
   is 'Number of the entry within the study';
@@ -19719,19 +19896,19 @@ comment on column "operational"."entry"."code"
   is 'Code of the entry within the study';
 
 comment on column "operational"."entry"."product_id"
-  is 'ID of the product in the product table';
+  is 'Product as used as an entry';
 
 comment on column "operational"."entry"."product_gid"
-  is 'ID of germplasm from the IRIS GMS database; related to the germplasm''s seed stocks';
+  is 'GID of the product as a study entry';
 
 comment on column "operational"."entry"."product_name"
-  is 'Name or designation used for the product within the study';
+  is 'Name or designation used for the product as a study entry';
 
 comment on column "operational"."entry"."description"
   is 'Description';
 
 comment on column "operational"."entry"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "operational"."entry"."remarks"
   is 'Additional details';
@@ -19782,13 +19959,13 @@ comment on table "operational"."entry_metadata"
   is 'Metadata of an entry';
 
 comment on column "operational"."entry_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."entry_metadata"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."entry_metadata"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "operational"."entry_metadata"."value"
   is 'Value of a variable';
@@ -19848,13 +20025,13 @@ comment on table "operational"."entry_data"
   is 'Observational data of an entry';
 
 comment on column "operational"."entry_data"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."entry_data"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."entry_data"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "operational"."entry_data"."value"
   is 'Value of a variable';
@@ -19914,18 +20091,18 @@ comment on table "operational"."plot"
   is 'Plot of a study entry';
 
 comment on column "operational"."plot"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."plot"."key"
   is 'Logical key of the plot';
 
 comment on column "operational"."plot"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."plot"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
-comment on column "operational"."plot"."replication_number"
+comment on column "operational"."plot"."rep"
   is 'Replication number of a plot';
 
 comment on column "operational"."plot"."code"
@@ -19935,7 +20112,7 @@ comment on column "operational"."plot"."description"
   is 'Description';
 
 comment on column "operational"."plot"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "operational"."plot"."remarks"
   is 'Additional details';
@@ -19986,16 +20163,16 @@ comment on table "operational"."plot_metadata"
   is 'Metadata of a plot';
 
 comment on column "operational"."plot_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."plot_metadata"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."plot_metadata"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "operational"."plot_metadata"."plot_id"
-  is 'ID referring to plot';
+  is 'Plot';
 
 comment on column "operational"."plot_metadata"."value"
   is 'Value of a variable';
@@ -20061,16 +20238,16 @@ comment on table "operational"."plot_data"
   is 'Observational data of a plot';
 
 comment on column "operational"."plot_data"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."plot_data"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."plot_data"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "operational"."plot_data"."plot_id"
-  is 'ID referring to plot';
+  is 'Plot';
 
 comment on column "operational"."plot_data"."value"
   is 'Value of a variable';
@@ -20136,19 +20313,19 @@ comment on table "operational"."subplot"
   is 'Subplot of a study entry''s plot';
 
 comment on column "operational"."subplot"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."subplot"."key"
   is 'Logical key of the subplot';
 
 comment on column "operational"."subplot"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."subplot"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "operational"."subplot"."plot_id"
-  is 'ID referring to plot';
+  is 'Plot';
 
 comment on column "operational"."subplot"."number"
   is 'Number of the subplot within the plot';
@@ -20157,7 +20334,7 @@ comment on column "operational"."subplot"."description"
   is 'Description';
 
 comment on column "operational"."subplot"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "operational"."subplot"."remarks"
   is 'Additional details';
@@ -20214,16 +20391,16 @@ comment on table "operational"."subplot_metadata"
   is 'Metadata of a subplot';
 
 comment on column "operational"."subplot_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."subplot_metadata"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."subplot_metadata"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "operational"."subplot_metadata"."plot_id"
-  is 'ID referring to plot';
+  is 'Plot';
 
 comment on column "operational"."subplot_metadata"."subplot_id"
   is 'ID referring to subplot';
@@ -20298,16 +20475,16 @@ comment on table "operational"."subplot_data"
   is 'Observational data of a subplot';
 
 comment on column "operational"."subplot_data"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."subplot_data"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."subplot_data"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "operational"."subplot_data"."plot_id"
-  is 'ID referring to plot';
+  is 'Plot';
 
 comment on column "operational"."subplot_data"."subplot_id"
   is 'ID referring to subplot';
@@ -20379,40 +20556,43 @@ comment on index "operational"."subplot_data_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "operational"."cross"
-  is 'Crosses in a crossing study in the hybridization (HB) phase';
+  is 'Crosses in the hybridization stage';
 
 comment on column "operational"."cross"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."cross"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."cross"."product_id"
   is 'ID of the product in the product table';
 
 comment on column "operational"."cross"."female_entry_id"
-  is 'ID of the female entry in the cross';
+  is 'Female entry in the cross';
 
 comment on column "operational"."cross"."female_product_id"
-  is 'ID of the female product in the cross';
+  is 'Female product in the cross';
 
 comment on column "operational"."cross"."female_product_name"
   is 'Name or designation used for the female product in the cross';
 
 comment on column "operational"."cross"."male_entry_id"
-  is 'ID of the male entry in the cross';
+  is 'Male entry in the cross';
 
 comment on column "operational"."cross"."male_product_id"
-  is 'ID of the male product in the cross';
+  is 'Male product in the cross';
 
 comment on column "operational"."cross"."male_product_name"
   is 'Name or designation used for the male product in the cross';
+
+comment on column "operational"."cross"."cross_method_id"
+  is 'Method used in the cross';
 
 comment on column "operational"."cross"."description"
   is 'Description';
 
 comment on column "operational"."cross"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "operational"."cross"."remarks"
   is 'Additional details';
@@ -20484,13 +20664,13 @@ comment on index "operational"."cross_male_product_id_idx"
   is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
 
 comment on table "operational"."cross_metadata"
-  is 'Metadata about a cross';
+  is 'Metadata details about a cross';
 
 comment on column "operational"."cross_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."cross_metadata"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."cross_metadata"."value"
   is 'Value of a variable';
@@ -20544,10 +20724,10 @@ comment on table "operational"."cross_data"
   is 'Observational data of a cross';
 
 comment on column "operational"."cross_data"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."cross_data"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "operational"."cross_data"."value"
   is 'Value of a variable';
@@ -20602,7 +20782,7 @@ comment on table "operational"."seed_storage"
 on what material is available to be used in the product development programs.';
 
 comment on column "operational"."seed_storage"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "operational"."seed_storage"."product_id"
   is 'Product where the seeds are harvested from';
@@ -20611,13 +20791,25 @@ comment on column "operational"."seed_storage"."seed_lot_id"
   is 'A unique identifier for the seed storage assigned by the data manager';
 
 comment on column "operational"."seed_storage"."key_type"
-  is 'family_id, entry_key, plot_key, custom_key, seed_lot_id, dummy_key';
+  is 'Type of seed storage key: family_id, entry_key, plot_key, custom_key, seed_lot_id, dummy_key';
 
 comment on column "operational"."seed_storage"."seed_manager"
   is 'Refers to which product development programs has access to the seeds';
 
+comment on column "operational"."seed_storage"."gid"
+  is 'Assigned GID to the product given the seed storage record';
+
+comment on column "operational"."seed_storage"."volume"
+  is 'Amount of material in the seed storage';
+
+comment on column "operational"."seed_storage"."unit"
+  is 'Scale to measure the amount of material';
+
+comment on column "operational"."seed_storage"."harvest_date"
+  is 'Date when the material was harvested';
+
 comment on column "operational"."seed_storage"."label"
-  is 'Metadata about the seed storage';
+  is 'Metadata label about the seed storage';
 
 comment on column "operational"."seed_storage"."original_storage_id"
   is 'Null except in special cases when a seed lot is divided into several seed lots,
@@ -20657,10 +20849,13 @@ comment on index "operational"."seed_storage_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "operational"."seed_storage_log"
-  is 'Transaction log contains the history of transactions made';
+  is 'Contains the history of transactions made to the seed storage record';
 
 comment on column "operational"."seed_storage_log"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
+
+comment on column "operational"."seed_storage_log"."seed_storage_id"
+  is 'Seed storage of the product';
 
 comment on column "operational"."seed_storage_log"."encoder_id"
   is 'User who entered the record';
@@ -20669,7 +20864,13 @@ comment on column "operational"."seed_storage_log"."encode_timestamp"
   is 'Timestamp when the transaction was done';
 
 comment on column "operational"."seed_storage_log"."transaction_type"
-  is 'Deposit or withdraw';
+  is 'What was done to the seed storage record: deposit or withdraw';
+
+comment on column "operational"."seed_storage_log"."volume"
+  is 'Volume deposited to or withdrawn from the seed storage record';
+
+comment on column "operational"."seed_storage_log"."unit"
+  is 'Scale used to measure what volume was deposited or withdrawn';
 
 comment on column "operational"."seed_storage_log"."event_timestamp"
   is 'Timestamp when the transaction was needed';
@@ -20720,7 +20921,7 @@ comment on table "warehouse_terminal"."transaction"
   is 'Transactions store events related to upload from imported data and commit to warehouse data.';
 
 comment on column "warehouse_terminal"."transaction"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."transaction"."type"
   is 'Type of transaction ''upload'': data source files to terminal; ''commit'': terminal to data warehouse';
@@ -20780,7 +20981,7 @@ comment on table "warehouse_terminal"."transaction_file"
   is 'Files uploaded or committed in a transaction';
 
 comment on column "warehouse_terminal"."transaction_file"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."transaction_file"."transaction_id"
   is 'Transaction where the file belongs to';
@@ -20841,7 +21042,7 @@ comment on table "warehouse_terminal"."study"
   is 'Studies';
 
 comment on column "warehouse_terminal"."study"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."study"."transaction_id"
   is 'ID of the transaction made in the terminal';
@@ -20907,13 +21108,13 @@ comment on table "warehouse_terminal"."study_metadata"
   is 'Metadata of a study';
 
 comment on column "warehouse_terminal"."study_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."study_metadata"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
 comment on column "warehouse_terminal"."study_metadata"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse_terminal"."study_metadata"."value"
   is 'Value of a variable';
@@ -20973,13 +21174,13 @@ comment on table "warehouse_terminal"."study_variable"
   is 'Variables in a study';
 
 comment on column "warehouse_terminal"."study_variable"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."study_variable"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
 comment on column "warehouse_terminal"."study_variable"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse_terminal"."study_variable"."data_level"
   is 'Data level where the variable is found; can be study, entry, plot';
@@ -21042,13 +21243,13 @@ comment on table "warehouse_terminal"."entry"
   is 'Entries of a study';
 
 comment on column "warehouse_terminal"."entry"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."entry"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
 comment on column "warehouse_terminal"."entry"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse_terminal"."entry"."product_gid"
   is 'ID of germplasm from the IRIS GMS database; related to the germplasm''s seed stocks';
@@ -21105,16 +21306,16 @@ comment on index "warehouse_terminal"."entry_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "warehouse_terminal"."entry_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."entry_metadata"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
 comment on column "warehouse_terminal"."entry_metadata"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse_terminal"."entry_metadata"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "warehouse_terminal"."entry_metadata"."value"
   is 'Value of a variable';
@@ -21177,16 +21378,16 @@ comment on index "warehouse_terminal"."entry_metadata_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "warehouse_terminal"."entry_data"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."entry_data"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
 comment on column "warehouse_terminal"."entry_data"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse_terminal"."entry_data"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "warehouse_terminal"."entry_data"."value"
   is 'Value of a variable';
@@ -21249,7 +21450,7 @@ comment on index "warehouse_terminal"."entry_data_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "warehouse_terminal"."entry_summary"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."entry_summary"."transaction_id"
   is 'ID of the transaction made in the terminal';
@@ -21297,13 +21498,13 @@ comment on table "warehouse_terminal"."plot"
   is 'Plot observations of entries in a study';
 
 comment on column "warehouse_terminal"."plot"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."plot"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
 comment on column "warehouse_terminal"."plot"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse_terminal"."plot"."product_gid"
   is 'ID of germplasm from the IRIS GMS database; related to the germplasm''s seed stocks';
@@ -21363,19 +21564,19 @@ comment on index "warehouse_terminal"."plot_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "warehouse_terminal"."plot_metadata"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."plot_metadata"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
 comment on column "warehouse_terminal"."plot_metadata"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse_terminal"."plot_metadata"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "warehouse_terminal"."plot_metadata"."plot_id"
-  is 'ID referring to plot';
+  is 'Plot';
 
 comment on column "warehouse_terminal"."plot_metadata"."value"
   is 'Value of a variable';
@@ -21444,19 +21645,19 @@ comment on index "warehouse_terminal"."plot_metadata_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "warehouse_terminal"."plot_data"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."plot_data"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
 comment on column "warehouse_terminal"."plot_data"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse_terminal"."plot_data"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "warehouse_terminal"."plot_data"."plot_id"
-  is 'ID referring to plot';
+  is 'Plot';
 
 comment on column "warehouse_terminal"."plot_data"."value"
   is 'Value of a variable';
@@ -21525,7 +21726,7 @@ comment on index "warehouse_terminal"."plot_data_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "warehouse_terminal"."plot_summary"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."plot_summary"."transaction_id"
   is 'ID of the transaction made in the terminal';
@@ -21570,7 +21771,7 @@ comment on index "warehouse_terminal"."plot_summary_is_void_idx"
   is 'Index for the is_void column';
 
 comment on column "warehouse_terminal"."temporary_data_upload"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."temporary_data_upload"."transaction_id"
   is 'ID of the transaction made in the terminal';
@@ -21630,7 +21831,7 @@ comment on table "warehouse"."study"
   is 'Studies';
 
 comment on column "warehouse"."study"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse"."study"."key"
   is 'Logical key of the study';
@@ -21684,13 +21885,13 @@ comment on table "warehouse"."entry"
   is 'Entries of a study';
 
 comment on column "warehouse"."entry"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse"."entry"."key"
   is 'Logical key of the entry';
 
 comment on column "warehouse"."entry"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse"."entry"."number"
   is 'Number of the entry within the study';
@@ -21711,7 +21912,7 @@ comment on column "warehouse"."entry"."description"
   is 'Description';
 
 comment on column "warehouse"."entry"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "warehouse"."entry"."remarks"
   is 'Additional details';
@@ -21765,16 +21966,16 @@ comment on table "warehouse"."plot"
   is 'Plot of a study entry';
 
 comment on column "warehouse"."plot"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse"."plot"."key"
   is 'Logical key of the plot';
 
 comment on column "warehouse"."plot"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse"."plot"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "warehouse"."plot"."replication_number"
   is 'Replication number of a plot';
@@ -21786,7 +21987,7 @@ comment on column "warehouse"."plot"."description"
   is 'Description';
 
 comment on column "warehouse"."plot"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "warehouse"."plot"."remarks"
   is 'Additional details';
@@ -21840,19 +22041,19 @@ comment on table "warehouse"."subplot"
   is 'Subplot of a study entry''s plot';
 
 comment on column "warehouse"."subplot"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "warehouse"."subplot"."key"
   is 'Logical key of the subplot';
 
 comment on column "warehouse"."subplot"."study_id"
-  is 'ID referring to study';
+  is 'Study';
 
 comment on column "warehouse"."subplot"."entry_id"
-  is 'ID referring to entry';
+  is 'Entry of the study';
 
 comment on column "warehouse"."subplot"."plot_id"
-  is 'ID referring to plot';
+  is 'Plot';
 
 comment on column "warehouse"."subplot"."number"
   is 'Number of the subplot within the plot';
@@ -21861,7 +22062,7 @@ comment on column "warehouse"."subplot"."description"
   is 'Description';
 
 comment on column "warehouse"."subplot"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "warehouse"."subplot"."remarks"
   is 'Additional details';
@@ -21921,10 +22122,10 @@ comment on table "import"."variable"
   is 'Variable list by the data managers';
 
 comment on column "import"."variable"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "import"."variable"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "import"."variable"."remarks"
   is 'Additional details';
@@ -21963,10 +22164,10 @@ comment on schema "test"
   is 'Temporary schema used for testing purposes only';
 
 comment on column "test"."lookup"."id"
-  is 'Locally unique primary key';
+  is 'Primary key of the record in the table';
 
 comment on column "test"."lookup"."abbrev"
-  is 'Short name identifier or abbreviation';
+  is 'Short name identifier or abbreviation of the record';
 
 comment on column "test"."lookup"."name"
   is 'Name identifier';
@@ -21975,7 +22176,7 @@ comment on column "test"."lookup"."description"
   is 'Description';
 
 comment on column "test"."lookup"."display_name"
-  is 'Name to display to users';
+  is 'Name to show to users';
 
 comment on column "test"."lookup"."remarks"
   is 'Additional details';
