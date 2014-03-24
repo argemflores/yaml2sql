@@ -5,13 +5,13 @@ dictionary:
             name: id
             data_type: serial
             not_null: true
-            comment: Locally unique primary key
+            comment: Primary key of the record in the table
         - &abbrev-col
             name: abbrev
             data_type: varchar
             length: 128
             not_null: true
-            comment: Short name identifier or abbreviation
+            comment: Short name identifier or abbreviation of the record
         - &name-col
             name: name
             data_type: varchar
@@ -121,17 +121,17 @@ dictionary:
             name: study_id
             data_type: integer
             not_null: true
-            comment: ID referring to study
+            comment: Study
         - &entry_id-col
             name: entry_id
             data_type: integer
             not_null: true
-            comment: ID referring to entry
+            comment: Entry of the study
         - &plot_id-col
             name: plot_id
             data_type: integer
             not_null: true
-            comment: ID referring to plot
+            comment: Plot
         - &subplot_id-col
             name: subplot_id
             data_type: integer
@@ -187,7 +187,7 @@ dictionary:
             name: display_name
             data_type: varchar
             length: 256
-            comment: Name to display to users
+            comment: Name to show to users
     constraint:
         - &id-pkey-cst
             name: {table}_id_pkey
@@ -466,12 +466,14 @@ database: &bims_0.10_dev-db
     schema:
         - &master-sch
             name: master
-            comment: 'Stores master data, which are absolutely correct data that does not change frequently'
+            comment: |
+                Stores master data, which are absolutely correct data that does not change frequently
             table:
                 - &master-user-tbl
                     <<: *def-tbl
                     name: user
-                    comment: Users
+                    comment: |
+                        Registered users in the system are granted with roles and are assigned to one or more teams.
                     column:
                         <<: *def-id-tbl-col
                         - &user-email-col
@@ -479,49 +481,60 @@ database: &bims_0.10_dev-db
                             data_type: varchar
                             length: 64
                             not_null: true
+                            comment: Active email address of the user. Currently supports IRRI email addresses.
                         - &user-username-col
                             name: username
                             data_type: varchar
                             length: 64
                             not_null: true
-                        - &user-last_name-col
-                            name: last_name
-                            data_type: varchar
-                            length: 32
+                            comment: Unique username of the user taken from email address by removing all characters after and including the '@' sign
+                        - &user-user_type-col
+                            name: user_type
+                            data_type: integer
                             not_null: true
-                        - &user-first_name-col
-                            name: first_name
-                            data_type: varchar
-                            length: 32
-                            not_null: true
-                        - &user-middle_name-col
-                            name: middle_name
-                            data_type: varchar
-                            length: 32
-                        - &user-display_name-col
-                            name: display_name
-                            data_type: varchar
-                            length: 64
-                            not_null: true
+                            comment: Administrator (admin) or non-admin
                         - &user-status-col
                             name: status
                             data_type: varchar
                             not_null: true
                             default_value: active
+                            comment: Whether the user can log in to the system (active) or not (inactive)
+                        - &user-last_name-col
+                            name: last_name
+                            data_type: varchar
+                            length: 32
+                            not_null: true
+                            comment: Last name or family name of the user
+                        - &user-first_name-col
+                            name: first_name
+                            data_type: varchar
+                            length: 32
+                            not_null: true
+                            comment: First or given name of the user
+                        - &user-middle_name-col
+                            name: middle_name
+                            data_type: varchar
+                            length: 32
+                            comment: Middle name of the user
+                        - &user-display_name-col
+                            name: display_name
+                            data_type: varchar
+                            length: 64
+                            not_null: true
+                            comment: Name of the user to be displayed in the system
                         - &user-salutation-col
                             name: salutation
                             data_type: varchar
                             length: 16
+                            comment: Name to address the user in some parts of the system like the user profile
                         - &user-valid_start_date-col
                             name: valid_start_date
                             data_type: date
+                            comment: Start date to allow the user to use the system
                         - &user-valid_end_date-col
                             name: valid_end_date
                             data_type: date
-                        - &user-user_type-col
-                            name: user_type
-                            data_type: integer
-                            not_null: true
+                            comment: Last date allowed for the user to use the system 
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -561,42 +574,49 @@ database: &bims_0.10_dev-db
                 - &master-property-tbl
                     <<: *def-tbl
                     name: property
-                    comment: 'Property describes the context of the sampling unit and experimental material, or the trait being measured.'
+                    comment: |
+                        Property describes the context of the sampling unit and experimental material, or the trait being measured.
                 - &master-method-tbl
                     <<: *def-tbl
                     name: method
-                    comment: 'Method describes how the property is applied or the protocol by which a variable is measured.'
+                    comment: |
+                        Method describes how the property is applied or the protocol by which a variable is measured.
                     column:
                         <<: *def-id-tbl-col
                         - &method-abbrev-col
                             <<: *abbrev-col
+                            comment: Short name for the method
                         - &method-name-col
                             name: name
                             data_type: varchar
+                            comment: Name of the method or protocol to be applied
                         <<: *def-desc-tbl-col
                         -
                             name: formula
                             data_type: varchar
+                            comment: Formula needed to compute for a property
                         <<: *def-log-tbl-col
                 - &master-scale-tbl
                     <<: *def-tbl
                     name: scale
-                    comment: 'Scale describes the units in which the variables are recorded.'
+                    comment: |
+                        Scale describes the units in which the variables are recorded.
                     column:
                         <<: *def-id-tbl-col
                         <<: *def-meta-tbl-col
                         - &scale-unit-col
                             name: unit
                             data_type: varchar
+                            comment: Unit to use to measure a property
                         - &scale-type-col
                             name: type
                             data_type: varchar
                             # not_null: true
-                            comment: 'categorical; continuous; discrete'
+                            comment: categorical; continuous; discrete
                         - &scale-level-col
                             name: level
                             data_type: varchar
-                            comment: 'nominal; ordinal; interval; ratio'
+                            comment: nominal; ordinal; interval; ratio
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                 - &master-scale_value-tbl
@@ -609,12 +629,21 @@ database: &bims_0.10_dev-db
                             name: scale_id
                             data_type: integer
                             not_null: true
+                            comment: Scale to use the allowable value
                         - &scale_value-value-col
                             name: value
                             data_type: varchar
                             not_null: true
-                        - *order_number-col
-                        <<: *def-desc-tbl-col
+                            comment: Value in the scale
+                        -
+                            <<: *order_number-col
+                            comment: Order of the value in the scale; -1 if order is not significant
+                        -
+                            <<: *description-col
+                            comment: Additional information about the scale value
+                        -
+                            <<: *display_name-col
+                            comment: Name to display or label of the scale value
                         <<: *def-log-tbl-col
                     constraint:
                         - &scale_value-scale_id-cst
@@ -624,6 +653,11 @@ database: &bims_0.10_dev-db
                             other_attributes:
                                 foreign_table: master.scale
                                 foreign_column: id
+                        -
+                            type: unique_key
+                            column:
+                                - scale_id
+                                - value
                         <<: *def-log-tbl-cst
                     index:
                         - &scale_value-scale_id-idx
@@ -643,7 +677,9 @@ database: &bims_0.10_dev-db
                 - &master-variable-tbl
                     <<: *def-tbl
                     name: variable
-                    comment: Variables
+                    comment: |
+                        A variable is a data element, which has precise meaning throughout the data model.
+                        Each variable has a set of mandatory attributes, which are inherited by the children through the data model.
                     column:
                         <<: *def-id-tbl-col
                         - &variable-abbrev-col
@@ -656,48 +692,69 @@ database: &bims_0.10_dev-db
                             comment: Abbrev of the variable's property
                         - &variable-name-col
                             <<: *name-col
-                            comment: Name of the variable's property
+                            comment: Name of the variable or the variable's property
                         - &variable-data_type-col
                             name: data_type
                             data_type: varchar
+                            comment: Type of data a variable can accept
                             # accepted_values: integer, float, varchar, text, bool, byte
                         - &variable-not_null-col
                             name: not_null
                             data_type: boolean
                             not_null: true
                             default_value: false
+                            comment: Whether the variable can not be null (true) or nullable (false)
                         - &variable-type-col
                             name: type
                             data_type: varchar
                             length: 32
-                            # accepted_values: [ system, identification, metadata, observation ]
+                            comment: |
+                                Type of the variable in the system
+                                1. system: contains values which are (usually) not displayed to the users of the system.
+                                    For example study_id which is a surrogate key or a product_id which is a reference key to product catalog.
+                                    This is automatically generated by the system.
+                                2. identification: has values which are used as keys or part of a key, which will be used to verify the data integrity in study, entry and plot level.
+                                    For instance entry_code, replication number. This is also automatically generated by the system.
+                                3. metadata: has a wide range of data types aimed to store values, which will be useful to interpret the observation variable values.
+                                    For instance entry count of a study, harvest date, remarks and pictures.
+                                4. observation: used to store the values produced (measured, observed, computed, predicted) in various data production events,
+                                    like for instance single trial analysis or plant height observation
                         - &variable-status-col
                             <<: *status-col
+                            comment: Whether a variable is being actively used in the system (active) or not (deprecated)
                         - &variable-display_name-col
                             name: display_name
                             data_type: varchar
                             not_null: true
+                            comment: Name of the variable to display in different parts of the system
                         - &variable-ontology_reference-col
                             name: ontology_reference
                             data_type: varchar
+                            comment: Reference of the variable to the Rice Crop Ontology (http://www.cropontology.org/ontology/CO_320/Rice)
                         - &variable-bibliographical_reference-col
                             name: bibliographical_reference
                             data_type: varchar
+                            comment: 'Reference to books (version, year, chapter, page, etc.) like SES or RD, where the variable was taken from'
                         - &variable-property_id-col
                             name: property_id
                             data_type: integer
+                            comment: Property of the variable
                         - &variable-method_id-col
                             name: method_id
                             data_type: integer
+                            comment: Method to measure the property of the variable
                         - &variable-scale_id-col
                             name: scale_id
                             data_type: integer
+                            comment: Scale and allowable values a variable can have
                         - &variable-variable_set-col
                             name: variable_set
                             data_type: varchar
+                            comment: Variable set where the variable belongs to
                         - &variable-synonym-col
                             name: synonym
                             data_type: varchar
+                            comment: Additional entries about the synonyms of the variable
                         <<: *def-log-tbl-col
                     constraint:
                         - &variable-property_id-fkey-cst
@@ -746,26 +803,29 @@ database: &bims_0.10_dev-db
                 - &master-variable_set-tbl
                     <<: *def-tbl
                     name: variable_set
-                    comment: Groups of variables
+                    comment: Groups related variables together
                 - &master-variable_set_member-tbl
                     <<: *def-tbl
                     name: variable_set_member
-                    comment: variables
+                    comment: List of variables belonging to a variable set
                     column:
                         <<: *def-id-tbl-col
                         - &variable_set_member-variable_set_id-col
                             name: variable_set_id
                             data_type: integer
                             not_null: true
+                            comment: Variable set where the variables belong to
                         - &variable_set_member-variable_id-col
                             name: variable_id
                             data_type: integer
                             not_null: true
+                            comment: Variable belonging to variable set
                         - &variable_set_member-order_number-col
                             name: order_number
                             data_type: integer
                             not_null: true
                             default_value: 1
+                            comment: Order of the variable within the variable set
                         <<: *def-log-tbl-col
                     constraint:
                         - &variable_set_member-variable_set_id-fkey-cst
@@ -787,6 +847,11 @@ database: &bims_0.10_dev-db
                             column:
                                 - variable_set_id
                                 - variable_id
+                        -
+                            type: unique_key
+                            column:
+                                - variable_set_id
+                                - order_number
                         <<: *def-log-tbl-cst
                     index:
                         -
@@ -800,13 +865,13 @@ database: &bims_0.10_dev-db
                     comment: |
                         A product development schema designed to develop breeding products to a certain demand (market segment).
                         At IRRI, VDPs are structured based on major regions and production ecologies
-                            - Irrigated South East Asia (IR SEA)
-                            - Rainfed lowland South East Asia (RF SEA)
-                            - Irrigated South Asia (IR SA)
-                            - Rainfed lowland South Asia (RF SA)
-                            - Hybrid
+                            - Irrigated South East Asia (IRSEA)
+                            - Rainfed lowland South East Asia (RFSEA)
+                            - Irrigated South Asia (IRSA)
+                            - Rainfed lowland South Asia (RFSA)
+                            - Hybrid (HYB)
                             - Eastern Southern Africa (ESA) - has Rainfed and Irrigated TVP's, 
-                            - Japonica - has Temperate and Tropical TVP's
+                            - Japonica (JAP) - has Temperate and Tropical TVP's
                 - &master-crosscutting-tbl
                     <<: *def-tbl
                     name: crosscutting
@@ -821,6 +886,15 @@ database: &bims_0.10_dev-db
                         Products of VDPs are varieties, breeding lines, parental lines and other genetic materials in different stages of a breeding scheme, and IP related to the genetic materials.
                         Products of trait development are discovered trait donors, QTL's and genes, and marker application for selection of those, and related IP.
                         Trait development products work through different type IP-solutions than variety development.
+                    column:
+                        <<: *def-id-tbl-col
+                        <<: *def-meta-tbl-col
+                        -
+                            name: type
+                            data_type: varchar
+                            comment: 'Type of program: pipeline, crosscutting'
+                        <<: *def-desc-tbl-col
+                        <<: *def-log-tbl-col
                     copy:
                         <<: *copy-val
                         column:
@@ -835,7 +909,7 @@ database: &bims_0.10_dev-db
                     <<: *def-tbl
                     name: place
                     comment: |
-                        Represents the physical places and their segmentations such as geographies, locations, areas, zones, etc. 
+                        Represents the physical places and their segmentations such as geographies, locations, areas, zones, etc.
                             - Breeding hub
                             - Breeding location
                             - Facility
@@ -857,7 +931,7 @@ database: &bims_0.10_dev-db
                 - &master-phase-tbl
                     <<: *def-tbl
                     name: phase
-                    comment: Breeding development phases
+                    comment: Breeding development phases; a step having agreed name in an agreed breeding schema
                     copy:
                         <<: *copy-val
                         column:
@@ -902,8 +976,7 @@ database: &bims_0.10_dev-db
                             name: year
                             data_type: integer
                             not_null: true
-                            comment: |
-                                Year when the product was created or acquired
+                            comment: Year when the product was created or acquired
                         - &product-season_id-col
                             name: season_id
                             data_type: integer
@@ -918,13 +991,11 @@ database: &bims_0.10_dev-db
                         - &product-parentage-col
                             name: parentage
                             data_type: varchar
-                            comment: |
-                                Pedigree details of the product
+                            comment: Pedigree details of the product
                         - &product-cross_id-col
                             name: cross_id
                             data_type: integer
-                            comment: |
-                                Refers to the cross id where the product was crossed; needs clarification
+                            comment: Refers to the cross id where the product was crossed; needs clarification
                         - &product-generation-col
                             name: generation
                             data_type: varchar
@@ -946,8 +1017,7 @@ database: &bims_0.10_dev-db
                         - &product-selection_method-col
                             name: selection_method
                             data_type: varchar
-                            comment: |
-                                Method of selection of the product
+                            comment: Method of selection of the product
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
@@ -1004,30 +1074,31 @@ database: &bims_0.10_dev-db
                 - &master-product_name-tbl
                     <<: *def-tbl
                     name: product_name
-                    comment: Names of a product
+                    comment: Different names and name types given to a product
                     column:
                         <<: *def-id-tbl-col
                         - &product_name-product_id-col
                             name: product_id
                             data_type: integer
                             not_null: true
+                            comment: Product given with a particular name
                         - &product_name-name_type-col
                             name: name_type
                             data_type: varchar
                             not_null: true
                             comment: |
-                                derivative, fixed_line, cultivar, common, others
+                                Type of the name: derivative, fixed_line, cultivar, common, others
                         - &product_name-value-col
                             name: value
                             data_type: varchar
                             not_null: true
+                            comment: Value of the name
                         - &product_name-language_code-col
                             name: language_code
                             data_type: varchar
                             not_null: true
                             default_value: eng
-                            comment: |
-                                Reference: http://www.loc.gov/standards/iso639-2/php/code_list.php
+                            comment: 'Language of the given name to the product (refer to: http://www.loc.gov/standards/iso639-2/php/code_list.php)'
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
@@ -1050,20 +1121,24 @@ database: &bims_0.10_dev-db
                 - &master-product_gid-tbl
                     <<: *def-tbl
                     name: product_gid
-                    comment: List of GIDs of a product
+                    comment: List of GIDs of a product; refers to its seed storage
                     column:
                         <<: *def-id-tbl-col
                         -
                             name: product_id
                             data_type: integer
+                            not_null: true
+                            comment: Product assigned with a particular GID
                         -
                             name: gid
                             data_type: integer
+                            not_null: true
+                            comment: GID assigned to a product
                         -
                             name: gid_type
                             data_type: varchar
                             comment: |
-                                fixed breeding line, cross, derivative, mgid (founding germplasm; from gms)
+                                Type of GID of the product: fixed breeding line, cross, derivative, mgid (founding germplasm, from gms)
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1088,7 +1163,7 @@ database: &bims_0.10_dev-db
                 - &master-product_metadata-tbl
                     <<: *def-tbl
                     name: product_metadata
-                    comment: Additional information about products
+                    comment: Additional information about a product
                     column:
                         <<: *def-id-tbl-col
                         - &product_metadata-variable_id-col
@@ -1135,10 +1210,12 @@ database: &bims_0.10_dev-db
                             name: place_id
                             data_type: integer
                             not_null: true
+                            comment: Place having that particular season
                         - &place_season-season_id-col
                             name: season_id
                             data_type: integer
                             not_null: true
+                            comment: Season in a given place
                         - &place_season-order_number-col
                             name: order_number
                             data_type: integer
@@ -1203,11 +1280,6 @@ database: &bims_0.10_dev-db
                             - name
                             - description
                             - display_name
-                - &master-country-tbl
-                    <<: *def-tbl
-                    name: country
-                    # copy:
-                    #     <<: *copy-val
                 - &master-family-tbl
                     <<: *def-tbl
                     name: family
@@ -1220,22 +1292,28 @@ database: &bims_0.10_dev-db
                             name: female_product_id
                             data_type: integer
                             not_null: true
+                            comment: Product used as female parent in the family
                         - &family-male_product_id-col
                             name: male_product_id
                             data_type: integer
                             not_null: true
+                            comment: Product used as male parent in the family
                         -
                             <<: *study_id-col
                             not_null: false
+                            comment: Study where the family came from
                         - &family-cross_id-col
                             name: cross_id
                             data_type: integer
+                            comment: Cross of the family in a study
                         - &family-female_entry_id-col
                             name: female_entry_id
                             data_type: integer
+                            comment: Study entry used as female in the family
                         - &family-male_entry_id-col
                             name: male_entry_id
                             data_type: integer
+                            comment: Study entry used as male in the family
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1285,8 +1363,7 @@ database: &bims_0.10_dev-db
                 - &master-role-tbl
                     <<: *def-tbl
                     name: role
-                    comment: |
-                        Titles of privileged users that can perform definite actions
+                    comment: Titles of privileged users that can perform definite actions
                     column:
                         <<: *def-id-tbl-col
                         <<: *def-meta-tbl-col
@@ -1351,15 +1428,18 @@ database: &bims_0.10_dev-db
                             name: parent_id
                             data_type: integer
                             not_null: true
+                            comment: Parent item
                         -
                             name: child_id
                             data_type: integer
                             not_null: true
+                            comment: Child item of the parent item
                         -
                             name: order_number
                             data_type: integer
                             not_null: true
                             default_value: 1
+                            comment: Order of the child in the list of children of the parent item
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1409,23 +1489,28 @@ database: &bims_0.10_dev-db
                 - &master-item_action-tbl
                     <<: *def-tbl
                     name: item_action
+                    comment: 'Module, controller, and action IDs assigned to an item'
                     column:
                         <<: *def-id-tbl-col
                         -
                             name: item_id
                             data_type: integer
                             not_null: true
+                            comment: Item which can be accessed by visiting module-controller-action
                         -
                             name: module
                             data_type: varchar
+                            comment: Name of the module
                         -
                             name: controller
                             data_type: varchar
                             not_null: true
+                            comment: Name of the controller in a module (if applicable)
                         -
                             name: action
                             data_type: varchar
                             not_null: true
+                            comment: Name of action in the controller
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1464,16 +1549,18 @@ database: &bims_0.10_dev-db
                 - &master-team-tbl
                     <<: *def-tbl
                     name: team
+                    comment: Groups users together in a pipeline or crosscutting team
                     column:
                         <<: *def-id-tbl-col
                         <<: *def-meta-tbl-col
                         -
                             name: leader_id
                             data_type: integer
+                            comment: User who leads the team
                         -
                             name: type
                             data_type: varchar
-                            comment: pipeline; crosscutting
+                            comment: 'Type of the team: pipeline; crosscutting'
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
@@ -1506,13 +1593,17 @@ database: &bims_0.10_dev-db
                 - &master-user_item-tbl
                     <<: *def-tbl
                     name: user_item
+                    comment: Items assigned to users
                     column:
                         <<: *def-id-tbl-col
-                        - *user_id-col
+                        -
+                            <<: *user_id-col
+                            comment: User assigned with a role
                         -
                             name: item_id
                             data_type: integer
                             not_null: true
+                            comment: Item assigned to user
                         <<: *def-log-tbl-col
                     constraint:
                         - *user_id-fkey-cst
@@ -1551,13 +1642,17 @@ database: &bims_0.10_dev-db
                 - &master-user_role-tbl
                     <<: *def-tbl
                     name: user_role
+                    comment: Roles assigned to users
                     column:
                         <<: *def-id-tbl-col
-                        - *user_id-col
+                        -
+                            <<: *user_id-col
+                            comment: User assigned with a role
                         -
                             name: role_id
                             data_type: integer
                             not_null: true
+                            comment: Role assigned to a user
                         <<: *def-log-tbl-col
                     constraint:
                         - *user_id-fkey-cst
@@ -1598,26 +1693,32 @@ database: &bims_0.10_dev-db
                 - &master-user_session-tbl
                     <<: *def-tbl
                     name: user_session
+                    comment: Session data of users
                     column:
                         <<: *def-id-tbl-col
                         - *user_id-col
                         -
                             name: data
                             data_type: text
+                            comment: Session data saved in JSON format
                         -
                             name: selected_pipeline_id
                             data_type: integer
+                            comment: Pipeline where the user is currently into
                         -
                             name: last_visited_url
                             data_type: varchar
+                            comment: Last visited page of the user
                         -
                             name: is_default_redirect_yes
                             data_type: boolean
                             default_value: false
+                            comment: Redirect the user to the last visited page
                         -
                             name: is_default_redirect_no
                             data_type: boolean
                             default_value: false
+                            comment: Do not redirect the user to the last visited page
                         <<: *def-log-tbl-col
                     constraint:
                         - *user_id-fkey-cst
@@ -1641,23 +1742,28 @@ database: &bims_0.10_dev-db
                 - &master-team_member-tbl
                     <<: *def-tbl
                     name: team_member
+                    comment: Users belonging to teams
                     column:
                         <<: *def-id-tbl-col
                         -
                             name: team_id
                             data_type: integer
                             not_null: true
+                            comment: Team with one or more members
                         -
                             name: member_id
                             data_type: integer
                             not_null: true
+                            comment: User belonging to a team
                         -
                             name: role_id
                             data_type: integer
                             not_null: true
+                            comment: Role of the user within the team
                         -
                             name: user_role_id
                             data_type: integer
+                            comment: Refers to the role assigned to user in the user_role table
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1746,14 +1852,17 @@ database: &bims_0.10_dev-db
                             name: item_id
                             data_type: integer
                             not_null: true
+                            comment: Item assigned with the role
                         -
                             name: role_id
                             data_type: integer
                             not_null: true
+                            comment: Role that can access the item
                         -
                             name: team_id
                             data_type: integer
                             not_null: true
+                            comment: Team with the role that can access the item
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1827,9 +1936,15 @@ database: &bims_0.10_dev-db
                     name: tooltip
                     column:
                         <<: *def-id-tbl-col
-                        - *name-col
-                        - *value-col
-                        - *description-col
+                        -
+                            <<: *name-col
+                            comment: Name of the tooltip
+                        -
+                            <<: *value-col
+                            comment: Value of the tooltip
+                        -
+                            <<: *description-col
+                            comment: 
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1857,11 +1972,18 @@ database: &bims_0.10_dev-db
                 - &master-instruction-tbl
                     <<: *def-tbl
                     name: instruction
+                    comment: Instructions for users on how to use a feature in the system
                     column:
                         <<: *def-id-tbl-col
-                        - *name-col
-                        - *value-col
-                        - *description-col
+                        -
+                            <<: *name-col
+                            comment: Name of the instruction
+                        -
+                            <<: *value-col
+                            comment: Value of the instruction to display
+                        -
+                            <<: *description-col
+                            comment: Additional details about the instruction
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1895,32 +2017,45 @@ database: &bims_0.10_dev-db
                             name: schema_name
                             data_type: varchar
                             not_null: true
+                            comment: Schema name
                         - &audit-table_name-col
                             name: table_name
                             data_type: varchar
+                            comment: Table name
                         - &audit-column_name-col
                             name: column_name
                             data_type: varchar
+                            comment: Column name
                         - &audit-action_type-col
                             name: action_type
                             data_type: varchar
+                            comment: 'Type of action performed on the record: insert, update, delete'
                         - &audit-record_id-col
                             name: record_id
                             data_type: bigint
+                            comment: Record subjected to the action
                         - &audit-old_value-col
                             name: old_value
                             data_type: varchar
-                        - &audit-new_value-col
-                            name: new_value
+                            comment: 'Old value of the record before the update'
+                        - &audit-value-col
+                            name: value
                             data_type: varchar
+                            comment: 'For insert, new value to be inserted; for update, new value of the updated record; for delete, value of the record to be deleted'
                         - &audit-actor_id-col
                             name: actor_id
                             data_type: integer
+                            comment: User who performed the action
                         - &audit-action_timestamp-col
                             name: action_timestamp
                             data_type: timestamp
-                        - *description-col
-                        - *status-col
+                            comment: Timestamp when the action was performed
+                        -
+                            <<: *remarks-col
+                            comment: Additional details about the audit record
+                        -
+                            <<: *status-col
+                            comment: Needs clarification (forgotten why it's here)
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1948,21 +2083,27 @@ database: &bims_0.10_dev-db
                                 - actor_id
                                 - action_timestamp
                         <<: *def-log-tbl-idx
-                - &master-change_log-tbl
+                - &master-changelog-tbl
                     <<: *def-tbl
-                    name: change_log
+                    name: changelog
                     column:
                         <<: *def-id-tbl-col
-                        - *name-col
-                        - *description-col
+                        -
+                            <<: *name-col
+                            comment: Display name of the changelog record
+                        -
+                            <<: *description-col
+                            comment: More details about the changes
                         -
                             name: key_person_id
                             data_type: integer
                             not_null: true
+                            comment: User who implemented the feature
                         -
                             name: date_done
                             data_type: date
                             not_null: true
+                            comment: Date when the feature was done
                         <<: *def-log-tbl-col
                     constraint:
                         -
@@ -1993,6 +2134,7 @@ database: &bims_0.10_dev-db
             view:
                 - &master-variable_list-view
                     name: variable_list
+                    comment: 'Master list of variables, with their property, method, and scale values'
                     query: |
                         select
                             mv.id variable_id,
@@ -2529,29 +2671,35 @@ database: &bims_0.10_dev-db
                             name: program_id
                             data_type: integer
                             not_null: true
+                            comment: Product development program
                         - &study-place_id-col
                             name: place_id
                             data_type: integer
                             not_null: true
+                            comment: Place where the study is conducted
                         - &study-phase_id-col
                             name: phase_id
                             data_type: integer
                             not_null: true
+                            comment: 'Breeding stage (HB, F1, F2, etc.) or special experiment (RGA, SI, etc.)'
                         - &study-year-col
                             name: year
                             data_type: integer
                             not_null: true
+                            comment: Year when the study was conducted
                         - &study-season_id-col
                             name: season_id
                             data_type: integer
                             not_null: true
+                            comment: Season of the place when the study is conducted
                         - &study-number-col
                             name: number
                             data_type: integer
                             not_null: true
+                            comment: 'Sequence number of the study; used to uniquely distinguish studies within the same program, place, phase, year, and season'
                         - &study-name-col
                             <<: *name-col
-                            comment: Logical name of the study
+                            comment: 'Logical name of the study, which consists of the abbrev of the program, place, phase, year, season, and study number'
                         - &study-title-col
                             <<: *title-col
                             comment: Title of the study
@@ -2643,7 +2791,7 @@ database: &bims_0.10_dev-db
                 - &operational-study_metadata-tbl
                     <<: *def-tbl
                     name: study_metadata
-                    comment: Metadata of a study
+                    comment: Metadata details of a study
                     column:
                         <<: *def-id-tbl-col
                         - *study_id-col
@@ -2667,7 +2815,9 @@ database: &bims_0.10_dev-db
                         - &entry-key-col
                             <<: *key-col
                             comment: Logical key of the entry
-                        - *study_id-col
+                        - &entry-study_id-col
+                            <<: *study_id-col
+                            comment: Study where the entry belongs to
                         - &entry-number-col
                             <<: *number-col
                             comment: Number of the entry within the study
@@ -2676,13 +2826,15 @@ database: &bims_0.10_dev-db
                             comment: Code of the entry within the study
                         - &entry-product_id-col
                             <<: *product_id-col
+                            comment: Product as used as an entry
                         - &entry-product_gid-col
                             <<: *gid-col
                             name: product_gid
+                            comment: GID of the product as a study entry
                         - &entry-product_name-col
                             <<: *name-col
                             name: product_name
-                            comment: Name or designation used for the product within the study
+                            comment: Name or designation used for the product as a study entry
                         # - &entry-seed_storage_id-col
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
@@ -2777,8 +2929,8 @@ database: &bims_0.10_dev-db
                             comment: Logical key of the plot
                         - *study_id-col
                         - *entry_id-col
-                        - &plot-replication_number-col
-                            name: replication_number
+                        - &plot-rep-col
+                            name: rep
                             data_type: integer
                             comment: Replication number of a plot
                         - &plot-code-col
@@ -2977,7 +3129,7 @@ database: &bims_0.10_dev-db
                 - &operational-cross-tbl
                     <<: *def-tbl
                     name: cross
-                    comment: Crosses in a crossing study in the hybridization (HB) phase
+                    comment: Crosses in the hybridization stage
                     column:
                         <<: *def-id-tbl-col
                         - &cross-study_id-col
@@ -2987,11 +3139,11 @@ database: &bims_0.10_dev-db
                         - &cross-female_entry_id-col
                             <<: *entry_id-col
                             name: female_entry_id
-                            comment: ID of the female entry in the cross
+                            comment: Female entry in the cross
                         - &cross-female_product_id-col
                             <<: *product_id-col
                             name: female_product_id
-                            comment: ID of the female product in the cross
+                            comment: Female product in the cross
                         - &cross-female_product_name-col
                             <<: *name-col
                             name: female_product_name
@@ -2999,11 +3151,11 @@ database: &bims_0.10_dev-db
                         - &cross-male_entry_id-col
                             <<: *entry_id-col
                             name: male_entry_id
-                            comment: ID of the male entry in the cross
+                            comment: Male entry in the cross
                         - &cross-male_product_id-col
                             <<: *product_id-col
                             name: male_product_id
-                            comment: ID of the male product in the cross
+                            comment: Male product in the cross
                         - &cross-male_product_name-col
                             <<: *name-col
                             name: male_product_name
@@ -3012,6 +3164,7 @@ database: &bims_0.10_dev-db
                             name: cross_method_id
                             data_type: integer
                             not_null: true
+                            comment: Method used in the cross
                         <<: *def-desc-tbl-col
                         <<: *def-log-tbl-col
                     constraint:
@@ -3102,7 +3255,7 @@ database: &bims_0.10_dev-db
                 - &operational-cross_metadata-tbl
                     <<: *def-tbl
                     name: cross_metadata
-                    comment: Metadata about a cross
+                    comment: Metadata details about a cross
                     column:
                         <<: *def-id-tbl-col
                         - *study_id-col
@@ -3180,40 +3333,41 @@ database: &bims_0.10_dev-db
                             name: seed_lot_id
                             data_type: integer
                             not_null: true
-                            comment: |
-                                A unique identifier for the seed storage assigned by the data manager
+                            comment: A unique identifier for the seed storage assigned by the data manager
                         - &seed_storage-key_type-col
                             name: key_type
                             data_type: varchar
                             not_null: true
-                            comment: |
-                                family_id, entry_key, plot_key, custom_key, seed_lot_id, dummy_key
+                            comment: 'Type of seed storage key: family_id, entry_key, plot_key, custom_key, seed_lot_id, dummy_key'
                         - &seed_storage-seed_manager-col
                             name: seed_manager
                             data_type: varchar
                             not_null: true
-                            comment: |
-                                Refers to which product development programs has access to the seeds
+                            comment: 'Refers to which product development programs has access to the seeds'
                         - &seed_storage-gid-col
                             name: gid
                             data_type: integer
                             not_null: true
+                            comment: Assigned GID to the product given the seed storage record
                         - &seed_storage-volume-col
                             name: volume
                             data_type: float
                             not_null: true
+                            comment: Amount of material in the seed storage
                         - &seed_storage-unit-col
                             name: unit
                             data_type: varchar
                             not_null: true
+                            comment: Scale to measure the amount of material
                         - &seed_storage-harvest_date-col
                             name: harvest_date
                             data_type: date
+                            comment: Date when the material was harvested
                         - &seed_storage-label-col
                             name: label
                             data_type: varchar
                             not_null: true
-                            comment: Metadata about the seed storage
+                            comment: Metadata label about the seed storage
                         - &seed_storage-original_storage_id-col
                             name: original_storage_id
                             data_type: integer
@@ -3270,13 +3424,14 @@ database: &bims_0.10_dev-db
                 - &operational-seed_storage_log-tbl
                     <<: *def-tbl
                     name: seed_storage_log
-                    comment: Transaction log contains the history of transactions made
+                    comment: Contains the history of transactions made to the seed storage record
                     column:
                         <<: *def-id-tbl-col
                         - &seed_storage_log-seed_storage_id-col
                             name: seed_storage_id
                             data_type: integer
                             not_null: true
+                            comment: Seed storage of the product
                         - &seed_storage_log-encoder_id-col
                             name: encoder_id
                             data_type: integer
@@ -3291,15 +3446,17 @@ database: &bims_0.10_dev-db
                             name: transaction_type
                             data_type: varchar
                             not_null: true
-                            comment: Deposit or withdraw
+                            comment: 'What was done to the seed storage record: deposit or withdraw'
                         - &seed_storage_log-volume-col
                             name: volume
                             data_type: float
                             not_null: true
+                            comment: Volume deposited to or withdrawn from the seed storage record
                         - &seed_storage_log-unit-col
                             name: unit
                             data_type: varchar
                             not_null: true
+                            comment: Scale used to measure what volume was deposited or withdrawn
                         - &seed_storage_log-event_timestamp-col
                             name: event_timestamp
                             data_type: timestamp
