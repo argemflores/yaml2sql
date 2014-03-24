@@ -753,6 +753,21 @@ EOD
                                     '{viewQuery}' => $view->query,
                                 ]
                             );
+                            
+                            # add comment to view
+                            if (!empty($view->comment)) {
+                                $cmtSqlArr[] = strtr(
+<<<EOD
+comment on {objType} {objName}
+    is '{cmtVal}';
+EOD
+                                    , [
+                                        '{objType}' => 'view',
+                                        '{objName}' => '"' . $schName . '"."' . $viewName . '"',
+                                        '{cmtVal}' => pg_escape_string($view->comment),
+                                    ]
+                                );
+                            }
                         }
                     }
                 }
