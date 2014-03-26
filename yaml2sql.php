@@ -36,6 +36,93 @@ if (isset($argv[2])) {
 # global variables
 $sql = '';
 $cmtSqlArr = [];
+$dictArr = [
+    'database' => [
+        [
+            'database_name',
+            'encoding',
+            'lc_collate',
+            'lc_ctype',
+            'comment',
+        ]
+    ],
+    'schema' => [
+        [
+            'database_name',
+            'schema_name',
+            'comment',
+        ]
+    ],
+    'table' => [
+        [
+            'database_name',
+            'schema_name',
+            'table_name',
+            'comment',
+        ]
+    ],
+    'column' => [
+        [
+            'database_name',
+            'schema_name',
+            'table_name',
+            'column_name',
+            'data_type',
+            'length',
+            'not_null',
+            'default_value',
+            'comment',
+            'order_number',
+        ]
+    ],
+    'constraint' => [
+        [
+            'database_name',
+            'schema_name',
+            'table_name',
+            'constraint_name',
+            'type',
+            'column',
+            'foreign_table',
+            'foreign_column',
+            'on_update',
+            'on_delete',
+            'match_type',
+            'no_inherit',
+            'expression',
+            'command',
+            'comment',
+        ]
+    ],
+    'index' => [
+        [
+            'database_name',
+            'schema_name',
+            'table_name',
+            'index_name',
+            'column',
+            'using',
+            'unique',
+            'concurrent',
+            'comment',
+        ]
+    ],
+    'sequence' => [
+        [
+            'database_name',
+            'schema_name',
+            'table_name',
+            'sequence_name',
+            'start_value',
+            'increment',
+            'minimum_value',
+            'maximum_value',
+            'cache',
+            'cycle',
+            'comment',
+        ]
+    ],
+];
 
 # get current directory
 $curDir = dirname(__FILE__);
@@ -47,6 +134,16 @@ if (!empty($object->database)) {
     
     # escape database name in postgres format
     $dbName = pg_escape_string($database->name);
+    $dbEncoding = pg_escape_string(!empty($database->encoding) ? $database->encoding : 'UTF8');
+    $dbLcCollate = pg_escape_string(!empty($database->lc_collate) ? $database->lc_collate : 'C');
+    $dbLcCtype = pg_escape_string(!empty($database->lc_ctype) ? $database->lc_ctype : 'C');
+    
+    $dbValArr = [
+        '{dbName}' => $dbName,
+        '{dbEncoding}' => $dbEncoding,
+        '{dbLcCollate}' => $dbLcCollate,
+        '{dbLcCtype}' => $dbLcCtype,
+    ];
     
     # generate create database commands
     $dbSql = strtr(
@@ -56,12 +153,7 @@ create database "{dbName}"
     lc_collate = '{dbLcCollate}'
     lc_ctype = '{dbLcCtype}';
 EOD
-        , [
-            '{dbName}' => $dbName,
-            '{dbEncoding}' => pg_escape_string(!empty($database->encoding) ? $database->encoding : 'UTF8'),
-            '{dbLcCollate}' => pg_escape_string(!empty($database->lc_collate) ? $database->lc_collate : 'C'),
-            '{dbLcCtype}' => pg_escape_string(!empty($database->lc_ctype) ? $database->lc_ctype : 'C'),
-        ]
+        , $dbValArr
     );
     
     # add comment to database
@@ -78,6 +170,8 @@ EOD
             ]
         );
     }
+    
+    $dictArr['database'][] = array_merge([], $dbValArr, [empty($database->comment) ? null : $database->comment]);
     
     # database has one or more shemas
     if (!empty($database->schema)) {
@@ -192,6 +286,29 @@ EOD
                                         );
                                     }
                                     
+                                    // if (empty($column->type)) {
+                                    //     echo $schName, '.', $tblName, '.', $column->name, "\n";
+                                    // }
+                                    
+                                    // if (!empty($column->type))
+                                    // {
+                                    //     // if (!empty($varArr[$column->type][$column->name]))
+                                    //     //     $varArr[$column->type][$column->name] = $varArr[$column->type][$column->name] + 1;
+                                    //     // else
+                                    //     //     $varArr[$column->type][$column->name] = 1;
+                                    //     $varArr[] = [
+                                    //         str_replace(' ', '_', $column->name), // abbrev
+                                    //         str_replace(' ', '_', $column->name), // label
+                                    //         $column->name, // name
+                                    //         isset($column->comment) ? $column->comment : null, // description
+                                    //         $column->data_type, // data_type
+                                    //         isset($column->not_null) ? $column->not_null : null, // not_null
+                                    //         $column->type, // type
+                                    //         isset($column->status) ? $column->status : null, // status
+                                    //         ucfirst($column->name), // display_name
+                                    //     ];
+                                    // }
+                                    
                                     # generate command to adding the column to the table
                                     $colSqlArr[] = strtr(
 <<<EOD
@@ -203,6 +320,30 @@ EOD
                                             '{colAttributes}' => $colAttributes,
                                         ]
                                     );
+                                    
+                                    $dictArr['column'][] = array_merge([$dbName, $schName, $tblName], [
+                                        $colName,
+                                        $colType,
+                                        isset($column->length) ? $column->length : null,
+                                        isset($column->not_null) ? $column->not_null : null,
+                                        isset($column->default_value) ? $column->default_value : null,
+                                        isset($column->comment) ? $column->comment : null,
+                                        $colIdx + 1,
+                                    ]);
+                                    
+                                    if ($colType == 'serial') {
+                                        $seqName = $tblName . '_' . $colName . '_seq';
+                                        $dictArr['sequence'][$seqName] = array_merge([$dbName, $schName], [
+                                            $seqName,
+                                            1,
+                                            1,
+                                            '2147483647',
+                                            1,
+                                            1,
+                                            false,
+                                            isset($sequence->comment) ? $sequence->comment : null,
+                                        ]);
+                                    }
                                 }
                             }
                             
@@ -231,6 +372,11 @@ EOD
                                 '{tblWithOids}' => !empty($table->with_oids) ? $table->with_oids : 'false',
                             ]
                         );
+                        
+                        $dictArr['table'][] = array_merge([$dbName, $schName], [
+                            $tblName,
+                            isset($table->comment) ? $table->comment : null,
+                        ]);
                         
                         # table has one or more constraints
                         $cstSql = '';
@@ -433,6 +579,21 @@ EOD
                                             '{cstAttributes}' => $cstAttributes,
                                         ]
                                     );
+                                    
+                                    $dictArr['constraint'][] = array_merge([$dbName, $schName, $tblName], [
+                                        $cstName,
+                                        $constraint->type,
+                                        $cstColumn,
+                                        isset($cstForeignTable) ? $cstForeignTable : null,
+                                        isset($cstForeignColumn) ? $cstForeignColumn : null,
+                                        isset($constraint->other_attributes->on_update) ? $constraint->other_attributes->on_update : ($constraint->type == 'foreign_key' ? 'cascade' : null),
+                                        isset($constraint->other_attributes->on_delete) ? $constraint->other_attributes->on_delete : ($constraint->type == 'foreign_key' ? 'cascade' : null),
+                                        isset($constraint->other_attributes->match_type) ? $constraint->other_attributes->match_type : ($constraint->type == 'foreign_key' ? 'simple' : null),
+                                        isset($constraint->other_attributes->no_inherit) ? $constraint->other_attributes->no_inherit : false,
+                                        isset($constraint->other_attributes->expression) ? $constraint->other_attributes->expression : null,
+                                        isset($constraint->command) ? $constraint->command : null,
+                                        isset($constraint->comment) ? $constraint->comment : null,
+                                    ]);
                                 }
                             }
                             
@@ -513,6 +674,15 @@ EOD
                                             '{idxColumn}' => $idxColumn,
                                         ]
                                     );
+                                    
+                                    $dictArr['index'][] = array_merge([$dbName, $schName, $tblName], [
+                                        $idxName,
+                                        is_array($index->column) ? implode(',', $index->column) : $index->column,
+                                        isset($index->using) ? $index->using : 'btree',
+                                        isset($index->unique) ? $index->unique : null,
+                                        isset($index->concurrent) ? $index->concurrent : null,
+                                        isset($index->comment) ? $index->comment : null,
+                                    ]);
                                 }
                             }
                             
@@ -629,6 +799,10 @@ EOD
                         if (!empty($table->sequence)) {
                             $sequence = $table->sequence;
                             
+                            $seqColName = 'id';
+                            if (!empty($sequence->column_name)) {
+                                $seqColName = $sequence->column_name;
+                            }
                             # name of sequnce
                             if (!empty($sequence->name)) {
                                 # custom sequence name
@@ -636,7 +810,7 @@ EOD
                             }
                             else {
                                 # default sequence name
-                                $seqName = pg_escape_string($tblName . '_id_seq');
+                                $seqName = pg_escape_string($tblName . '_' . $seqColName . '_seq');
                             }
                             
                             # starting number of sequence
@@ -706,6 +880,18 @@ EOD
                                 $seqSqlPost = $seqSql;
                                 $seqSql = '';
                             }
+                            
+                            $seqName = $tblName . '_' . $seqColName . '_seq';
+                            $dictArr['sequence'][$seqName] = array_merge([$dbName, $schName], [
+                                $seqName,
+                                $seqStartWith,
+                                $seqIncrementBy,
+                                $seqMinValue,
+                                $seqMaxValue,
+                                $seqCache,
+                                $seqNoCycle,
+                                isset($seq->comment) ? $seq->comment : null,
+                            ]);
                         }
                         
                         # other sql commans to be executed after the table has been created
@@ -763,7 +949,7 @@ comment on {objType} {objName}
 EOD
                                     , [
                                         '{objType}' => 'view',
-                                        '{objName}' => '"' . $schName . '"."' . $viewName . '"',
+                                        '{objName}' => $viewName,
                                         '{cmtVal}' => pg_escape_string($view->comment),
                                     ]
                                 );
@@ -778,6 +964,12 @@ EOD
                     $viewSql = implode("\n\n-- ----------------\n\n", $viewSqlArr);
                 }
                 
+                $schValArr = [
+                    '{schName}' => $schName,
+                    '{tblSql}' => $tblSql,
+                    '{viewSql}' => $viewSql,
+                ];
+                
                 # create schema, with its tables, and views, if any
                 $schSqlArr[$schIdx] = strtr(
 <<<EOD
@@ -787,12 +979,12 @@ create schema "{schName}";
 
 {viewSql}
 EOD
-                    , [
-                        '{schName}' => $schName,
-                        '{tblSql}' => $tblSql,
-                        '{viewSql}' => $viewSql,
-                    ]
+                    , $schValArr
                 );
+                
+                $dictArr['schema'][] = array_merge([$dbName], [
+                    $schName
+                ], [empty($schema->comment) ? null : $schema->comment]);
             }
         }
         
@@ -809,63 +1001,82 @@ if (!empty($cmtSqlArr)) {
     $cmtSql = implode("\n\n", $cmtSqlArr);
 }
 
-# database has custom properties or options
-$preSql = '';
-$postSql = '';
-if (!empty($database->options)) {
-    $dbOpts = $database->options;
-    
-    # terminate all connections to database before running sql commands
-    if (isset($dbOpts->terminate_connections) and $dbOpts->terminate_connections == true) {
-        echo "select pg_terminate_backend(pid) from pg_stat_activity where datname='{$dbName}' and pid <> pg_backend_pid();",
-            "\n\n-- --------------------------------\n\n";
-    }
-    
-    # drop database if exists before running commands
-    if (isset($dbOpts->drop_database) and $dbOpts->drop_database == true) {
-        echo strtr(
+# print sql commands
+if (empty($database->options->dump)) {
+    # database has custom properties or options
+    $preSql = '';
+    $postSql = '';
+    if (!empty($database->options)) {
+        $dbOpts = $database->options;
+        
+        # terminate all connections to database before running sql commands
+        if (isset($dbOpts->terminate_connections) and $dbOpts->terminate_connections == true) {
+            echo "select pg_terminate_backend(pid) from pg_stat_activity where datname='{$dbName}' and pid <> pg_backend_pid();",
+                "\n\n-- --------------------------------\n\n";
+        }
+        
+        # drop database if exists before running commands
+        if (isset($dbOpts->drop_database) and $dbOpts->drop_database == true) {
+            echo strtr(
 <<<EOD
 drop database if exists "{dbName}";\n\n
 EOD
-            , [
-                '{dbName}' => pg_escape_string($dbName),
-            ]
-        ), $dbSql, "\n\n-- --------------------------------\n\n";
-    }
-    # drop schema/s if exists
-    elseif (isset($dbOpts->drop_schema) and $dbOpts->drop_schema == true) {
-        $schemas = $database->schema;
-        $schDropSql = '';
-        
-        # process drop commands for schemas one by one
-        foreach ($schemas as $schIdx => $schema) {
-            # overrid drop command for a schema if schema is set to skip drop
-            if (!empty($schema->name) and (!isset($schema->options->skip_drop) or $schema->options->skip_drop != true)) {
-                $schDropSql .= strtr(
+                , [
+                    '{dbName}' => pg_escape_string($dbName),
+                ]
+            ), $dbSql, "\n\n-- --------------------------------\n\n";
+        }
+        # drop schema/s if exists
+        elseif (isset($dbOpts->drop_schema) and $dbOpts->drop_schema == true) {
+            $schemas = $database->schema;
+            $schDropSql = '';
+            
+            # process drop commands for schemas one by one
+            foreach ($schemas as $schIdx => $schema) {
+                # overrid drop command for a schema if schema is set to skip drop
+                if (!empty($schema->name) and (!isset($schema->options->skip_drop) or $schema->options->skip_drop != true)) {
+                    $schDropSql .= strtr(
 <<<EOD
 drop schema if exists "{schName}" cascade;\n\n
 EOD
-                    , [
-                        '{schName}' => pg_escape_string($schema->name),
-                    ]
-                );
+                        , [
+                            '{schName}' => pg_escape_string($schema->name),
+                        ]
+                    );
+                }
             }
+            
+            echo $schDropSql, "-- --------------------------------\n\n";
         }
         
-        echo $schDropSql, "-- --------------------------------\n\n";
+        # post-sql commands are to be run for the database
+        if (!empty($dbOpts->append_sql) and empty($database->options->skip_append_sql)) {
+            # add append sqls to end of commands
+            $postSql .= strtr($dbOpts->append_sql, [
+                '{curdir}' => pg_escape_string($curDir),
+            ]);
+        }
     }
-    
-    # post-sql commands are to be run for the database
-    if (!empty($dbOpts->append_sql) and empty($database->options->skip_append_sql)) {
-        # add append sqls to end of commands
-        $postSql .= strtr($dbOpts->append_sql, [
-            '{curdir}' => pg_escape_string($curDir),
-        ]);
-    }
+
+    echo $schSql, "\n\n";
+    echo $cmtSql, "\n\n";
+    echo "\n\n-- --------------------------------\n\n",
+        $postSql, "\n\n";
 }
 
-# print sql commands
-echo $schSql, "\n\n";
-echo $cmtSql, "\n\n";
-echo "\n\n-- --------------------------------\n\n",
-    $postSql, "\n\n";
+foreach ($dictArr as $objType => $objArr) {
+    $filePath = $curDir . "\\dictionary.{$objType}.csv";
+    $fp = fopen($filePath, 'w');
+
+    foreach ($objArr as $obj) {
+        $obj2 = [];
+        foreach ($obj as $o) {
+            # $obj2[] = pg_escape_string(str_replace(array("\r\n","\r","\n",'  '), "\\n", $o));
+            $obj2[] = pg_escape_string($o);
+        }
+        
+        fputcsv($fp, $obj2, ';', '"');
+    }
+
+    fclose($fp);
+}
