@@ -2,3 +2,6 @@
 bims_0.10.txt
 warehouse_terminal_schema
 test/*
+dictionary.*.csv
+import.variable_*.csv
+.~lock.*#
