@@ -176,7 +176,7 @@ create index "property_is_void_idx"
 create table "master"."method" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
-    "name" varchar,
+    "name" varchar(256) not null,
     "description" text,
     "display_name" varchar(256),
     "formula" varchar,
@@ -314,7 +314,7 @@ create table "master"."variable" (
     "not_null" boolean not null default false,
     "type" varchar(32),
     "status" varchar(32),
-    "display_name" varchar not null,
+    "display_name" varchar(256),
     "ontology_reference" varchar,
     "bibliographical_reference" varchar,
     "property_id" integer,
@@ -322,6 +322,7 @@ create table "master"."variable" (
     "scale_id" integer,
     "variable_set" varchar,
     "synonym" varchar,
+    "description" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -509,6 +510,31 @@ create index "pipeline_is_void_idx"
   on "master"."pipeline"
   using btree ("is_void");
 
+
+
+copy "master"."pipeline" (
+    "abbrev",
+    "name",
+    "description"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"abbrev";"name";"description"
+"IRSEA";"Irrigated South-East Asia";
+"RFSEA";"Rainfed Lowland South-East Asia";
+"IRSA";"Irrigated South Asia";
+"RFSA";"Rainfed Lowland South Asia";
+"ESA";"Eastern Southern Africa";"Rainfed and Irrigated TVPs"
+"HYB";"Hybrid";
+"JAP";"Japonica";"Temperate and Tropical TVPs"
+\.
+
 -- ----------------
 
 create table "master"."crosscutting" (
@@ -547,13 +573,33 @@ create index "crosscutting_is_void_idx"
   on "master"."crosscutting"
   using btree ("is_void");
 
+
+
+copy "master"."crosscutting" (
+    "abbrev",
+    "name",
+    "description"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+"abbrev";"name";"description"
+"HB";"Hybridization";"Hybridization"
+"RGA";"Rapid Generation Advancement";"Rapid Generation Advancement"
+\.
+
 -- ----------------
 
 create table "master"."program" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
-    "type" varchar,
+    "pipeline_id" integer not null,
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -568,6 +614,10 @@ create table "master"."program" (
 );
 
 alter table "master"."program"
+  add constraint "program_pipeline_id_fkey"
+  foreign key ("pipeline_id") references "master"."pipeline" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."program"
   add constraint "program_id_pkey"
   primary key ("id");
 alter table "master"."program"
@@ -579,6 +629,9 @@ alter table "master"."program"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "program_pipeline_id_idx"
+  on "master"."program"
+  using btree ("pipeline_id");
 create unique index "program_abbrev_idx"
   on "master"."program"
   using btree ("abbrev");
@@ -599,6 +652,7 @@ alter sequence "master"."program_id_seq"
 
 copy "master"."program" (
     "abbrev",
+    "pipeline_id",
     "name",
     "description"
 )
@@ -610,14 +664,14 @@ from stdin
     escape e'\\'
     null ''
 ;
-"abbrev";"name";"description"
-"IRSEA";"Irrigated South-East Asia";
-"RFSEA";"Rainfed Lowland South-East Asia";
-"IRSA";"Irrigated South Asia";
-"RFSA";"Rainfed Lowland South Asia";
-"ESA";"Eastern Southern Africa";"Rainfed and Irrigated TVPs"
-"HYB";"Hybrid";
-"JAP";"Japonica";"Temperate and Tropical TVPs"
+"abbrev";"pipeline_id";"name";"description"
+"IRSEA";"1";"Irrigated South-East Asia";
+"RFSEA";"2";"Rainfed Lowland South-East Asia";
+"IRSA";"3";"Irrigated South Asia";
+"RFSA";"4";"Rainfed Lowland South Asia";
+"ESA";"5";"Eastern Southern Africa";"Rainfed and Irrigated TVPs"
+"HYB";"6";"Hybrid";
+"JAP";"7";"Japonica";"Temperate and Tropical TVPs"
 \.
 
 -- ----------------
@@ -768,6 +822,91 @@ from stdin
 
 -- ----------------
 
+create table "master"."scheme" (
+    "id" serial not null,
+    "abbrev" varchar(128) not null,
+    "name" varchar(256) not null,
+    "pipeline_id" integer,
+    "program_id" integer,
+    "phase_id" integer,
+    "order_number" integer not null default '1',
+    "type" varchar,
+    "description" text,
+    "display_name" varchar(256),
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."scheme"
+  add constraint "scheme_pipeline_id_fkey"
+  foreign key ("pipeline_id") references "master"."pipeline" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."scheme"
+  add constraint "scheme_program_id_fkey"
+  foreign key ("program_id") references "master"."program" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."scheme"
+  add constraint "scheme_phase_id_fkey"
+  foreign key ("phase_id") references "master"."phase" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."scheme"
+  add constraint "scheme_pipeline_id_program_id_phase_id_ukey"
+  unique ("pipeline_id", "program_id", "phase_id");
+alter table "master"."scheme"
+  add constraint "scheme_id_pkey"
+  primary key ("id");
+alter table "master"."scheme"
+  add constraint "scheme_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."scheme"
+  add constraint "scheme_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "scheme_pipeline_id_idx"
+  on "master"."scheme"
+  using btree ("pipeline_id");
+create index "scheme_program_id_idx"
+  on "master"."scheme"
+  using btree ("program_id");
+create index "scheme_phase_id_idx"
+  on "master"."scheme"
+  using btree ("phase_id");
+create index "scheme_pipeline_id_program_id_phase_id_idx"
+  on "master"."scheme"
+  using btree ("pipeline_id", "program_id", "phase_id");
+create index "scheme_is_void_idx"
+  on "master"."scheme"
+  using btree ("is_void");
+
+
+
+copy "master"."scheme" (
+    "abbrev",
+    "name",
+    "description"
+)
+from stdin
+    csv
+    header
+    delimiter ';'
+    quote '"'
+    escape e'\\'
+    null ''
+;
+
+\.
+
+-- ----------------
+
 create table "master"."product" (
     "id" serial not null,
     "program_id" integer not null,
@@ -825,7 +964,7 @@ create index "product_name_type_idx"
   using btree ("name_type");
 create index "product_type_idx"
   on "master"."product"
-  using btree ("type");
+  using btree ("product_type");
 create index "product_year_idx"
   on "master"."product"
   using btree ("year");
@@ -850,9 +989,6 @@ create index "product_derivative_name_idx"
 create index "product_fixed_line_name_idx"
   on "master"."product"
   using btree ("fixed_line_name");
-create unique index "product_abbrev_idx"
-  on "master"."product"
-  using btree ("abbrev");
 create index "product_is_void_idx"
   on "master"."product"
   using btree ("is_void");
@@ -953,9 +1089,57 @@ create index "product_gid_is_void_idx"
 
 -- ----------------
 
+create table "master"."product_study" (
+    "id" serial not null,
+    "product_id" integer not null,
+    "study_id" integer not null,
+    "entry_id" integer,
+    "cross_id" integer,
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "master"."product_study"
+  add constraint "product_study_product_id_fkey"
+  foreign key ("product_id") references "master"."product" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."product_study"
+  add constraint "product_study_id_pkey"
+  primary key ("id");
+alter table "master"."product_study"
+  add constraint "product_study_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."product_study"
+  add constraint "product_study_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "product_study_study_id_product_id_idx"
+  on "master"."product_study"
+  using btree ("study_id", "product_id");
+create index "product_study_study_id_entry_id_idx"
+  on "master"."product_study"
+  using btree ("study_id", "entry_id");
+create index "product_study_study_id_cross_id_idx"
+  on "master"."product_study"
+  using btree ("study_id", "cross_id");
+create index "product_study_is_void_idx"
+  on "master"."product_study"
+  using btree ("is_void");
+
+-- ----------------
+
 create table "master"."product_metadata" (
     "id" serial not null,
-    "variable_id" integer,
+    "variable_id" integer not null,
     "value" varchar not null,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -1620,6 +1804,9 @@ alter table "master"."item_action"
   foreign key ("item_id") references "master"."item" ("id")
   match simple on update cascade on delete cascade;
 alter table "master"."item_action"
+  add constraint "item_action_item_id_ukey"
+  unique ("item_id");
+alter table "master"."item_action"
   add constraint "item_action_item_id_module_controller_action_ukey"
   unique ("item_id", "module", "controller", "action");
 alter table "master"."item_action"
@@ -1634,6 +1821,9 @@ alter table "master"."item_action"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
+create index "item_action_item_id_idx"
+  on "master"."item_action"
+  using btree ("item_id");
 create index "item_action_item_id_module_controller_action_idx"
   on "master"."item_action"
   using btree ("item_id", "module", "controller", "action");
@@ -2250,6 +2440,17 @@ alter table "master"."item_role"
   add constraint "item_role_team_id_fkey"
   foreign key ("team_id") references "master"."team" ("id")
   match simple on update cascade on delete cascade;
+alter table "master"."item_role"
+  add constraint "item_role_id_pkey"
+  primary key ("id");
+alter table "master"."item_role"
+  add constraint "item_role_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."item_role"
+  add constraint "item_role_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create index "item_role_item_id_idx"
   on "master"."item_role"
@@ -2413,6 +2614,17 @@ create table "master"."tooltip" (
 alter table "master"."tooltip"
   add constraint "tooltip_name_ukey"
   unique ("name");
+alter table "master"."tooltip"
+  add constraint "tooltip_id_pkey"
+  primary key ("id");
+alter table "master"."tooltip"
+  add constraint "tooltip_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."tooltip"
+  add constraint "tooltip_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "tooltip_name_idx"
   on "master"."tooltip"
@@ -2598,6 +2810,17 @@ create table "master"."instruction" (
 alter table "master"."instruction"
   add constraint "instruction_name_ukey"
   unique ("name");
+alter table "master"."instruction"
+  add constraint "instruction_id_pkey"
+  primary key ("id");
+alter table "master"."instruction"
+  add constraint "instruction_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "master"."instruction"
+  add constraint "instruction_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
 
 create unique index "instruction_name_idx"
   on "master"."instruction"
@@ -2723,17 +2946,16 @@ alter sequence "master"."instruction_id_seq"
 -- ----------------
 
 create table "master"."audit" (
-    "id" serial not null,
+    "id" bigserial not null,
     "schema_name" varchar not null,
     "table_name" varchar,
     "column_name" varchar,
     "action_type" varchar,
-    "record_id" bigint,
+    "record_id" numeric,
     "old_value" varchar,
     "value" varchar,
     "actor_id" integer,
     "action_timestamp" timestamp,
-    "remarks" text,
     "status" varchar(32),
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -2884,10 +3106,10 @@ create table "dictionary"."database" (
     "id" serial not null,
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
-    "comment" text,
     "encoding" varchar not null default 'UTF8',
     "lc_collate" varchar not null default 'C',
     "lc_ctype" varchar not null default 'C',
+    "comment" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -3025,6 +3247,7 @@ create table "dictionary"."column" (
     "not_null" boolean not null default false,
     "default_value" varchar,
     "comment" text,
+    "order_number" integer not null default '1',
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -3077,15 +3300,15 @@ create table "dictionary"."constraint" (
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "type" varchar,
-    "column_id" integer not null,
-    "command" text,
-    "foreign_table_id" integer,
-    "foreign_column_id" integer,
-    "on_delete" varchar not null default 'no action',
-    "on_update" varchar not null default 'no action',
+    "column" varchar,
+    "foreign_table" varchar,
+    "foreign_column" varchar,
+    "on_update" varchar not null default 'cascade',
+    "on_delete" varchar not null default 'cascade',
     "match_type" varchar not null default 'simple',
     "no_inherit" boolean not null default false,
-    "concurrent" boolean not null default false,
+    "expression" text,
+    "command" text,
     "comment" text,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
@@ -3111,10 +3334,6 @@ alter table "dictionary"."constraint"
   foreign key ("table_id") references "dictionary"."table" ("id")
   match simple on update cascade on delete cascade;
 alter table "dictionary"."constraint"
-  add constraint "constraint-column_id_fkey"
-  foreign key ("column_id") references "dictionary"."column" ("id")
-  match simple on update cascade on delete cascade;
-alter table "dictionary"."constraint"
   add constraint "constraint_id_pkey"
   primary key ("id");
 alter table "dictionary"."constraint"
@@ -3135,6 +3354,95 @@ create index "constraint_is_void_idx"
 
 -- ----------------
 
+create table "dictionary"."constraint_column" (
+    "id" serial not null,
+    "constraint_id" integer not null,
+    "column_id" integer not null,
+    "order_number" integer not null default '1',
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "dictionary"."constraint_column"
+  add constraint "constraint_column_constraint_id_fkey"
+  foreign key ("constraint_id") references "dictionary"."constraint" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint_column"
+  add constraint "constraint_column_column_id_fkey"
+  foreign key ("column_id") references "dictionary"."column" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint_column"
+  add constraint "constraint_column_id_pkey"
+  primary key ("id");
+alter table "dictionary"."constraint_column"
+  add constraint "constraint_column_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint_column"
+  add constraint "constraint_column_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "constraint_column_is_void_idx"
+  on "dictionary"."constraint_column"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."constraint_foreign" (
+    "id" serial not null,
+    "constraint_id" integer not null,
+    "table_id" integer not null,
+    "column_id" integer not null,
+    "order_number" integer not null default '1',
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "dictionary"."constraint_foreign"
+  add constraint "constraint_foreign_constraint_id_fkey"
+  foreign key ("constraint_id") references "dictionary"."constraint" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint_foreign"
+  add constraint "constraint_foreign_table_id_fkey"
+  foreign key ("table_id") references "dictionary"."table" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint_foreign"
+  add constraint "constraint_foreign_column_id_fkey"
+  foreign key ("column_id") references "dictionary"."column" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint_foreign"
+  add constraint "constraint_foreign_id_pkey"
+  primary key ("id");
+alter table "dictionary"."constraint_foreign"
+  add constraint "constraint_foreign_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."constraint_foreign"
+  add constraint "constraint_foreign_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "constraint_foreign_is_void_idx"
+  on "dictionary"."constraint_foreign"
+  using btree ("is_void");
+
+-- ----------------
+
 create table "dictionary"."index" (
     "id" serial not null,
     "database_id" integer not null,
@@ -3142,7 +3450,6 @@ create table "dictionary"."index" (
     "table_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
-    "column_id" integer not null,
     "using" varchar,
     "unique" boolean not null default false,
     "concurrent" boolean not null default false,
@@ -3171,10 +3478,6 @@ alter table "dictionary"."index"
   foreign key ("table_id") references "dictionary"."table" ("id")
   match simple on update cascade on delete cascade;
 alter table "dictionary"."index"
-  add constraint "index-column_id_fkey"
-  foreign key ("column_id") references "dictionary"."column" ("id")
-  match simple on update cascade on delete cascade;
-alter table "dictionary"."index"
   add constraint "index_id_pkey"
   primary key ("id");
 alter table "dictionary"."index"
@@ -3191,6 +3494,48 @@ create unique index "index_abbrev_idx"
   using btree ("abbrev");
 create index "index_is_void_idx"
   on "dictionary"."index"
+  using btree ("is_void");
+
+-- ----------------
+
+create table "dictionary"."index_column" (
+    "id" serial not null,
+    "index_id" integer not null,
+    "column_id" integer not null,
+    "order_number" integer not null default '1',
+    "remarks" text,
+    "creation_timestamp" timestamp not null default now(),
+    "creator_id" integer not null default '1',
+    "modification_timestamp" timestamp,
+    "modifier_id" integer,
+    "notes" text,
+    "is_void" boolean not null default false
+) with (
+    oids = false
+);
+
+alter table "dictionary"."index_column"
+  add constraint "index_column_index_id_fkey"
+  foreign key ("index_id") references "dictionary"."index" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."index_column"
+  add constraint "index_column_column_id_fkey"
+  foreign key ("column_id") references "dictionary"."column" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."index_column"
+  add constraint "index_column_id_pkey"
+  primary key ("id");
+alter table "dictionary"."index_column"
+  add constraint "index_column_creator_id_fkey"
+  foreign key ("creator_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+alter table "dictionary"."index_column"
+  add constraint "index_column_modifier_id_fkey"
+  foreign key ("modifier_id") references "master"."user" ("id")
+  match simple on update cascade on delete cascade;
+
+create index "index_column_is_void_idx"
+  on "dictionary"."index_column"
   using btree ("is_void");
 
 -- ----------------
@@ -3352,12 +3697,13 @@ create table "dictionary"."sequence" (
     "id" serial not null,
     "database_id" integer not null,
     "schema_id" integer not null,
+    "table_id" integer not null,
     "abbrev" varchar(128) not null,
     "name" varchar(256) not null,
     "value" integer not null default '1',
     "increment" integer not null default '1',
-    "maximum_value" integer not null default '2147483647',
     "minimum_value" integer not null default '1',
+    "maximum_value" integer not null default '2147483647',
     "cache" integer not null default '1',
     "cycle" boolean not null default false,
     "comment" text,
@@ -3569,15 +3915,17 @@ create schema "operational";
 
 create table "operational"."study" (
     "id" serial not null,
-    "key" bigint not null,
+    "study_key" numeric not null,
     "program_id" integer not null,
     "place_id" integer not null,
     "phase_id" integer not null,
     "year" integer not null,
     "season_id" integer not null,
-    "number" integer not null,
+    "study_number" integer not null,
     "name" varchar(256) not null,
     "title" varchar,
+    "is_draft" boolean default true,
+    "is_active" boolean default true,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -3606,11 +3954,11 @@ alter table "operational"."study"
   foreign key ("season_id") references "master"."season" ("id")
   match simple on update cascade on delete cascade;
 alter table "operational"."study"
-  add constraint "study_key_ukey"
-  unique ("key");
-alter table "operational"."study"
   add constraint "study_study_key_ukey"
-  unique ("program_id", "place_id", "phase_id", "year", "season_id", "number");
+  unique ("study_key");
+alter table "operational"."study"
+  add constraint "study_operational_key_ukey"
+  unique ("program_id", "place_id", "phase_id", "year", "season_id", "study_number");
 alter table "operational"."study"
   add constraint "study_name_ukey"
   unique ("name");
@@ -3626,9 +3974,9 @@ alter table "operational"."study"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "study_key_idx"
+create index "study_study_key_idx"
   on "operational"."study"
-  using btree ("key");
+  using btree ("study_key");
 create index "study_program_id_idx"
   on "operational"."study"
   using btree ("program_id");
@@ -3647,9 +3995,9 @@ create index "study_season_id_idx"
 create index "study_year_season_id_idx"
   on "operational"."study"
   using btree ("year", "season_id");
-create index "study_study_key_idx"
+create index "study_operational_study_key_idx"
   on "operational"."study"
-  using btree ("program_id", "place_id", "phase_id", "year", "season_id", "number");
+  using btree ("program_id", "place_id", "phase_id", "year", "season_id", "study_number");
 create index "study_name_idx"
   on "operational"."study"
   using btree ("name");
@@ -3709,13 +4057,14 @@ create index "study_metadata_is_void_idx"
 
 create table "operational"."entry" (
     "id" serial not null,
-    "key" bigint not null,
+    "entry_key" numeric not null,
     "study_id" integer not null,
-    "number" integer not null default '1',
-    "code" varchar,
+    "entno" integer not null default '1',
+    "entcode" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
     "product_name" varchar(256) not null,
+    "is_active" boolean default true,
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -3730,8 +4079,8 @@ create table "operational"."entry" (
 );
 
 alter table "operational"."entry"
-  add constraint "entry_key_ukey"
-  unique ("key");
+  add constraint "entry_entry_key_ukey"
+  unique ("entry_key");
 alter table "operational"."entry"
   add constraint "entry_study_id_fkey"
   foreign key ("study_id") references "operational"."study" ("id")
@@ -3741,8 +4090,8 @@ alter table "operational"."entry"
   foreign key ("product_id") references "master"."product" ("id")
   match simple on update cascade on delete cascade;
 alter table "operational"."entry"
-  add constraint "entry_study_id_number_ukey"
-  unique ("study_id", "number");
+  add constraint "entry_study_id_entno_ukey"
+  unique ("study_id", "entno");
 alter table "operational"."entry"
   add constraint "entry_study_id_product_id_ukey"
   unique ("study_id", "product_id");
@@ -3758,18 +4107,18 @@ alter table "operational"."entry"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create index "entry_key_idx"
+create index "entry_entry_key_idx"
   on "operational"."entry"
-  using btree ("key");
+  using btree ("entry_key");
 create index "entry_study_id_idx"
   on "operational"."entry"
   using btree ("study_id");
 create index "entry_product_id_idx"
   on "operational"."entry"
   using btree ("product_id");
-create index "entry_study_id_number_idx"
+create index "entry_study_id_entno_idx"
   on "operational"."entry"
-  using btree ("study_id", "number");
+  using btree ("study_id", "entno");
 create index "entry_study_id_product_id_idx"
   on "operational"."entry"
   using btree ("study_id", "product_id");
@@ -3893,12 +4242,12 @@ create index "entry_data_is_void_idx"
 
 create table "operational"."plot" (
     "id" serial not null,
-    "key" bigint not null,
+    "plot_key" numeric not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "rep" integer,
     "code" varchar,
-    "plot_no" varchar,
+    "plotno" integer,
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -3913,8 +4262,8 @@ create table "operational"."plot" (
 );
 
 alter table "operational"."plot"
-  add constraint "plot_key_ukey"
-  unique ("key");
+  add constraint "plot_plot_key_ukey"
+  unique ("plot_key");
 alter table "operational"."plot"
   add constraint "plot_study_id_fkey"
   foreign key ("study_id") references "operational"."study" ("id")
@@ -3924,8 +4273,8 @@ alter table "operational"."plot"
   foreign key ("entry_id") references "operational"."entry" ("id")
   match simple on update cascade on delete cascade;
 alter table "operational"."plot"
-  add constraint "plot_study_id_entry_id_replication_number_ukey"
-  unique ("study_id", "entry_id", "replication_number");
+  add constraint "plot_study_id_entry_id_rep_ukey"
+  unique ("study_id", "entry_id", "rep");
 alter table "operational"."plot"
   add constraint "plot_id_pkey"
   primary key ("id");
@@ -3938,18 +4287,18 @@ alter table "operational"."plot"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create index "plot_key_idx"
+create index "plot_plot_key_idx"
   on "operational"."plot"
-  using btree ("key");
+  using btree ("plot_key");
 create index "plot_study_id_idx"
   on "operational"."plot"
   using btree ("study_id");
 create index "plot_entry_id_idx"
   on "operational"."plot"
   using btree ("entry_id");
-create index "plot_study_id_entry_id_replication_number_idx"
+create index "plot_study_id_entry_id_rep_idx"
   on "operational"."plot"
-  using btree ("study_id", "entry_id", "replication_number");
+  using btree ("study_id", "entry_id", "rep");
 create index "plot_is_void_idx"
   on "operational"."plot"
   using btree ("is_void");
@@ -4086,11 +4435,11 @@ create index "plot_data_is_void_idx"
 
 create table "operational"."subplot" (
     "id" serial not null,
-    "key" bigint not null,
+    "subplot_key" numeric not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "plot_id" integer not null,
-    "number" integer not null default '1',
+    "subplotno" integer not null default '1',
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -4105,8 +4454,8 @@ create table "operational"."subplot" (
 );
 
 alter table "operational"."subplot"
-  add constraint "subplot_key_ukey"
-  unique ("key");
+  add constraint "subplot_subplot_key_ukey"
+  unique ("subplot_key");
 alter table "operational"."subplot"
   add constraint "subplot_study_id_fkey"
   foreign key ("study_id") references "operational"."study" ("id")
@@ -4120,8 +4469,8 @@ alter table "operational"."subplot"
   foreign key ("plot_id") references "operational"."plot" ("id")
   match simple on update cascade on delete cascade;
 alter table "operational"."subplot"
-  add constraint "subplot_study_id_entry_id_plot_id_number_ukey"
-  unique ("study_id", "entry_id", "plot_id", "number");
+  add constraint "subplot_study_id_entry_id_plot_id_subplotno_ukey"
+  unique ("study_id", "entry_id", "plot_id", "subplotno");
 alter table "operational"."subplot"
   add constraint "subplot_id_pkey"
   primary key ("id");
@@ -4134,9 +4483,9 @@ alter table "operational"."subplot"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create index "subplot_key_idx"
+create index "subplot_subplot_key_idx"
   on "operational"."subplot"
-  using btree ("key");
+  using btree ("subplot_key");
 create index "subplot_study_id_idx"
   on "operational"."subplot"
   using btree ("study_id");
@@ -4146,9 +4495,9 @@ create index "subplot_entry_id_idx"
 create index "subplot_plot_id_idx"
   on "operational"."subplot"
   using btree ("plot_id");
-create index "subplot_study_id_entry_id_plot_id_number_idx"
+create index "subplot_study_id_entry_id_plot_id_subplotno_idx"
   on "operational"."subplot"
-  using btree ("study_id", "entry_id", "plot_id", "number");
+  using btree ("study_id", "entry_id", "plot_id", "subplotno");
 create index "subplot_is_void_idx"
   on "operational"."subplot"
   using btree ("is_void");
@@ -4930,7 +5279,7 @@ create table "warehouse_terminal"."entry" (
     "transaction_id" integer not null,
     "study_id" integer not null,
     "study_name" varchar not null,
-    "entry_number" varchar not null,
+    "entno" varchar not null,
     "product_gid" varchar not null,
     "product_name" varchar(256) not null,
     "seed_source_name" varchar(256) not null,
@@ -4974,9 +5323,9 @@ create index "entry_study_id_idx"
 create index "entry_study_name_idx"
   on "warehouse_terminal"."entry"
   using btree ("study_name");
-create index "entry_entry_number_idx"
+create index "entry_entno_idx"
   on "warehouse_terminal"."entry"
-  using btree ("entry_number");
+  using btree ("entno");
 create index "entry_product_gid_idx"
   on "warehouse_terminal"."entry"
   using btree ("product_gid");
@@ -5167,11 +5516,11 @@ create table "warehouse_terminal"."plot" (
     "transaction_id" integer not null,
     "study_id" integer not null,
     "study_name" varchar not null,
-    "entry_number" varchar not null,
+    "entno" varchar not null,
     "product_gid" varchar not null,
     "product_name" varchar(256) not null,
     "seed_source_name" varchar(256) not null,
-    "replication_number" integer not null default '1',
+    "rep" integer not null default '1',
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -5212,15 +5561,15 @@ create index "plot_study_id_idx"
 create index "plot_study_name_idx"
   on "warehouse_terminal"."plot"
   using btree ("study_name");
-create index "plot_entry_number_idx"
+create index "plot_entno_idx"
   on "warehouse_terminal"."plot"
-  using btree ("entry_number");
+  using btree ("entno");
 create index "plot_product_gid_idx"
   on "warehouse_terminal"."plot"
   using btree ("product_gid");
-create index "plot_replication_number_idx"
+create index "plot_rep_idx"
   on "warehouse_terminal"."plot"
-  using btree ("replication_number");
+  using btree ("rep");
 create index "plot_is_void_idx"
   on "warehouse_terminal"."plot"
   using btree ("is_void");
@@ -5472,15 +5821,16 @@ create schema "warehouse";
 
 create table "warehouse"."study" (
     "id" serial not null,
-    "key" bigint not null,
+    "study_key" numeric not null,
     "program_id" integer not null,
     "place_id" integer not null,
     "phase_id" integer not null,
     "year" integer not null,
     "season_id" integer not null,
-    "number" integer not null,
-    "name" varchar(256) not null,
-    "title" varchar,
+    "study_number" integer not null default '1',
+    "study" varchar(256) not null,
+    "study_name" varchar(256) not null,
+    "study_title" varchar,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -5493,8 +5843,8 @@ create table "warehouse"."study" (
 );
 
 alter table "warehouse"."study"
-  add constraint "study_key_ukey"
-  unique ("key");
+  add constraint "study_study_key_ukey"
+  unique ("study_key");
 alter table "warehouse"."study"
   add constraint "study_program_id_fkey"
   foreign key ("program_id") references "master"."program" ("id")
@@ -5512,11 +5862,11 @@ alter table "warehouse"."study"
   foreign key ("season_id") references "master"."season" ("id")
   match simple on update cascade on delete cascade;
 alter table "warehouse"."study"
-  add constraint "study_program_id_place_id_phase_id_year_season_id_number_ukey"
-  unique ("program_id", "place_id", "phase_id", "year", "season_id", "number");
+  add constraint "study_warehouse_study_key_ukey"
+  unique ("program_id", "place_id", "phase_id", "year", "season_id", "study_number");
 alter table "warehouse"."study"
-  add constraint "study_name_ukey"
-  unique ("name");
+  add constraint "study_study_name_ukey"
+  unique ("study_name");
 alter table "warehouse"."study"
   add constraint "study_id_pkey"
   primary key ("id");
@@ -5529,9 +5879,9 @@ alter table "warehouse"."study"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "study_key_idx"
+create index "study_study_key_idx"
   on "warehouse"."study"
-  using btree ("key");
+  using btree ("study_key");
 create index "study_program_id_idx"
   on "warehouse"."study"
   using btree ("program_id");
@@ -5552,10 +5902,10 @@ create index "study_year_season_id_idx"
   using btree ("year", "season_id");
 create index "study_name_idx"
   on "warehouse"."study"
-  using btree ("name");
-create index "study_program_id_place_id_phase_id_year_season_id_number_idx"
+  using btree ("study_name");
+create index "study_warehouse_study_key_idx"
   on "warehouse"."study"
-  using btree ("program_id", "place_id", "phase_id", "year", "season_id", "number");
+  using btree ("program_id", "place_id", "phase_id", "year", "season_id", "study_number");
 create index "study_is_void_idx"
   on "warehouse"."study"
   using btree ("is_void");
@@ -5564,9 +5914,9 @@ create index "study_is_void_idx"
 
 create table "warehouse"."entry" (
     "id" serial not null,
-    "key" bigint not null,
+    "entry_key" numeric not null,
     "study_id" integer not null,
-    "number" integer not null default '1',
+    "entno" integer not null default '1',
     "code" varchar,
     "product_id" integer not null,
     "product_gid" integer not null,
@@ -5585,8 +5935,8 @@ create table "warehouse"."entry" (
 );
 
 alter table "warehouse"."entry"
-  add constraint "entry_key_ukey"
-  unique ("key");
+  add constraint "entry_entry_key_ukey"
+  unique ("entry_key");
 alter table "warehouse"."entry"
   add constraint "entry_study_id_fkey"
   foreign key ("study_id") references "warehouse"."study" ("id")
@@ -5596,8 +5946,8 @@ alter table "warehouse"."entry"
   foreign key ("product_id") references "master"."product" ("id")
   match simple on update cascade on delete cascade;
 alter table "warehouse"."entry"
-  add constraint "entry_study_id_number_ukey"
-  unique ("study_id", "number");
+  add constraint "entry_study_id_entno_ukey"
+  unique ("study_id", "entno");
 alter table "warehouse"."entry"
   add constraint "entry_study_id_product_id_ukey"
   unique ("study_id", "product_id");
@@ -5613,18 +5963,18 @@ alter table "warehouse"."entry"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "entry_key_idx"
+create index "entry_entry_key_idx"
   on "warehouse"."entry"
-  using btree ("key");
+  using btree ("entry_key");
 create index "entry_study_id_idx"
   on "warehouse"."entry"
   using btree ("study_id");
 create index "entry_product_id_idx"
   on "warehouse"."entry"
   using btree ("product_id");
-create index "entry_study_id_number_idx"
+create index "entry_study_id_entno_idx"
   on "warehouse"."entry"
-  using btree ("study_id", "number");
+  using btree ("study_id", "entno");
 create index "entry_study_id_product_id_idx"
   on "warehouse"."entry"
   using btree ("study_id", "product_id");
@@ -5636,12 +5986,12 @@ create index "entry_is_void_idx"
 
 create table "warehouse"."plot" (
     "id" serial not null,
-    "key" bigint not null,
+    "plot_key" numeric not null,
     "study_id" integer not null,
     "entry_id" integer not null,
-    "replication_number" integer,
+    "rep" integer not null default '1',
     "code" varchar,
-    "plot_no" varchar,
+    "plotno" integer,
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -5656,8 +6006,8 @@ create table "warehouse"."plot" (
 );
 
 alter table "warehouse"."plot"
-  add constraint "plot_key_ukey"
-  unique ("key");
+  add constraint "plot_plot_key_ukey"
+  unique ("plot_key");
 alter table "warehouse"."plot"
   add constraint "plot_study_id_fkey"
   foreign key ("study_id") references "warehouse"."study" ("id")
@@ -5667,8 +6017,8 @@ alter table "warehouse"."plot"
   foreign key ("entry_id") references "warehouse"."entry" ("id")
   match simple on update cascade on delete cascade;
 alter table "warehouse"."plot"
-  add constraint "plot_study_id_entry_id_replication_number_ukey"
-  unique ("study_id", "entry_id", "replication_number");
+  add constraint "plot_study_id_entry_id_rep_ukey"
+  unique ("study_id", "entry_id", "rep");
 alter table "warehouse"."plot"
   add constraint "plot_id_pkey"
   primary key ("id");
@@ -5681,18 +6031,18 @@ alter table "warehouse"."plot"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "plot_key_idx"
+create index "plot_plot_key_idx"
   on "warehouse"."plot"
-  using btree ("key");
+  using btree ("plot_key");
 create index "plot_study_id_idx"
   on "warehouse"."plot"
   using btree ("study_id");
 create index "plot_entry_id_idx"
   on "warehouse"."plot"
   using btree ("entry_id");
-create index "plot_study_id_entry_id_replication_number_idx"
+create index "plot_study_id_entry_id_rep_idx"
   on "warehouse"."plot"
-  using btree ("study_id", "entry_id", "replication_number");
+  using btree ("study_id", "entry_id", "rep");
 create index "plot_is_void_idx"
   on "warehouse"."plot"
   using btree ("is_void");
@@ -5701,11 +6051,11 @@ create index "plot_is_void_idx"
 
 create table "warehouse"."subplot" (
     "id" serial not null,
-    "key" bigint not null,
+    "subplot_key" numeric not null,
     "study_id" integer not null,
     "entry_id" integer not null,
     "plot_id" integer not null,
-    "number" integer not null default '1',
+    "subplotno" integer not null default '1',
     "description" text,
     "display_name" varchar(256),
     "remarks" text,
@@ -5720,8 +6070,8 @@ create table "warehouse"."subplot" (
 );
 
 alter table "warehouse"."subplot"
-  add constraint "subplot_key_ukey"
-  unique ("key");
+  add constraint "subplot_subplot_key_ukey"
+  unique ("subplot_key");
 alter table "warehouse"."subplot"
   add constraint "subplot_study_id_fkey"
   foreign key ("study_id") references "warehouse"."study" ("id")
@@ -5735,8 +6085,8 @@ alter table "warehouse"."subplot"
   foreign key ("plot_id") references "warehouse"."plot" ("id")
   match simple on update cascade on delete cascade;
 alter table "warehouse"."subplot"
-  add constraint "subplot_study_id_entry_id_plot_id_number_ukey"
-  unique ("study_id", "entry_id", "plot_id", "number");
+  add constraint "subplot_study_id_entry_id_plot_id_subplotno_ukey"
+  unique ("study_id", "entry_id", "plot_id", "subplotno");
 alter table "warehouse"."subplot"
   add constraint "subplot_id_pkey"
   primary key ("id");
@@ -5749,9 +6099,9 @@ alter table "warehouse"."subplot"
   foreign key ("modifier_id") references "master"."user" ("id")
   match simple on update cascade on delete cascade;
 
-create unique index "subplot_key_idx"
+create index "subplot_subplot_key_idx"
   on "warehouse"."subplot"
-  using btree ("key");
+  using btree ("subplot_key");
 create index "subplot_study_id_idx"
   on "warehouse"."subplot"
   using btree ("study_id");
@@ -5761,9 +6111,9 @@ create index "subplot_entry_id_idx"
 create index "subplot_plot_id_idx"
   on "warehouse"."subplot"
   using btree ("plot_id");
-create index "subplot_study_id_entry_id_plot_id_number_idx"
+create index "subplot_study_id_entry_id_plot_id_subplotno_idx"
   on "warehouse"."subplot"
-  using btree ("study_id", "entry_id", "plot_id", "number");
+  using btree ("study_id", "entry_id", "plot_id", "subplotno");
 create index "subplot_is_void_idx"
   on "warehouse"."subplot"
   using btree ("is_void");
@@ -5784,6 +6134,7 @@ create table "import"."variable" (
     "display_name" varchar,
     "ontology_reference" varchar,
     "bibliographical_reference" varchar,
+    "property" varchar,
     "method" varchar,
     "scale" varchar,
     "scale_unit" varchar,
@@ -5838,6 +6189,7 @@ copy "import"."variable" (
     "display_name",
     "ontology_reference",
     "bibliographical_reference",
+    "property",
     "method",
     "scale",
     "scale_unit",
@@ -5849,7 +6201,8 @@ copy "import"."variable" (
     "variable_set",
     "synonym",
     "entry_message",
-    "coded_values"
+    "coded_values",
+    "notes"
 )
 from stdin
     csv
@@ -5859,324 +6212,500 @@ from stdin
     escape e'\\'
     null ''
 ;
-"ABBREV";"LABEL";"NAME";"DESCRIPTION";"DATA_TYPE";"NOT_NULL";"TYPE";"STATUS";"DISPLAY_NAME";"ONTOLOGY_REFERENCE";"BIBLIOGRAPHICAL_REFERENCE";"METHOD";"SCALE";"SCALE_UNIT";"SCALE_TYPE";"SCALE_LEVEL";"DEFAULT_VALUE";"MINIMUM_VALUE";"MAXIMUM_VALUE";"VARIABLE_SET";"SYNONYM";"ENTRY_MESSAGE";"CODED_VALUES"
-"PROGRAM";"PROGRAM";"program";"Program name";"character varying";"yes";"identification";;"Program";;;;;;"discrete";;;;;"study identifier";;;
-"PLACE";"PLACE";"place";"Place name";"character varying";"yes";"identification";;"Place";;;;;;"discrete";;;;;"plot identifier";;;
-"PHASE";"PHASE";"phase";"Breeding phase name";"character varying";"yes";"identification";;"Phase";;;;;;"discrete";;;;;"study identifier";;;
-"YEAR";"YEAR";"year";"Year";"integer";"yes";"identification";;"Year";;;;;;"continuous";;;;;"study identifier";;;
-"SEASON";"SEASON";"season";"Season";"character varying";"yes";"identification";;"Season";;;;;;"discrete";;;;;"study identifier";;;
-"STDSEQNO";"STDSEQNO";"study sequence number";"Study sequence no.";"integer";"yes";"identification";;"Sequence no.";;;;;;"continuous";;;;;"study identifier";;;
-"STUDY_TITLE";;"study title";;"character varying";"no";"metadata";;"Study_Title";;;;;;"discrete";;;;;"study metadata";;;
-"REMARKS";;"remarks";"Remarks";"text";"no";"metadata";;"Remarks";;;;;;"discrete";;;;;"metadata";;;
-"REP_COUNT";;"replication count";"No. of replications";"integer";"no";"metadata";;"Rep_Count";;;;;;"continuous";;;;;"study metadata";;;
-"OTFERT_CONT";"OTFERT";"Amount Other Fertilizer ";"Fertilizer other than nitrogen, phosphorous and potassium applied";"integer";"no";"metadata";"active";"Amount other fertilizer ";;"IRIS";;"measured in Kg or in grams";"kg;g";"continuous";;;;;"field management";;;
-"Basal_CONT";"Basal";"basal fertilizer";"Basal fertilizer used";"character varying";"no";"metadata";;"basal fertilizer";;;"Record the basal fertilizer used.";;;"continuous";;;;;"field management";;;
-"Amt_Basal_CONT";"Amount_Basal";"basal fertilizer amount";"Amount of basal fertilizer used";"character varying";"no";"metadata";;"basal fertilizer amount";;;"Record the amount of basal fertilizer used";"Measured in grams";"g";"continuous";;;;;"field management";;;
-"Date_Basal_CONT";"Date_Basal";"basal fertilizer application date";"Date for basal fertilizer application";"character varying";"no";"metadata";;"basal fertilizer application date";;;"Record the date of basal fertilizer application";;;"continuous";;;;;"field management";;;
-"ESTAB";"ESTAB";"Crop establishment method";"transplanting (manual), transplanting (machine), direct seeding";"character varying";"no";"metadata";;"Crop establishment ";;;;"transplanting (manual)\n transplanting (machine)\n direct seeding";;"categorical";;;;;"design factor";;;
-"DISEASE_PROTECT";"Disease_proctect";"Disease protection";"Extent of disease protection implemented during trial";"character varying";"no";"metadata";"active";"disease protection";;"IRIS";;;;"continuous";;;;;"field management";;;
-"DIST_BET_ROWS";;"distance between rows";"the space between rows";"float";"no";"metadata";;"distance between rows";;;"Measure the space between rows";;;"continuous";;;;;"field management";;;
-"ENTRY_COUNT";"ENTRY_COUNT";"entry count";"Number of entries";"integer";"no";"metadata";;"Entry count";;;"Record the number fo entries.";;;"continuous";;;;;"study metadata";;;
-"DESIGN";"DESIGN";"Experimental design";"experimental design used in a trial";"character varying";"no";"metadata";;"Experimental design";;;;;;"continuous";;;;;"design factor";;;
-"INSECT_PROT";"Insect_proctect";"Insect protection";"Extent of insect protection implemented during trial";"character varying";"no";"metadata";"active";"insect protection";;"IRIS";;;;"continuous";;;;;"field management";;;
-;"Nitrogen";"Nitrogen Fertilizer";"Amount of nitrogen fertilizer applied";"integer";"no";"metadata";"active";"Nitrogen Fertilizer applied";;"IRIS";;"measured in Kg or in grams";"kg;g";"continuous";;;;;"field management";;;
-"ROWS_Per_Plot";;"number of rows per plot";"total number of rows per plot";"float";"no";"metadata";;"number of rows per plot";;;"Count the number of rows per plot";;;"continuous";;;;;"field management";;;
-"NURSERY";"NURSERY";"NURSERY";"Nursery type";"character varying";"no";"metadata";"active";"Type of Nursery";;"IRIS";;"Nursery type";;"continuous";;;;;"design factor";;;
-;"OTFERT";"Other Fertilizer Applied";"Fertilizer other than nitrogen, phosphorous and potassium applied";"character varying";"no";"metadata";"active";"Other fertilizer applied";;"IRIS";;"Name of fertilizer";;"continuous";;;;;"field management";;;
-"PESTICIDE";"Pesticide";"Pesticide";"Pesticide used";"character varying";"no";"metadata";;"Pesticide";;;"Record the pesticide used";;;"continuous";;;;;"field management";;;
-"Date_Pest";"Date_Pesticide";"Pesticide application date";"Date of pesticide application";"character varying";"no";"metadata";;"Pesticide application date";;;"Record the date of pesticide application";;;"continuous";;;;;"field management";;;
-;"Phosphorus";"Phosphorus Fertilizer";"Amount of phosphorus fertilizer applied";"integer";"no";"metadata";"active";"Phosphorus Fertilizer applied";;"IRIS";;"measured in Kg or in grams";"kg;g";"continuous";;;;;"field management";;;
-;"Potassium";"Potassium Fertiliizer";"Amount of potassium fertilizer applied";"integer";"no";"metadata";"active";"Potassium Fertilizer applied";;"IRIS";;"measured in Kg or in grams";"kg;g";"continuous";;;;;"field management";;;
-;;"varietal group";;"integer";"no";"metadata";"active";"Varietal Group";"CO_320:0000486";;;"1= Indica\n2= Japonica (Sinica)\n3= Javanica\n4= Intermediate (hybrids). []";;"categorical";;;1;4;"morphological";"variety group";;
-;;"varietal group";;"integer";"no";"metadata";"active";"Varietal Group";;"SES 5th editon 2013";;"1= Indica\n2= Temperate japonica (equivalent to old japonica)\n3= Tropical japonica (equivalent to old javanica\n4= Aus\n5 =Aromatic (basmati-type)\n6= Deepwater\7= Indica-Aus intermediates\n8= Japonica intermediates\9Japonica-aromatic intermediates\n10= Other intermediates. []";;"categorical";;;1;10;"morphological";"variety group";;
-"WATER_MGT";"WATER MANAGEMENT";"WATER MANAGEMENT";"Type of water management, whether irrigated or rainfed";"character varying";"no";"metadata";"active";"Water management";;"IRIS";;"irrigated\nrainfed";;"categorical";;;;;"field management";;;
-"AREA_SQM";;"area in square meters";"Area in square meters";"float";"no";"metadata";;"Area (sqm)";;;;;"sqm";"continuous";;;;;"study metadata";;;
-"ENTNO";"ENTNO";"Entry number";"Entry number";"integer";"yes";"identification";"active";"Entry Number";;;;;;"continuous";;;;;"entry identifier";;;
-"ProductID";"ProductID";"Product ID";;"integer";"yes";"identification";;"Product ID";;;;;;"continuous";;;;;"entry metadata";;;
-"ENTCODE";"ENTCODE";"Entry code";"Entry code";"character varying";"no";"metadata";;"Entry Code";;;;;;"discrete";;;;;"entry metadata";;;
-"DESIGNATION";"DESIGNATION";"Designation";;"character varying";"yes";"metadata";"active";"Designation";;;;;;"discrete";;;;;"entry metadata";;;
-"GID";"GID";"Germplasm ID";"IRIS Germplasm identification number";"integer";"yes";"metadata";"active";"IRIS GID";;;;;;"continuous";;;1;999999999;"entry metadata";;;
-;"SOURCE";"Seed Source";"Seed Source";"character varying";"no";"metadata";"active";"Seed Source";;"IRIS";;;;"continuous";;;;;"design factor";;;
-"BMETH";"BMETH";"Breeding Method";"Breeding method used";;"no";"metadata";"active";"Breeding method";;"IRIS";;;;;;;;;"field management";;;
-"SEEDING_DATE";"SEEDING_DATE";"Seeding Date";"Date of seeding";"integer";"no";"metadata";"active";"Seeding date";;"IRIS";;"ICIS date format";;"continuous";;;;;"design factor";;;
-"T1";"T1";"T1 fertilizer";"T1 fertilizer used";"character varying";"no";"metadata";;"T1 fertilizer";;;"Record topdress 1 fertilizer used";;;"continuous";;;;;"field management";"Topdress 1";;
-"Amt_T1";"Amount_T1";"T1 fertilizer amount";"Amount of T1 fertilizer used";"character varying";"no";"metadata";;"T1 fertilizer amount";;;"Record the amount of topdress 1 fertilizer";"Measured in grams.";"g";"continuous";;;;;"field management";;;
-"Date_T1";"Date_T1";"T1 fertilizer application date";"Date of T1 fertilizer application";"character varying";"no";"metadata";;"T1 fertilizer application date";;;"Record the date of topdress 1 application";;;"continuous";;;;;"field management";;;
-"T2";"T2";"T2 fertilizer";"T2 fertilizer used";"character varying";"no";"metadata";;"T2 fertilizer";;;"Record topdress 2 fertilizer used";;;"continuous";;;;;"field management";"Topdress 2";;
-"Amt_T2";"Amount_T2";"T2 fertilizer amount";"Amount of T2 fertilizer used";"character varying";"no";"metadata";;"T2 fertilizer amount";;;"Record the amount of topdress 2 fertilizer";"Measured in grams";"g";"continuous";;;;;"field management";;;
-"Date_T2";"Date_T2";"T2 fertilizer application date";"Date of T2 fertilizer application";"character varying";"no";"metadata";;"T2 fertilizer application date";;;"Record the date of topdress 2 application";;;"continuous";;;;;"field management";;;
-"TRANS_DATE";"TRANS_DATE";"Transplanting Date";"Date of transplanting";"integer";"no";"metadata";"active";"Date of transplanting";;"IRIS";;"ICIS date format";;"continuous";;;;;"design factor";;;
-"FLD_LOC";;"field location";"Field location";"character varying";"no";"metadata";;"Field location";;;;;;"discrete";;;;;"plot metadata";;;
-"REP";;"replication number";"Replication number in the field layout";"integer";"yes";"identification";;"REP";;;;;;"continuous";;;;;"plot identifier";;;
-"PLOT_NO";"PLOTNO";"Plot number";"Plot number in the field layout";"character varying";"yes";"metadata";"active";"Plot Number";;;;;;"continuous";;;;;"plot metadata";;;
-"HVDATE_CONT";"HVDATE";"harvest date";"Date of harvest";"character varying";"no";"metadata";;"harvest date";;"IRIS";"Record the harvest date";;;"continuous";;;;;"plot metadata";;;
-"COL";"COL";"Column in layout";"Specific column position of plot in the Latin Square randomized layout in the field";"integer";"no";"metadata";;"Coulmn in layout";;;;;;"continuous";;;;;"design factor";;;
-;"ROW";"Row in layout";"Specific row position of plot in the Latin Square randomized layout in the field";"integer";"no";"metadata";;"Row in layout";;;;;;"continuous";;;;;"design factor";;;
-"ROW_LENGTH";;"row length";"Row length";"float";"no";"metadata";;"row length";;;"Measure row length";;;"continuous";;;;;"field management";;;
-"AP_SCOR_1_9";;"abortion pattern";"Observations are made on staining behavior and number of nuclei in most of the pollens. [CO:rs]";"integer";"no";"observation";"active";"Abortion Pattern";"CO_320:0000331";"Crop Ontology";"Florets are collected and fixed in 3:1 Acetic alcohol. Pollen grains are squeezed out from some anthers in Acetocarmine stain and observation are made on their staining behavior and number of nuclei visible in most of the pollen grains.";"1= Pollen free TGMS line Norin PL12\n3= Abortion at uni-nucleate stage of pollen 'CMS-WA' type\n5= Abortion at binucleate stage of pollen 'CMS-HL' type\n7= Abortion at trinucleate stage of pollen 'CMS-boro' type\n9= Abortion at later stage and pollen looks like a fertile pollen 518A (O. nivara cytoplasm).";;"categorical";;;1;9;"hybrid";"abortion pattern of male sterile line;pollen abortion type";;
-"Alk_GRNH_1_9";"Alk";"Alkali tolerance";"Observe general growth conditions in relation to standard resistance and susceptible checks. Since some soil problems are very heterogenous in the field, several replications may be needed to obtain precise reading.";"integer";"no";"observation";;"Alkali injury";;"SES 4th Ed. 1996";"At growth stage: 3-4";"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;"Leaf is counted as discolored or dead if more than half of its area if discolored or dead.";
-"Alk1_FLD_1_9";"Alk1";"Alkali tolerance";"Observation done in the field";"integer";"no";"observation";;"alkali injury";;"SES 4th Ed. 1996";;"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;
-;"ALKTOL";"Alkali tolerance";"Sensitivity to the zinc content in the growth environment. [CO:rs]";;"no";"observation";;"Alkali tolerance";"CO_320:0000055";"Crop Ontology";;;;;;;;;"stress";"Alk;alkali injury";;
-"AMY_PERC";"AMY";"amylose content";"Percent amylose of milled rice. [CO:rs]";"double precision";"no";"observation";"active";"Amylose";"CO_320:0000102";"Crop Ontology";"Use standard laboratory procedure to determine amylose content. Give amylose content in actual percentage. []";;;"continuous";"ratio";;;;"grain quality";"AMY;amylose content of grain;";;
-"AL_CONT";;"anther length";"Anther length in mm. [CO:rs]";"float";"no";"observation";"active";"Anther Length";"CO_320:0000150";"Crop Ontology";"(Wild species). Record the average of five samples. Stage: at anthesis. [RD:7.4.3]";"Measured in mm. [RD:7.4.3]";"mm";"continuous";;;;;"morphological";;;
-"ApC_SCOR_1_7";"ApC";"apiculus color";"Color of the apiculus. [CO:rs]";"integer";"no";"observation";"active";"Apiculus Color";"CO_320:0000037";"Crop Ontology";;"1 White\n2 Straw\n3 Brown (tawny)\n4 Red\n5 Red apex\n6 Purple\n7 Purple apex. [SES:115]";;"categorical";;;1;7;"morphological";;;
-;;"aroma";"The aroma of the cooked/uncooked grains. [CO:rs]";;"no";"observation";;"aroma";"CO_320:0000103";"Crop Ontology";;;;;;;;;"grain quality";"scent;SCT";;
-"AC_SCOR_0_5";"AC";"auricle color";"Color of the auricle. [CO:rs]";"integer";"no";"observation";"active";"Auricle Color";"CO_320:0000029";"Crop Ontology";"Stage: late vegetative. [RD:7.3.11]";"0 0 Absent (no auricles)\n1 011 Whitish\n2 062 Yellowish green\n3 080 Purple\n4 081 Light purple\n5 084 Purple lines. [RD:7.3.11]";;"categorical";;;0;5;"morphological";;;
-"AC_SCOR_1_2";"AC";"auricle color";;"integer";"no";"observation";;"Auricle Color";;"SES 4th Ed. 1996";"At growth stage: 4-5";"Code\n\n1= Light green\n2= Purple";;"categorical";;;1;2;"morphological";;;
-"AC_SCOR_0_2";"AC";"auricle color";;"integer";"no";"observation";;"Auricle Color";;"SES 5th Ed. 2013";"At growth stage: 4-5";"Code\n\n0= Absent (no auricles)\n1= Light green\n2= Purple";;"categorical";;;0;2;"morphological";;;
-"AnC_SCOR_0_8";"AnC";"awn color";"Describes the awn color. [CO:rs]";"integer";"no";"observation";"active";"Awn Color";"CO_320:0000036";"Crop Ontology";"Stage: after anthesis. [RD:7.4.10]";"0 0 Absent (awnless)\n1 011 Whitish\n2 020 Straw\n3 040 Gold\n4 052 Brown (tawny)\n5 061 Light green\n6 070 Red\n7 080 Purple\n8 100 Black. [RD:7.4.10]";;"categorical";;;0;8;"morphological";;;
-"AnC_SCOR_0_6";"AnC";"awn color";;"integer";"no";"observation";;"Awn Color";;"SES 4th Ed. 1996";"At growth stage: 6";"0= Awnless\n1= Straw\n2=Gold\n3= Brown (tawny)\n4= Red\n5= Purple\n6= Black";;"categorical";;;0;6;"morphological";;;
-"AnL_CONT";;"awn length";"Length of own. Expressed in mm. [CO:rs]";"float";"no";"observation";"active";"Awn Length";"CO_320:0000237";"Crop Ontology";"Record the average length of 10 representative spikelets. Cultivated species: measure the longest awn. Stage: maturity Wild species: measure random awns. Stage: after anthesis. [RD:7.4.11]";"Measured in mm. [RD:7.4.11]";"mm";"continuous";;;;;"morphological";;;
-"AnL_SCOR_0_9";;"awn length";"Length of own. Expressed in mm. [CO:rs]";"integer";"no";"observation";"active";"Awn Length";"CO_320:0000238";"Crop Ontology";"Record the average length of 10 representative spikelets. Cultivated species: measure the longest awn. Stage: maturity Wild species: measure random awns. Stage: after anthesis. [RD:7.4.11]";"0 None (awnless)\n1 Very short (<5 mm)\n3 Short (~8 mm)\n5 Intermediate (~15 mm)\n7 Long (~30 mm)\n9 Very long (>40 mm). [RD:7.4.11]";;"categorical";;;0;9;"morphological";;;
-"AnP_SCOR_0_2";;"awn presence";"The presence or absence of awn. Observation may include relative awn size. [CO:rs]";"integer";"no";"observation";"active";"Awn Presence";"CO_320:0000156";"Crop Ontology";"Stage: flowering to maturity. [RD:7.4.8]";"0 Absent\n1 Partly awned\n2 Fully awned. [RD:7.4.8]";;"categorical";;;0;2;"morphological";;;
-"AnT_CONT";;"awn thickness";;"float";"no";"observation";"active";"Awn Thickness";"CO_320:0000144";"Crop Ontology";"(Wild species). Record the average width of 10 representative spikelets, at 1 cm from the apiculus of the spikelet. Stage: after anthesis. [RD:7.4.12]";"Measured in mm. [RD:7.4.12]";"mm";"continuous";;;;;"morphological";;;
-"BB_SCOR_1_9";"BB";"bacterial blight";"Causal agent: Xanthomonas oryzae pv. oryzae.\n\nSymptoms: Lesion usually start near the leaf tip or leaf margins or both, and extend down the outer edge(s). Young lesions are pale green to grayish green, later turning yellow to gray (dead) with time. In very susceptible varieties, lesions may extend to the entire leaf length into the leaf sheath. Kresek or seedling blight causes wilting and death of the plants.\n\nAt growth stage: 3-4 kresek (greenhouse evaluation of leaf blight), 5-8 (leaf blight). \n\n\bNote: In both seedling and field tests, folded young leaves should not be  inoculated. Old or leaves with symptom of nutrient deficiency or other diseases should also be avoided for inoculation.";"integer";"no";"observation";"active";"Bacterial Blight";;"SES 4th Ed. 1996";;"Scale (for greenhouse test, lesion area)\n\n1= 0-3%\n2= 4-6%\n3= 7-12%\n4= 13-25%\n5=26-50%\n6= 51-75%\n7= 76-87%\n8= 88-94%\n9= 95-100%\n\n\nScale (for field test, lesion area)\n\n1= 1-5%\n3= 6-12%\n5= 13-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;1;9;"stress";;;
-"BB1";"BB1";"bacterial blight (race 1) ";"Bacterial Blight (Race 1)";"integer";"no";"observation";"active";"Bacterial blight (race 1)";;;"Race 1 Field Trial ";"SCALE (field test, severity: % leaf area diseased)\n1= 1-5%\n3= 6-12%\n5= 13-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;1;9;"stress";;;
-"BB2";"BB2";"bacterial blight (race 2)";"Bacterial Blight (Race 2)";"integer";"no";"observation";"active";"Bacterial blight (race 2)";;;"Race 2 Field Trial";"SCALE (field test, severity: % leaf area diseased)\n1= 1-5%\n3= 6-12%\n5= 13-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;1;9;"stress";;;
-"BB1_S";"BB1_S";"bacterial blight 1 (segregating)";;"character varying";"no";"observation";"active";"Bacterial blight 1 (segregating)";;;"Race 1 Field Trial";"Segregating Score (S or blank)";;"categorical";;;;;"stress";;;
-"BB2_S";"BB2_S";"bacterial blight 2 (segregating)";;"character varying";"no";"observation";"active";"Bacterial blight 2 (segregating)";;;"Race 2 Field Trial";"Segregating Score (S or blank)";;"categorical";;;;;"stress";;;
-;;"bacterial leaf blight";"The trait is scored for the plant response to the agent Xanthomonas oryzae pv. oryzae causing bacterial leaf blight. [CO:rs]\n\nSymptoms: Lesions usually start near the leaf tips or leaf margins or both, and extend down the outer edge(s).";"integer";"no";"observation";"active";"Bacterial Leaf Blight";"CO_320:0000173";"Crop Ontology";;"SCALE (greenhouse test, severity: % leaf area diseased)\n1 No disease observed\n2 Less than 1%\n3 1-3%\n4 4-5%\n5 11-15%\n6 16-25%\n7 26-50%\n8 51-75%\n9 76-100%.\n\n\nSCALE (field test, severity: % leaf area diseased)\n1 1-5%\n3 6-12%\n5 13-25%\n7 26-50%\n9 51-100%. [SES:35]";;"categorical";"interval";;1;9;"stress";"Bacterial blight (BB);Bacterial Blight Kreak (BBK);Bacterial Blight Race 1 (BB1);Bacterial Blight Race 2 (BB2)";;"greenhouse test::1 No disease observed;2 Less than 1%;3 1-3%;4 4-5%;5;11-15%;6 16-25%;7 26-50%;8 51-75%;9 76-100%;;field test::1 1-5%;3 6-12%;5 13-25%;7 26-50%;9 51-100%"
-;;"bacterial leaf streak";"The trait is scored for the plant response to the agent Xanthomonas oryzae pv. oryzicola causing bacterial leaf streak. [CO:rs]";;"no";"observation";"active";"Bacterial leaf streak";"CO_320:0000174";"Crop Ontology";;;;;;;;;"stress";;;
-;"BLS";"bacterial leaf streak";"Causal agent: Xanthomonas oryzae pv. oryzicola.\n\nSymptoms: Linear lesions with small bacterial exudates evident.\nAt growth stage: 3-6.\n\nNote: This scale mayl also be used for lead smut caused by Entyloma oryzae.";;"no";"observation";"active";"Bacterial Leaf Streak";;"SES 4th Ed. 1996";;;;;;;;;"stress";;;
-"BLS_SCOR_0_9";"BLS";"bacterial leaf streak";"Causal agent: Xanthomonas oryzae pv. oryzicola.\n\nSymptoms: Linear lesions with small bacterial exudates evident.\nAt growth stage: 3-6.\n\nNote: This scale mayl also be used for lead smut caused by Entyloma oryzae.";"integer";"no";"observation";"active";"Bacterial Leaf Streak";;"SES 5th Ed. 2013";;"Scale (Affected leaf area)\n\n0= No lesions observed\n1= Small brown specks of pinpoint size or large brown specks without sporulating center\n3= Lesion type is the same as in scale 2, but a significant number of lesions are on the upper leaves\n5= Typical blast lesions infecting 4-10% of the leaf area\n7= Typical blast lesions infection 26-50% of the leaf area\n9= More than 75% leaf area affected";;"categorical";;;0;9;"stress";;;
-;;"bakanae disease";"The trait is scored for the plant response to the agent Gibberella fujikuroi causing bakanae disease. [CO:rs]";;"no";"observation";;"bakanae disease";"CO_320:0000195";"Crop Ontology";"At growth stage: 3-6";;;;;;;;"stress";;"Causal agent: Gibberella fujikuroi. Symptoms: the plant elongates abnormally, has few tillers and usually dies before producing grains.";
-"DBI_CONT_CO";"DBI";"basal internode diameter";"Actual measurements in millimeters from the outer diameter of the stems (culms) at the basal portion of the main stem (culm). [CO:rs]";"float";"no";"observation";"active";"Basal Internode Diameter";"CO_320:0000032";"Crop Ontology";;"Measure in mm. [SES:107]";"mm";"continuous";;;;;"morphological";;;
-"BLSC_CO_1_4";"BLSC";"basal leaf sheath color";"The changes in the color of basal leaf sheath. [CO:rs]";"integer";"no";"observation";"active";"Basal Leaf Sheath Color";"CO_320:0000023";"crop Ontology";"Colour of the outer surface of the leaf sheath. Stage: late vegetative. [RD:7.3.3]";"1 060 Green\n2 084 Green with purple lines\n3 081 Light purple\n4 080 Purple. [RD:7.3.3]";;"categorical";;;1;4;"morphological";;;
-"BLSC_SES_1_4";"BLSC";"basal leaf sheath color ";;"integer";"no";"observation";;"basal leaf sheath color";;"SES 4th Ed. 1996";"At growth stage: 3-5 early to late vegetative stage";"1= Green\n2= Purple lines\n3= Light purple\n4= Purple";;"categorical";;;1;4;"morphological";;;
-;;"bird damage";"The trait is scored for the plant damage caused by bird. [CO:rs]";;"no";"observation";;"bird damage";"CO_320:0000213";"crop Ontology";;;;;;;;;"stress";"rodent damage";;
-"BD_SCOR_0_9";"BD";"bird damage";"Since there is no genetic resistance to birds, the damage can be quantified as it does not represent resistance.";"integer";"no";"observation";;"bird damage";;"SES 4th Ed. 1996";;"Scale (Damaged panicles)\n0= No damage observed\n1= Less than 5%\n5= 6-25%\n9= 26-100%";;"categorical";;;0;9;"stress";;;
-;"BLAST";"blast";;"integer";"no";"observation";"active";"Blast";;;"Field Trial";"SES Score Blast Nursery (0-9)";;;;;0;9;"stress";;;
-;"BPH";"brown planthopper";"The trait is scored for the plant damage caused by brown plant hopper (Nilparvata lugens). [CO:rs]";"integer";"no";"observation";"active";"Brown Plathopper";"CO_320:0000371";"Crop Ontology";"Local colony";"SCALE (For greenhouse test)\n0= No injury\n1= Very slight injury\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting or dead and remaining plants severely stunted or dying\n7= More than half of the plants\n9= All plants dead.\n\n\nSCALE (For field test)\n0= No injury\n1= Slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead."" [SES:60]";;"categorical";;;0;9;"stress";"BPH1;BPH2;BPH3";;
-"BPH_GRNH_0_9";"BPH";"brown planthopper";"Causal agent: Nilaparvata lugens.\n\nSymptoms: Partial to pronounced yellowing and increasing severity of stunting. Extreme signs are wilting to death of plants. Infested areas in the field may be patchy.\nAt growth stage: 2 (greenhouse)\n3-9 (field).\n\nTest evaluation for resistance can be considered valid if hopper population is unformly distributed at a high level across the screening box or field.";"integer";"no";"observation";"active";"Brown Planthopper";;"SES 4th Ed. 1996";"Greenhouse Screening";"Scale (For greenhouse test)\n\n0= No damage\n1= Very slight damage\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting\n7= More than half of the plants wilting or dead and remaining plants severely stunted or dying\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-"BPH_FLD_0_9";"BPH";"brown planthopper";"Causal agent: Nilaparvata lugens.\n\nSymptoms: Partial to pronounced yellowing and increasing severity of stunting. Extreme signs are wilting to death of plants. Infested areas in the field may be patchy.\nAt growth stage: 2 (greenhouse)\n3-9 (field).\n\nTest evaluation for resistance can be considered valid if hopper population is unformly distributed at a high level across the screening box or field.";"integer";"no";"observation";"active";"Brown Planthopper";;"SES 4th Ed. 1996";"Field screening";"Scale (For field test)\n\n0= No damage\n1= slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;"For field screening, a minimum of the following hopper density on susceptible check is necessary:\n\na) 10 hoppers/hill at 10-15 days after transplanting\nb) 25hoppers/hill at maximum tillering\nc) 100 hoppers/hill at early booting stage";
-"BPH1_GRNH_0_9";"BPH1";"brown planthopper";"Brown Planthopper (Biotype1)";"integer";"no";"observation";;"brown planthopper";;;"Greenhouse Screening";"Scale (For greenhouse test)\n\n0= No damage\n1= Very slight damage\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting\n7= More than half of the plants wilting or dead and remaining plants severely stunted or dying\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-"BPH1_FLD_0_9";"BPH1";"brown planthopper";"Brown Planthopper (Biotype1)";"integer";"no";"observation";;"brown planthopper";;;"Field screening";"Scale (For field test)\n\n0= No damage\n1= slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-"BPH2_GRNH_0_9";"BPH2";"brown planthopper";"Brown Planthopper (Biotype2)";"integer";"no";"observation";;"brown planthopper";;;"Greenhouse Screening";"Scale (For greenhouse test)\n\n0= No damage\n1= Very slight damage\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting\n7= More than half of the plants wilting or dead and remaining plants severely stunted or dying\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-"BPH2_FLD_0_9";"BPH2";"brown planthopper";"Brown Planthopper (Biotype2)";"integer";"no";"observation";;"brown planthopper";;;"Field screening";"Scale (For field test)\n\n0= No damage\n1= slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-"BPH3_GRNH_0_9";"BPH3";"brown planthopper";"Brown Planthopper (Biotype3)";"integer";"no";"observation";;"brown planthopper";;;"Greenhouse Screening";"Scale (For greenhouse test)\n\n0= No damage\n1= Very slight damage\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting\n7= More than half of the plants wilting or dead and remaining plants severely stunted or dying\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-"BPH3_FLD_0_9";"BPH3";"brown planthopper";"Brown Planthopper (Biotype3)";"integer";"no";"observation";;"brown planthopper";;;"Field screening";"Scale (For field test)\n\n0= No damage\n1= slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-"PRT_PERC";"PRT";"brown rice protein";;"float";"no";"observation";;"Brown rice Protein";"CO_320:0000111";"Crop Ontology";"At growth stage: 9 (after dehulling).";"Percent of total brown rice weight (at 14% moisture) to one decimal place. [CO:rs]";"%";"continuous";;;;;"grain quality";"protein content";;
-"BS_SCOR_1_9";;"brown spot";"The trait is scored for the plant response to the agent Cochliobolus miyabeanus (Bipolaris oryzae, Drechslera oryzae) causing brown spot. [CO:rs]";"integer";"no";"observation";"active";"Brown Spot";"CO_320:0000343";"Crop Ontology";;"SCALE (Severity: % leaf area diseased)\n\n1= No disease observed\n2= Less than 1%\n3= 1-3%\n4= 4-5%\n5= 11-15%\n6= 16-25%\n7= 26-50%\n8= 51-75%\n9= 76-100%.";;"categorical";;;1;9;"stress";;;
-"BS_SCOR_0_9";"BS";"brown spot";"Causal agent: Cochliobolus miyabeanus (Bipolaris oryzae, Drechslera oryzae).\n\nSymptoms: Typical leaf spots are small, oval or circular and dark brown. Larger lesions usually have the same color on the edges but have a pale, usually grayish center. Most spots have a light yellow halo around the outer edge.\n\nAt growth stage: 2 and 5-9.\n\n\nNote: This scale may also be used for eyespot disease caused by Drechslera gigantea.";"integer";"no";"observation";"active";"Brown Spot";;"SES 4th Ed. 1996";;"Scale (Affected leaf area)\n\n0= No incidence\n1= Less than 1%\n2= 1-3%\n3= 4-5%\n4=6-10%\n5= 11-15%\n6= 16-25%\n7= 26-50%\n8= 51-75%\n9= 76-100%";;"categorical";;;0;9;"stress";;;
-;;"case worm damage";"The trait is scored for the plant damage caused by caseworm (Nymphula depunctalis). [CO:rs]";;"no";"observation";;"case worm damage";"CO_320:0000197";"Crop Ontology";;;;"categorical";;;;;"stress";;;
-"CW_SCOR_0_8";"CW";"caseworm";"Causal agent: Nymphula depunctalis.\nSymptoms: Larvae feed on leaf tissue, leaving only the papery upper epidermis.";"integer";"no";"observation";;"caseworm";;"SES 4th Ed. 1996";"At growth stage: 2-7";"Scale (Scraping index)\n0= No scraping\n1= Less than 1%\n3= 1-10%\n5= 11-25%\n7= 26-50%\n8= 51-100%";;"categorical";;;0;8;"stress";;;
-;;"chalkiness";;"float";"no";"observation";;"chalkiness";;;;"Cervitec";;"continuous";;;;;"grain quality";;;
-"CLK_SCOR_0_9";;"chalkiness of endosperm";"Defines a representative milled sample for the degree (extent) of chalkiness that will best describe the sample with respect to (a) white belly, (b) white center, (c) white back. [CO:rs]";"integer";"no";"observation";"active";"Chalkiness of Endosperm";"CO_320:0000104";"Crop Ontology";;"SCALE (% of kernel area)\n0= None\n1= Small (less than 10%)\n5= Medium (11% to 20%)\n9= Large (more than 20%). [SES:124]";;"categorical";;;0;9;"grain quality";"CLK";;
-"CLK_CERV";"CHALK";"chalkiness of endosperm";"Chalkiness of endosperm measured using Cervitec";"integer";"no";"observation";"active";"Chalkiness of Endosperm";;;"Average of Median Percentage";"Cervitec";;;;;;;"grain quality";;;
-;"Clk";"chalkiness of endosperm";"Note: Evaluate a representative milled sample for the degree (extent) of chalkiness that will best describe the sample with respect to (a) white belly, (b) white center, (c) white back.";"float";"no";"observation";;"chalkiness";;"SES 4th Ed. 1996";"At growth stage: 9";"Scale (% of kernel area)\n\n0= None\n1= Small (less than 10%)\n5= Medium (11% to 20%)\n9= Large (more than 20%)";;"categorical";;;0;9;"grain quality";;;
-"CTOL_SCOR_1_9";"CTol";"cold tolerance";;"integer";"no";"observation";;"Cold Tolerance";"CO_320:0000057";"Crop Ontology";;"1= No damage to leaves, normal leaf color (strongly tolerant)\n3= Tip of leaves slightly dried, folded and light green (tolerant)\n5= Some seedlings moderately folded and wilted, 30-50% seedlings dried, pale green to yellowish leaves (Moderate tolerant)\n7= Seedlings severely rolled and dried; reddish-brown leaves (Sensitive)\n9= Most seedlings dead and dying. (Highly sensitive). [SES:75]";;"categorical";;;1;9;"stress";;;
-"CTOL_VEGE_1_9";"CTol";"cold tolerance";;"integer";"no";"observation";;"Cold Tolerance";"CO_320:0000057";"Crop Ontology";;"SCALE (vegetative) Temp:17-18��C��1\n1-3= All leaves normal color (Tolerant)\n4-6= Pale green leaves (moderately tolerant)\n7-9= Yellowing of leaves and stunted growth (sensitive). [SES:75]";;"categorical";;;1;9;"stress";;;
-"CTOL_BOOT_1_9";"CTol";"cold tolerance";;"integer";"no";"observation";;"Cold Tolerance";"CO_320:0000057";"Crop Ontology";;"SCALE (reproductive/booting)\nTemp:17-18��C��1\n1-3= Normal growth, spikelet fertility (>70%) (tolerant)\n4-6= Heading delay, spikelet fertility (11-69%) (moderately tolerant)\n7-9= Reduced plant height, delayed heading, high sterility (<10%) (sensitive). [SES:75]";;"categorical";;;1;9;"stress";;;
-"CTOL_SEED_1_9";"CTol";"cold tolerance";"Observe differences in vigor along with subtle changes inlead color. The optimum time to make observations would be the seedling, tillering, flowering, and mature stages.";"integer";"no";"observation";;"Cold Tolerance";;"SES 4th Ed. 1996";;"Scale (for seedlings)\n\n1= Seedlings dark green\n3= Seedlings light yellow\n5= Seedlings yellow\n7= Seedlings brown\n9= Seedlings dead";;"categorical";;;1;9;"stress";;;
-"CTOL_TILL_1_9";"CTol";"cold tolerance";"Observe differences in vigor along with subtle changes inlead color. The optimum time to make observations would be the seedling, tillering, flowering, and mature stages.";"integer";"no";"observation";;"Cold Tolerance";;"SES 4th Ed. 1996";;"Scale (from tillering to maturity)\n1= Plants have a normal color; rate of growth and flowering normal\n3= Plants slightly stunted, growth slightly retarded\n5= Plants moderately stunted, leaves yellowish and development delayed\n7= Plants severly stunted, leaves yellow and development delayed, and panicles exserted\n9= Plants severely stunted, with leaves brown, development much delayed and panicles not exserted";;"categorical";;;1;9;"stress";;;
-"CTOL_SPIK_1_9";"CTol";"cold tolerance";"Observe differences in vigor along with subtle changes inlead color. The optimum time to make observations would be the seedling, tillering, flowering, and mature stages.";"integer";"no";"observation";;"Cold Tolerance";;"SES 4th Ed. 1996";;"Scale (Spikelet fertility)\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%";;"categorical";;;1;9;"stress";;;
-"CC_SCOR_0_4";"CC";"collar color";"Color changes monitored in leaf collar. [CO:rs]";"integer";"no";"observation";"active";"Collar Color";"CO_320:0000028";"Crop Ontology";"Stage: late vegetative. [RD:7.3.12]";"0 0 Absent (collarless)\n1 060 Green\n2 061 Light green\n3 080 Purple\n4 084 Purple lines. [RD:7.3.12]";;"categorical";;;0;4;"morphological";"leaf collar color";;
-"CC_SCOR_1_3";"CC";"collar color";;"integer";"no";"observation";;"Collar Color";;"SES 4th Ed. 1996";"At growth stage: 4-5";"Code\n\n1= Light green\n2= Green\n3= Purple";;"categorical";;;1;3;"morphological";;;
-"CC_SCOR_0_3";"CC";"collar color";;"integer";"no";"observation";;;;"SES 5th Ed. 2013";"At growth stage: 4-5";"Code\n\n0= Absent (collarless)\n1= Light Green\n2= Green\n3= Purple";;"categorical";;;0;3;"morphological";;;
-"CmA_CO_1_9";"CmA";"culm angle";"The angle of the culm with respect to the ground surface in a grass plant. [CO:rs]";"integer";"no";"observation";"active";"Culm Angle";"CO_320:0000031";"Crop Ontology";"The estimated average angle of inclination of the base of the main culm from vertical.\nStage: after flowering. [RD:7.3.23]";"1 Erect (<15??)\n3 Semi-erect (intermediate) (~20??)\n5 Open (~40??)\n7 Spreading (>60-80??, culms not resting on the ground)\n9 Procumbent (culm or its lower part rests on ground surface). [RD:7.3.23]";;"categorical";;;1;9;"morphological";;;
-"CmA_SES_1_9";"CmA";"culm angle";;"integer";"no";"observation";;"Culm Angle";;"SES 4th Ed. 1996";"At growth stage: 7-9";"1= Erect (<30°)\n3= Intermediate (≈45°)\n5= Open (≈60°)\n7= Spreading (>60°)\n9= Procumbent (The culm or its lower part rests on ground surface)";;"categorical";;;1;9;"morphological";;;
-"CmD_SCOR_1_2";;"culm diameter";"Measurement of culm diameter. [CO:rs]";"integer";"no";"observation";"active";"Culm Diameter";"CO_320:0000155";"Crop Ontology";"Measured as the outer diameter of basal portion of the main culm.\nCultivated species: record average of three representative plants during flowering or at late reproductive stage. Wild species: record average of five plants at late reproductive stage. [RD:7.3.27]";"1 Thin (<5 mm)\n2 Thick (>=5 mm). [RD:7.3.27]";;"categorical";;;1;2;"morphological";"culm width,stem width";;
-"CmIC_SCOR_0_2";"CmIC";"culm internode color";"Color of the outer surface of internodes on the culm/stem. [CO:rs]";"integer";"no";"observation";"active";"Culm Internode Color";"CO_320:0000016";"Crop Ontology";"The presence and distribution of purple colour from anthocyanin, observed on the outer surface of the internodes on the culm. Stage: near colouration maturity. [RD:7.3.30]";"0 0 Absent\n1 080 Purple\n2 084 Purple lines. [RD:7.3.30]";;"categorical";;;0;2;"morphological";"internode color";"At growth stage: 7-9";
-"CmIC_SCOR_1_4";"CmlC";"culm internode color";"The outer surface of the internodes on the culm is recorded.";"integer";"no";"observation";;;;"SES 4th editon 1996";"At growth stage: 7-9";"1= Green\n2= Light gold\n3= Purple lines\n4= Purple";;"categorical";;;1;4;"morphological";;;
-"CmL_SCOR_1_9";"CmL";"culm length";"Length of culm (stem) which is measured from soil surface to panicle base in centimeters. [CO:rs]";"integer";"no";"observation";"active";"Culm Length";"CO_320:0000230";"Crop Ontology";"Measure from soil surface to panicle base in centimeters. Sample size=5. At growth stage 7-9 [SES:104]";"1 Very short (<50 cm)\n2 Very short to short (51-70 cm)\n3 Short (71-90 cm)\n4 Short to intermediate (91-105 cm)\n5 Intermediate (106 -120 cm)\n6 Intermediate to long (121-140 cm)\n7 Long (141-155 cm)\n8 Long to very long (156-180 cm)\n9 Very long (>180 cm). [RD:7.3.25]";;"categorical";;;1;9;"morphological";"stem length";;
-"CmL_CONT";"CmL";"culm length";"Length of culm (stem) which is measured from soil surface to panicle base in centimeters. [CO:rs]";"float";"no";"observation";"active";"Culm Length";"CO_320:0000234";"SES 4th editon 1996";"Measure from soil surface to panicle base in centimeters. Sample size=5. At growth stage 7-9 [SES:104]";"Measured in cm. [RD:7.3.25]";"cm";"continuous";;;;;"morphological";"stem length";;
-"CmN_CONT";"CmN";"culm number";;"float";"no";"observation";;"culm number";;"SES 4th Ed. 1996";"Enter actual count of the total number of tillers after full heading. Specify if per plant, hill or area.\nAt growth stage: 6-9";;;"continuous";;;;;"morphological";;;
-"CS_SCOR_1_9";"CS";"culm strength";"This test gives some indication of culm stiffness and resilience. Stage: Heading - Mature grain. [SES:3]";"integer";"no";"observation";"active";"Culm Strength";"CO_320:0000321";"Crop Ontology";"Culm strength is first rated after heading by gently pushing the tillers (30 cm from the ground) back and forth a few times. Final observation at maturity is made to record standing position of plants.";"1= Strong (no bending)/n3= Moderately strong (most plants bending)\n5= Intermediate (most plants moderately bending)\n7= Weak (most plants nearly flat)\n9= Very weak (all plants flat). ";;"categorical";;;1;9;"agronomic";"CMST;Cs;stem strength";;
-"An_SCOR_0_9";;"Detection for awn presence (SES)";"Presence of awn structure in the rice grain (kernel). [CO:rs]";"integer";"no";"observation";"active";"Detection For Awn Presence (Ses)";"CO_320:0000015";"Crop Ontology";"Observe for the presence of awn structure in the rice grain (kernel). []";"0 Absent\n1 Short and partly awned\n5 Short and fully awned\n7 Long and partly awned\n9 Long and fully awned. [SES:113]";;"categorical";;;0;9;"morphological";;;
-"DBI_CONT_SES";"DBI";"diameter of basal internode";"Enter actual measurement in millimeters from the outer diameter of the culms at the basal portion of the main culm.";"float";"no";"observation";;"Diameter of basal internode";;"SES 4th Ed. 1996";"Sample size= 3\n\nAt growth stage: 7-9";;;"continuous";;;;;"morphological";;;
-;;"drought recovery";"Scores are taken after 10 days following soaking rain or watering- Indicate the degree of stress before recovery. [CO:rs]";"integer";"no";"observation";;"Drought recovery";;"Crop Ontology";;"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%. [SES:80]";;"categorical";;;1;9;"stress";"drought recovery (2nd stress drought);drought recovery (9-10 bars);DRR2S;DRR910 ";;
-"DRT2_SCOR_1_9";"DRT2";"drought recovery";"Drought recovery. Rate of recovery after first stress.";"integer";"no";"observation";;"Drought recovery";;;"Drought 2 (After 1st stress)";"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%.";;"categorical";;;1;9;"stress";;;
-"DRT4_SCOR_1_9";"DRT4";"drought recovery";"Drought resistance. Resistance score at early vegetative stage (40 DAS)";"integer";"no";"observation";;"Drought recovery";;;"Drought 4 (Early Vegatative)";"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%.";;"categorical";;;1;9;"stress";;;
-"DRT6_SCOR_1_9";"DRT6";"drought recovery";"Drought resistance. Resistance score at reproductive stage";"integer";"no";"observation";;"Drought recovery";;;"Drought 6 (Reproductive)";"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%.";;"categorical";;;1;9;"stress";;;
-"DRT7_ROLL_0_9";"DRT7";"drought recovery";"Drought sensitivity. Tolerance score at 3-4 bars";"integer";"no";"observation";;"Drought recovery";;;"Drought 7 (3-4 Bars)";"SCALE (leaf rolling at vegetative stage)\n0= Leaves healthy\n1= Leaves start to fold (shallow)\n3= Leaves folding (deep V-shape)\n5= Leaves fully cupped (U-shape)\n7= Leaf margins touching (0-shape)\n9= Leaves tightly rolled";;"categorical";;;0;9;"stress";;;
-"DRT7_DRY_0_9";"DRT7";"drought recovery";"Drought sensitivity. Tolerance score at 3-4 bars";"integer";"no";"observation";;"Drought recovery";;;"Drought 7 (3-4 Bars)";"SCALE (leaf drying at vegetative stage)\n0= No symptoms\n1= Slight tip drying\n3= Tip drying extended up to 1/4 length in most leaves\n5= One-fourth to 1/2 of all leaves dried\n7= More than 2/3 of all leaves fully dried\n9= All plants apparently dead";;"categorical";;;0;9;"stress";;;
-"DRT7_SPIK_1_9";"DRT7";"drought recovery";"Drought sensitivity. Tolerance score at 3-4 bars";"integer";"no";"observation";;"Drought recovery";;;"Drought 7 (3-4 Bars)";"SCALE (spikelet fertility)\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%.";;"categorical";;;0;9;"stress";;;
-"DRT8_ROLL_0_9";"DRT8";"drought recovery";"Drought sensitivity. Tolerance score at 9-10 bars";"integer";"no";"observation";;"Drought recovery";;;"Drought 8 (9-10 Bars)";"SCALE (leaf rolling at vegetative stage)\n0= Leaves healthy\n1= Leaves start to fold (shallow)\n3= Leaves folding (deep V-shape)\n5= Leaves fully cupped (U-shape)\n7= Leaf margins touching (0-shape)\n9= Leaves tightly rolled";;"categorical";;;0;9;"stress";;;
-"DRT8_DRY_0_9";"DRT8";"drought recovery";"Drought sensitivity. Tolerance score at 9-10 bars";"integer";"no";"observation";;"Drought recovery";;;"Drought 8 (9-10 Bars)";"SCALE (leaf drying at vegetative stage)\n0= No symptoms\n1= Slight tip drying\n3= Tip drying extended up to 1/4 length in most leaves\n5= One-fourth to 1/2 of all leaves dried\n7= More than 2/3 of all leaves fully dried\n9= All plants apparently dead";;"categorical";;;0;9;"stress";;;
-"DRT8_SPIK_1_9";"DRT8";"drought recovery";"Drought sensitivity. Tolerance score at 9-10 bars";"integer";"no";"observation";;"Drought recovery";;;"Drought 8 (9-10 Bars)";"SCALE (spikelet fertility)\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%.";;"categorical";;;0;9;"stress";;;
-"DRT9_SCOR_1_9";"DRT9";"drought recovery";"Drought recovery. Rate of recovery after exposure to 9-10 bars";"integer";"no";"observation";;"Drought recovery";;;"Drought 9 (9-10 Bars)";"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%.";;"categorical";;;1;9;"stress";;;
-"DRS_ROLL_0_9";"DRS";"drought sensitivity";"Drought sensitivity is highly interactive with crop phenology, plant growth prior to stress, and timing, duration, and intensity of drought stress.";"integer";"no";"observation";;"Drought sensitivity";"CO_320:0000060";"Crop Ontology";;"SCALE (leaf rolling at vegetative stage)\n0= Leaves healthy\n1= Leaves start to fold (shallow)\n3= Leaves folding (deep V-shape)\n5= Leaves fully cupped (U-shape)\n7= Leaf margins touching (O-shape)\n9= Leaves tightly rolled [SES:80]";;"categorical";;;0;9;"stress";"drought tolerance;drought tolerance (3-4 bars);drought tolerance (9-10 Bars);DRT34;DRT910";;
-"DRS_DRY_0_9";"DRS";"drought sensitivity";"Drought sensitivity is highly interactive with crop phenology, plant growth prior to stress, and timing, duration, and intensity of drought stress.";"integer";"no";"observation";;"Drought sensitivity";"CO_320:0000060";"Crop Ontology";;"SCALE (leaf drying at vegetative stage)\n0= No symptoms\n1= Slight tip drying\n3= Tip drying extended up to 1/4 length in most leaves\n5= One-fourth to 1/2 of all leaves dried\n7= More than 2/3 of all leaves fully dried\n9= All plants apparently dead [SES:80]";;"categorical";;;0;9;"stress";"drought tolerance;drought tolerance (3-4 bars);drought tolerance (9-10 Bars);DRT34;DRT910";;
-"DRS_SPIK_1_9";"DRS";"drought sensitivity";"Drought sensitivity is highly interactive with crop phenology, plant growth prior to stress, and timing, duration, and intensity of drought stress.";"integer";"no";"observation";;"Drought sensitivity";"CO_320:0000060";"Crop Ontology";;"SCALE (spikelet fertility)\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%. [SES:80]";;"categorical";;;0;9;"stress";"drought tolerance;drought tolerance (3-4 bars);drought tolerance (9-10 Bars);DRT34;DRT910";;
-;"DRS";"drought sensitivity";"Note: Drought sensitivity is highly interactive wity crop phenology, plant growth prior to stress, and timing, duration and intensity of drought stress.\n\nFor many soils, it takes at least 2 rainless weeks to causew marked differences in drought sensitivity during the vegetative stage and at least 7 rainless days during the reproductive stage to cause severe drought injury.\n\nLeaf rolling precedes leaf drying during drought. Repeated ratings are recommended through progress of the drought. Record the stae of plant growth when the stress occurred and the number of stress days.";"integer";"no";"observation";;"drought sensitivity";;"SES 4th Ed. 1996";;"Scale (leaf rolling at vegetative stage)\n\n0= Leaves healthy\n1= Leaves start to fold (shallow V-shape)\n3= Leaves folding (deep V-shape)\n5= Leaves fully cupped (U-shape)\n7= Leaf margins touching (O-shape)\n9= Leaves tightly rolled\n\n\nScale (leaf drying at vegetative scale)\n\n0= No symptoms\n1= Slight tip drying\n3= Tip drying extended up to 1/4 length in most leaves\n5= One-fourth to 1/2 of all leaves fully dried\n7= More than 2/3 of all leaves fully dried\n9= All plants apparently dead\n\n\nScale (spikelet fertility)\n\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%";;"categorical";;;0;9;"stress";;;
-;"Elon";"elongation";"Elongation ability";"integer";"no";"observation";;"Elongation";"CO_320:0000061";"Crop Ontology";;"Scale Description : Biological check\n\n1= Best elongation response : Best local floating variety (i.e. Leb Mue Nahng 111)\n3= Response better than that of elongating semidwarf, but not as good as that of the best local floating variety\n5= Response similar to that of Elongating semidwarf : Elongating semidwarf (i.e. lR11141-6-1-4)\n7= Response better than that of the nonelongating semidwarf, but not as good as that of elongating semidwarf\n9= Poorest elongation, or none : Non-elongating semidwarf (i.e. IR42). [SES:85]";;"categorical";;;1;9;"stress";"stem elongation";;
-"ELON_GRNH_1_9";"Elon";"elongation";"Some rices can elongate and grow in areas annually flooded to varying depths. The scale is based on the performance of check varieties.";"integer";"no";"observation";;"Elongation";;"SES 4th Ed. 1996";"Specify water depth under which the data was recorded. At growth stage: 5-6";"Scale Description : Biological check\n\n1= Best elongation response : Best local floating variety (i.e. Leb Mue Nahng 111)\n3= Response better than that of elongating semidwarf, but not as good as that of the best local floating variety\n5= Response similar to that of Elongating semidwarf : Elongating semidwarf (i.e. lR11141-6-1-4)\n7= Response better than that of the nonelongating semidwarf, but not as good as that of elongating semidwarf\n9= Poorest elongation, or none : Non-elongating semidwarf (i.e. IR42).";;"categorical";;;1;9;"stress";;;
-"ELON1_FLD_1_9";"Elon1";"elongation";"Elongation ability (Field)";"integer";"no";"observation";;"Elongation";;"SES 4th Ed. 1996";;"Scale Description : Biological check\n\n1= Best elongation response : Best local floating variety (i.e. Leb Mue Nahng 111)\n3= Response better than that of elongating semidwarf, but not as good as that of the best local floating variety\n5= Response similar to that of Elongating semidwarf : Elongating semidwarf (i.e. lR11141-6-1-4)\n7= Response better than that of the nonelongating semidwarf, but not as good as that of elongating semidwarf\n9= Poorest elongation, or none : Non-elongating semidwarf (i.e. IR42).";;"categorical";;;1;9;"stress";;;
-"FSm_SCOR_0_9";;"False smut";"The trait is scored for the plant response to the agent Ustilaginoidea virens causing false smut. [CO:rs]";"integer";"no";"observation";;"False smut";"CO_320:0000178";"Crop Ontology";;"SCALE (Incidence: percentage of infected florets)\n0= No disease observed\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%. [SES:40]";;"categorical";;;0;9;"stress";;;
-;"FSm";"False smut";"Causal agent: Ustilaginoidea virens.\nSymptoms: Infected grains are transformed into yellow-greenish or greenish-black velvety-looking spore balls.";"integer";"no";"observation";;"False smut";;"SES 4th Ed. 1996";;"Scale (Infected florets)\n\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5=6-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;;
-;;"fertility restoration";;"integer";"no";"observation";"active";"fertility restoration";"CO_320:0000339";"Crop Ontology";;"Scale Pollen Sterility (%) - Spikelet Fertility (%):\n1= 90 and above - 90 and above\n2= 80-89 - 90 and above\n3= 90 and above - 75-89\n4= 80-89 - 75-89\n5= 70-79 - 75-89\n6= 70-79 - 60-74\n7= 60-69 - 60-74\n9= <60 - <60.";;"categorical";;;1;9;"hybrid";;;
-"FREST_SCOR_1_9";;"fertility restoration";"This trait is monitored at growth stage 6 for pollen fertility and growth stage 8-9 for spikelet fertility.";"integer";"no";"observation";"active";"fertility restoration";;"SES 4th Ed. 1996";"Pollen fertility is measured using 1% IKI solution and following the technique described for evaluating male sterile lines. However, in this case, emphasis is on extent of fertile pollen percentage. Spikelet fertility is monitored by counting the number of filled grains and total spikelets per panicle and converted into percentage.";"Scale Pollen Sterility (%) - Spikelet Fertility (%):\n1= 90 and above - 90 and above\n2= 80-89 - 90 and above\n3= 90 and above - 75-89\n4= 80-89 - 75-89\n5= 70-79 - 75-89\n6= 70-79 - 60-74\n7= 60-69 - 60-74\n9= <60 - <60.";;"categorical";;;1;9;"hybrid";;;
-"FLA_SCOR_1_7";"FLA";"flag leaf angle";"It is measured near the collar as the angle of attachment between the flag leaf blade and the main panicle axis. [CO:rs]";"integer";"no";"observation";"active";"Flag Leaf Angle";"CO_320:0000275";"Crop Ontology";"Measured near the collar. Angle of attachment between the flag leaf blade and the main panicle axis. Record the average of five samples.\nCultivated species: score at anthesis.\nWild species: score 7 days after anthesis. [RD:7.3.22]";"1 Erect\n3 Semi-erect (intermediate)\n5 Horizontal\n7 Descending. [RD:7.3.22]";;"categorical";;;1;7;"morphological";;;
-;"FLA";"flag leaf angle";"It is measured near the collar as the angle of attachment between the flag leaf blade and the main panicle axis. [CO:rs]";"integer";"no";"observation";"active";"Flag Leaf Angle";"CO_320:0000454";"Crop Ontology";"1 = Erect\n3 = Intermediate\n5 = Horizontal\n7 = Descending. []";"1 = Erect\n3 = Intermediate\n5 = Horizontal\n7 = Descending. []";;"categorical";;;1;7;"morphological";;;
-"FgLL_CONT";;"flag leaf length";"Length of flag leaf. [CO:rs]";"float";"no";"observation";"active";"Flag Leaf Length";"CO_320:0000271";"Crop Ontology";"Measure length of the flag leaf, from the ligule to the tip of the blade, on five\nrepresentative plants. Calculate average to nearest cm. Stage: 7 days after\nanthesis. [RD:7.3.20]";"Measured in cm. [RD:7.3.20]";"cm";"continuous";;;;;"morphological";;;
-"FgLW_CONT";;"flag leaf width";"Width of flag leaf. [CO:rs]";"float";"no";"observation";"active";"Flag Leaf Width";"CO_320:0000137";"Crop Ontology";"Measure width at the widest portion of the flag leaf on five representative plants. Calculate average to nearest cm. Stage: 7 days after anthesis. [RD:7.3.21]";"Measured in cm. [RD:7.3.21]";"cm";"continuous";;;;;"morphological";;;
-"FLW_CONT";"FLW";"flowering";"Days to flowering";"float";"no";"observation";"active";"Flowering";;"IRIS";"80% flowering";"Number of days";;"continuous";;;;;"agronomic";;;
-"FLW_CONT_CO";"FLW";"days to flowering";"Number of days from the seed sowing or the seedling transplant date to the anthesis (flowering) stage. [CO:rs";"integer";"no";"observation";"active";"Days to flowering";"CO_320:0000083";;"Determine the date when 80% flowering was observed, or express as number of days from seeding. []";"Count of number of days to flower";;"continuous";"ratio";;0;;"agronomic";"days to flower;DTF";"Count number of days to flower";
-"GM_FLD_0_9";"GM";"gall midge";"Causal agent: Orseolia oryzae.";"integer";"no";"observation";;"gall midge";;"SES 4th Ed. 1996";"For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check. Similarly, 60% of the plants in susceptible check shoul show silver shoots under greenhouse tests.\n\nIf any of the test entry in field evaluation exhibits damage less than 10% on plants basis, rate it in ""0"" category, since such damage could be due to other reasons.\n\nAt growth stage: 2-5";"SCALE (Infected tillers in field test)\n0= No damage\n1= Less than 1%\n3= 1-5%\n5= 6-10%\n7= 11-25%\n9= More than 25%";;"categorical";;;0;9;"stress";;;
-"GM_GRNH_0_9";"GM";"gall midge";"Causal agent: Orseolia oryzae.";"integer";"no";"observation";;"gall midge";;"SES 4th Ed. 1996";"For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check. Similarly, 60% of the plants in susceptible check shoul show silver shoots under greenhouse tests.\n\nIf any of the test entry in field evaluation exhibits damage less than 10% on plants basis, rate it in ""0"" category, since such damage could be due to other reasons.\n\nAt growth stage: 2-5";"SCALE (Plants with silver shoots in greenhouse test)\n0= No injury\n1= Less than 5%\n3= 6-10%\n5= 11-20%\n7= 21-50%\n9= More than 50%.";;"categorical";;;0;9;"stress";;;
-;;"gall midge damage";"The trait is scored for the plant damage caused by gall midge (Orseolia oryzae). [CO:rs]";"integer";"no";"observation";;"gall midge";"CO_320:0000199";"Crop Ontology";"At growth stage: 2-5.\nNote: For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check.";"SCALE (Infected tillers in field test)\n0 No injury\n1 Less than 1%\n3 1-5%\n5 6-10%\n7 11-25%\n9 More than 25%\n\n\n\nSCALE (Plants with silver shoots in greenhouse test)\n0 No injury\n1 Less than 5%\n3 6-10%\n5 11-20%\n7 21-50%\n9 More than 50%. [SES:65]";;"categorical";;;0;9;"stress";;;
-"GELC_SCOR_1_5";"GELC";"gel consistency";"Scoring of carbohydrate composition in grain by gel consistency type in mm. It measures the tendency of cooked rice to harden when it cools down. [CO:rs]";"character varying";"no";"observation";"active";"GelCon";"CO_320:0000244";"Crop Ontology";"Ground rice (0.1 g) is placed in a test tube with thymol blue (0.025% in ethanol, 0.2 ml) and KOH (0.2N, 2 ml). The tube is shaken to ensure contents are mixed, boiled (8 min), rested (5 min) and then placed in an ice-bath (15 min). Cooled tubes are laid flat on graph paper for 1 hour, and then the distance that the gel travels is measured. [RD:8.1.6]";"Scale Gel length Gel consistency type\n1 81-100 mm Soft\n2 61-80 mm Soft\n3 41-60 mm Intermediate\n4 36-40 mm Hard\n5 <36 mm Hard. [RD:8.1.6]";;"categorical";"interval";;"9:Less than 35 Hard";"1:80-100 Soft";"agronomic";;;"1 80-100 Soft;3 61-80 Soft;5 41-60 Medium;7 36-40 Hard;9 Less than 35 Hard"
-"GELC_SCOR_1_9";"GELC";"gel consistency";"Scoring of carbohydrate composition in grain by gel consistency type in mm. It measures the tendency of cooked rice to harden when it cools down. [CO:rs]";"character varying";"no";"observation";"active";"GelCon";"CO_320:0000455";"Crop Ontology";"Use standard laboratory procedures to determine the gel consistency. [SES:132]";"Scale (mm) : Gel Consistency type\n1 = 80-100 mm : Soft\n3 = 61-80 mm : Soft\n5 = 41-60 mm : Medium\n7 = 36-40 mm : Hard\n9 = Less than 35 mm : Hard. [SES:132]";;"categorical";"interval";;"9:Less than 35 Hard";"1:80-100 Soft";"grain quality";;;"1 80-100 Soft;3 61-80 Soft;5 41-60 Medium;7 36-40 Hard;9 Less than 35 Hard"
-"GELT_SCOR_1_7";"GELT";"gelatinization temperature";"Temperature for the gelatinization process. [CO:rs]";"character varying";"no";"observation";"active";"GelTemp";"CO_320:0000107";"Crop Ontology";"Place six milled-rice kernels in 10 ml 1.7% KOH in a shallow container and arrange them so that they do not touch. Let it stand for 23 hours at 30 C and score for spreading. []";"1 = High\n2 = High\n3 = High or intermediate\n4 = Intermediate\n5 = Intermediate\n6 = Low\n7 = Low. []";;"categorical";"ordinal";;"7:Low";"1:High";"grain quality";;"Place six milled-rice kernels in 10 ml 1.7% KOH in a shallow container and arrange them so that they do not touch. Let it stand for 23 hours at 30 C and score for spreading.";"1:High;2:High;3:High or intermediate;4:Intermediate;5:Intermediate;6:Low;7:Low"
-"GELT_CONT";"GELT";"gelatinization temperature";;"character varying";"no";"observation";;"GelTemp";;;"Six milled rice grains (kernels) are incubated for 23h in 10ml of 1.7% KOH. Individual kernels are scored based on the spreading. Scores of 6 kernels are NOT averaged. Combination of scores (example, 3 kernels with score of ""2"" and 3 kernels with score of ""3"") gives a final GT of H/HI (high/high-intermediate) and so on.";"Gelatinization Temperature     Score    Spreading\n\nHigh (H)    1    Kernel not affected\nHigh (H)    2    Kernel swollen\nHigh-intermediate (HI)    3    Kernel swollen; collar complete or narrow\nIntermediate (I)    4    Kernel swollen; collar complete and wide\nIntermediate (I)    5    kernel split or segregated; collar complete and wide\nLow (L)    6    Kernel dispersed; merging with collar\nLow (L)    7   Kernel completely dispersed and intermingle";;"continuous";;;"7: Low";"1: High";"grain quality";;;
-"GlO_CONT";;"glume opening";"Angle of opening of glumes is measured on each floret, assessment based on mean angle of glume opening. [CO:rs]";"float";"no";"observation";"active";"glume opening";"CO_320:0000094";"Crop Ontology";;;;"continuous";;;;;"agronomic";"glume opening;opening of glume of male sterile lines";;
-"GlO_SCOR_1_9";;"glume opening";"This trait is monitored at growth stage 6 during the time (9:00AM - 12:00Noon) when rice florets are blooming.";"integer";"no";"observation";"active";"glume opening";;"SES 4th Ed. 1996";"Between 5-10 blooming florets of a male sterile line are collected from different plants and angle of opening of glumes (viz., lemma and palea) is measured on each floret. Following scale is used to classify male sterile lines on the basis of mean angle of glume opening.";"1= 50 above\n3= 40-49\n5= 30-39\n7= 20-29\n9= Below 20";;"categorical";;;1;9;"agronomic";;;
-;"Gd";"Grain discoloration";"Causal agent: Species of Sarocladium, Bipolaris, Alternaria, Gerlachia, Fusarium, Phoma, Curcularia, Trichoconiella, and Pseudomonas, etc.\n\nSymptoms: Darkening of glumes of spikelets, brown color to black including rotten glumes caused by one or more pathogens. Intensity ranges from sporadic discoloration to discoloration of the whole glume.";"integer";"no";"observation";;"Grain discoloration";;"SES 4th Ed. 1996";"Severity of grain discoloration can be estiamted by counting grains with more than 25% of glume surface affected.\nAt growth stage: 8-9";"Scale (Grains with severely discolored glumes)\n\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;;
-"ELON_GRAIN_CONT";;"grain elongation in deepwater";"Elongation or growing of rice in areas annually flooded to varying depths. The scale is based on the performance of check varieties. [CO:rs]";"float";"no";"observation";;"grain elongation in deepwater";"CO_320:0000105";"Crop Ontology";"Specify water depth under which the data was recorded. At growth stage: 5-6.";;;;;;;;"grain quality";"elongation (grain)";;
-"GRL_CONT";"GRL";"grain length";;"float";"no";"observation";"active";"Grain Length";"CO_320:0000459";"Crop Ontology";"Enter the mean length in millimeters as the distance from the base of the lowermost sterile lemma to the tip (apiculus) of the fertile lemma or palea. In the case of awned varieties, the grain is measured to a point comparable to the tip of the apiculus. [SES:121]\n\nAt Growth Stage 9 (Mature Grain)";"Measured in mm.";"mm";"continuous";;;;;"grain quality";"seed length";;
-"GRL_CONT_1_7";"GRL";"grain length";;"integer";"no";"observation";"active";"Grain Length";;"SES 4th Ed. 1996";"Enter the mean length in millimeters as the distance from the base of the lowermost sterile lemma to the tip (apiculus) of the fertile lemma or palea. In the case of awned varieties, the grain is measure to a point comparable to the tip of the apciculus.  \n\nAt Growth Stage 9 (Mature Grain)";"1= Extra long (more than 7.5 mm)\n3= Long (6.6 to 7.5 mm)\n5= Medium (5.51-6.6 mm)\n7= Short (5.5mm or less)";;"continuous";;;1;7;"grain quality";;"Following the scale for Brown rice length.";
-"GRS_CONT";"GRS";"grain shape";"An assay to determine the variation in the shape of the dehulled grain. [CO:rs]";;"no";"observation";"active";"Grain Shape";"CO_320:0000464";"Crop Ontology";"Grain Length and Width Ratio. []";;;"continuous";;;;;"morphological";;;
-"GRS_CONT_1_9";"GRS";"grain shape";;"integer";"no";"observation";"active";"Grain Shape";;"SES 4th Ed. 1996";"Grain Length and Width Ratio. Following the Brown rice shape scale. At Growth Stage 9 (after harvesting, cleaning and dehulling)";"1= Slender (Over 3.0)\n3= Medium (2.1 to 3.0)\n5= Bold (1.1 to 2.0)\n9= Round (Less than 1.1)";;"continuous";;;1;9;"grain quality";;"Kernel shape can be easily estimated by this method (avoid broken samples).";
-;;"grain size";"Seed size is determined by its length to width ratio. [CO:rs]";"float";"no";"observation";"active";"Grain Size";"CO_320:0000466";;"Measurement of grain size from the mature grain, still with lemma and palea. []";;;"continuous";;;;;"morphological";;;
-;;"grain thickness";"Thickness of the seed or fruit caryopsis with the hull. [CO:rs]";"float";"no";"observation";"active";"Grain Thickness";"CO_320:0000309";;"(Wild species). Preferably, measure with a calliper or photo-enlarger. Average of 10 representative grains. Stage: after harvest. [RD:7.5.17]";"Measured in mm. [RD:7.5.17]";"mm";"continuous";;;3;7;"grain quality";;;
-"GRW_CONT";"GrW";"grain width";"Width of the dehulled grain with pericarp. [CO:rs]";"float";"no";"observation";"active";"Grain Width";"CO_320:0000306";"Crop Ontology";"Measured as the distance across the fertile lemma and palea at the widest point. Preferably, measure with calliper or photo-enlarger. Average of 10 representative grains. [RD:7.5.16]";"Measured in mm. [RD:7.5.16]";"mm";"continuous";;;;;"morphological";"seed width";;
-;"GRW";"grain width";"Width of the dehulled grain with pericarp. [CO:rs]";"float";"no";"observation";"active";"Grain Width";"CO_320:0000467";"Crop Ontology";"At Growth Stage 9 (Mature Grain)";"Measure in mm. [SES:122]";"mm";"continuous";;;;;"morphological";"seed width";;
-"YLD_CONT";"Yld";"grain yield";"The grain yield, measured in kilograms per hectare at 14 percent moisture. Growth stage: 9 on rough (paddy) rice. [CO:rs]";"float";"no";"observation";"active";"Grain Yield";"CO_320:0000073";"Crop Ontology";"Area harvested should not be less than 5 m2/plot (at least three border rows should be discarded). Report yield in kilogram per hectare on rough (paddy) rice at 14% moisture. [SES:12]";"kg/ha";"kg/ha";"continuous";;;;;"agronomic";"yield (grain)";;
-;;"grassy stunt virus";"The trait is scored for the plant response to the agent rice grassy stunt virus (RGSV). There are two known RGSV strains, rice grassy stunt virus 1 ( RGSV1) and rice grassy stunt virus 2 (RGSV2). [CO:rs]";"integer";"no";"observation";"active";"Grassy stunt virus";"CO_320:0000353";"Crop Ontology";;"SCALE (RGSV1)\n1= No symptom observed\n3= Pale green and slightly narrow leaves, no height reduction and with few small tillers.\n5= Pale green and slightly narrow leaves, 1-10% height reduction, and with numerous small tillers.\n7= Pale green to yellow and narrow leaves with some rusty spots, 11-30% height reduction, and with numerous small tillers.\n9= Pale green to yellow and narrow leaves with numerous rusty spots, more than 30% height reduction and with numerous small tillers.\n\n\nSCALE (RGSV2)\nNo symptom observed\n3= Pale yellow and slightly narrow leaves, no height reduction, and with numerous small tillers\n5= Distinct yellow and narrow leaves, 1-10% height reduction, and with numerous small tillers\n7= Yellow to orange and narrow leaves with some rusty spots, 11-30% height reduction, and with few small tillers\n9= Yellow to orange and narrow leaves with numerous rusty spots, >30% height reduction and with few small tillers.";;"categorical";;;1;9;"stress";"RSGV;RSGV1;RSGV2";;
-"RGSV1";"RGSV1";"grassy stunt virus";"Causal agent: Rice grassy stunt virus 1 (RGSV1) and rice grassy stunt virus 2 (RGSV2).\nSymptoms: RGSV1: Severe stunting, excessive tillering, pale green to yellow and narrow leaves with small rusty spots. RGSV2: Severe stunting, excessive tillering, yellow to orange and narrow leaves with and small rusty spots.\n\nAt growth stages: 2-3 (for the greenhouse)\n4-6 (for the field)";"integer";"no";"observation";"active";"Grassy stunt virus 1";;"SES 4th Ed. 1996";"Score and calculate DI at 5 weeks after inoculation in the greenhouse.";"Scale (RGSV1)\n1= No symptom observed\n3= Pale green and slightly narrow leaves, no height reduction and with few small tillers.\n5= Pale green and slightly narrow leaves, 1-10% height reduction, and with numerous small tillers.\n7= Pale green to yellow and narrow leaves with some rusty spots, 11-30% height reduction, and with numerous small tillers.\n9= Pale green to yellow and narrow leaves with numerous rusty spots, more than 30% height reduction and with numerous small tillers.";;"categorical";;;1;9;"stress";;;
-"RGSV2";"RGSV2";"grassy stunt virus";"Causal agent: Rice grassy stunt virus 1 (RGSV1) and rice grassy stunt virus 2 (RGSV2).\nSymptoms: RGSV1: Severe stunting, excessive tillering, pale green to yellow and narrow leaves with small rusty spots. RGSV2: Severe stunting, excessive tillering, yellow to orange and narrow leaves with and small rusty spots.\n\nAt growth stages: 2-3 (for the greenhouse)\n4-6 (for the field)";"integer";"no";"observation";"active";"Grassy stunt virus 2";;"SES 4th Ed. 1996";"Score and calculate DI at 5 weeks after inoculation in the greenhouse.";"SCALE (RGSV2)\n1= No symptom observed\n3= Pale yellow and slightly narrow leaves, no height reduction, and with numerous small tillers\n5= Distinct yellow and narrow leaves, 1-10% height reduction, and with numerous small tillers\n7= Yellow to orange and narrow leaves with some rusty spots, 11-30% height reduction, and with few small tillers\n9= Yellow to orange and narrow leaves with numerous rusty spots, >30% height reduction and with few small tillers.";;"categorical";;;1;9;"stress";;;
-"GLH_SCOR_0_9";"GLH";"green leafhopper";"The trait is scored for the plant damage caused by green leafhopper (Nephotettix virescens and Nephotettix cincticeps). [CO:rs]";"integer";"no";"observation";"active";"Green leafhopper";"CO_320:0000200";"Crop Ontology";"Greenhouse evaluation";"0= No injury\n1= Very slight injury\n3= First and 2nd leaves yellowing\n5= All leaves yellow; pronounced stunting or both\n7= More than half the plants dead;stunting or both remaining plants wilting; severely stunted\n9= All plants dead. [SES:61]";;"categorical";;;0;9;"stress";;;
-"GLH_SES_0_9";"GLH";"green leafhopper";"Causal agent: Nephotettix spp.\nSymptoms: Partial to pronounced yellowing and increasing severity of stunting. Extreme signs are wilting to death of plants. Infested areas in the field may be patchy.\n\nAt growth stage: 2 (greenhouse)\n3-9 (field)";"integer";"no";"observation";"active";"Green leafhopper";;"SES 4th Ed. 1996";;"0= No damage\n1= Very slight damage\n3= First and 2nd leaves yellowing\n5= All leaves yellow; pronounced stunting or both\n7= More than half the plants, dead; remaining plants wilting; severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-"HVHILL_CONT";;"harvested hill";"Number of hills harvested";"float";"no";"observation";;"harvested hill";;"IRIS";"Count the number of hills harvested";;;"continuous";;;;;"plot metadata";;;
-"HTol_SCOR_1_9";"HTol";"heat tolerance";"tolerance to warm temperatures if plant is exposed to above than permissive temperature limits. [CO:rs]";"integer";"no";"observation";;"heat tolerance";"CO_320:0000062";"Crop Ontology";;"1 More than 80%\n3 61-80%\n5 41-60%\n7 11-40%\n9 Less than 11%. [SES:76]";;"categorical";;;1;9;"stress";;;
-"HDR_CONT";"HDR";"head rice";"The 3/4 or longer whole milled kernels separated from the total milled rice. [CO:rs]";"float";"no";"observation";"active";"Head rice";"CO_320:0000471";"Crop Ontology";"Average length of kernels computed from 10 randomly selected whole kernels. 8/10th of the average length is the minimum length for head rice. All kernels with length equal to or more than this value are considered head rice.";;;"continuous";;;;;"grain quality";;;
-;;"hoja blanca";"The trait is scored for the plant response to the agent rice hoja blanca virus (RHBV) causing hoja blanca. [CO:rs]";"integer";"no";"observation";"active";"Hoja blanca";"CO_320:0000359";"Crop Ontology";;"SCALE (Incidence: % plants or hills showing symptoms)\n0= No symptom observed\n1= Less than 1%\n3= 1-10%\n5= 11-30%\n7= 31-60%\n9= 61-100%.";;"categorical";;;0;9;"stress";"HBVRS;RHBV";;
-"FETOX_SCOR_0_9";"FeTox";"iron toxicity";"Sensitivity to the iron ion content in the growth environment. [CO:rs]";"integer";"no";"observation";;"Iron Toxicity";"CO_320:0000063";"Crop Ontology";;"SCALE (Injured panicles)\n0= Growth and tillering nearly normal\n1= Growth and tillering nearly normal; reddish-brown spots or orange discoloration on tips of older leaves\n3= Growth and tillering nearly normal; older leaves reddish-brown, purple, or orange yellow\n5= Growth and tillering retarded; many leaves discolored\n7= Growth and tillering ceases; most leaves discolored or dead\n9= Almost all plants dead or dying. [SES:72]";;"categorical";;;1;9;"stress";"iron sensitivity";;
-"FETOX_GRNH_1_9";"FeTox";"iron toxicity";;"integer";"no";"observation";;"Iron Toxicity";;"SES 4th Ed. 1996";"At growth stage: 2-5";"1= Growth and tillering nearly normal\n2= Growth and tillering nearly normal; reddish-brown spots or orange discoloration on tips of older leaves\n3= Growth and tillering nearly normal; older leves reddish brown, purple, or orange yellow\n5= Growth and tillering ceases; most leaves discolored or dead\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;
-"FE1_FLD_1_9";"FE1";"iron toxicity";"Observation done in the field";"integer";"no";"observation";;"iron Toxicity";;"SES 4th Ed. 1996";;"1= Growth and tillering nearly normal\n2= Growth and tillering nearly normal; reddish-brown spots or orange discoloration on tips of older leaves\n3= Growth and tillering nearly normal; older leves reddish brown, purple, or orange yellow\n5= Growth and tillering retarded; many leaves discolored\n7= Growth and tillering ceases; most leaves discolored or dead\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;
-;;"kernel smut";"The trait is scored for the plant response to the agent Tilletia barclayana causing kernel smut. [CO:rs]";;"no";"observation";;"Kernel smut";"CO_320:0000180";"Crop Ontology";"At growth stage: 9.";;;;;;;;"stress";;"Symptoms: Infected grains show minute black pustules or streaks bursting through the glumes. In severe infection, the rupturing glumes produce short beak-like or spur-like growths.";
-;"KSm";"kernel smut";"Causal agent: Tilletia barclayana.\nSymptoms: Infected grains show minute black pustules or streaks bursting through the glumes. In severe infection, the rupturing glumes produce short beak-like or spur-like outgrowths.";;"no";"observation";;"kernel smut";;"SES 4th Ed. 1996";"At growth stage: 9.";;;;;;;;"stress";;;
-;"KnA";"kneeing ability";"The tiller angle measurement for kneeing. [CO:rs]";"integer";"no";"observation";;"kneeing ability";"CO_320:0000064";"Crop Ontology";;"SCALE\n1 Tiller angle greater than 45�� for 50% of tillers\n3 Tiller angle greater than 45�� for 25% of tillers\n5 Maximum tiller angle is less than 45�� for 50% of tillers (Tiller angle greater than 45�� for 1 or 2 tillers)\n7 Maximum tiller angle less than 30��\n9 No kneeing. [SES:87]";;"categorical";;;1;9;"stress";;;
-;"LA";"leaf angle";"The angle of openness of the blade tip is measured against the culm of the leaf below the flag leaf. [CO:rs]";"integer";"no";"observation";"active";"Leaf Angle";"CO_320:0000014";"Crop Ontology";"At growth stage: 4-5";"1 Erect\n5 Horizontal\n9 Drooping. [SES:97]";;"categorical";;;1;9;"morphological";;;
-"LBC_SCOR_1_2";"LBC";"leaf blade color";"Color of the leaf lamina/blade. [CO:rs]";"integer";"no";"observation";"active";"Leaf Blade Color";"CO_320:0000251";"Crop Ontology";"Stage: late vegetative. [RD:7.3.5]";"0 Absent\n1 Present. [RD:7.3.5]";;"categorical";;;0;1;"morphological";"leaf lamina color";;
-"LBC_SCOR_1_7";"LBC";"leaf blade color";"Color of the leaf lamina/blade. [CO:rs]";"integer";"no";"observation";"active";"Leaf Blade Color";"CO_320:0000413";"SES 4th editon 1996";"Observation at growth stage 4-6. At Growth Stage 4-6;Vegetative Stage. []";"1= Light green\n2= Green\n3= Dark Green\n4= Purple tips\n5= Purple margins\n6= Purple blotch (purple mixed with green)\n7= Purple."" [SES:95]";;"categorical";;;1;7;"morphological";"leaf lamina color";;
-;"LBP";"leaf blade pubescence";"Extent of pubescence (presence of hairs) on the leaf blade surface. [CO:rs]";"integer";"no";"observation";;"leaf blade pubescence";"CO_320:0000013";"Crop Ontology";"Assess both visually and by touch, rubbing fingers over the leaf surface from the tip downwards. Stage: late vegetative. [RD:7.3.9]";"1 Glabrous (smooth-including ciliated margins)\n2 Intermediate\n3 Pubescent. [RD:7.3.9]";;"categorical";;;1;3;"morphological";;"Methodology: Aside from ocular inspection, rub fingers from the tip down on the leaf surface. Presence of hairs on the blade surface are classified as glabrous (1), Intermediate (2) and pubescent (3). At growth stage: 5-6.";
-"BL_NURS_0_9";"Bl";"leaf blast";"Causal agent: Magnaporthe grisea (Pyricularia oryzae).";"integer";"no";"observation";"active";"Leaf Blast";;"SES 4th Ed. 1996";" Use this scale only for the nursery. Actual estimation of blast affected leaf area (%) is recommended for field assessment of blast disease together with predominant lesion type (see coding system for lesion type).\n\n\nEntries with scores 4-9 may also have lesions of scale 1 or 2. In cases where the lesion develop only on the collar, joint of the leaf sheath and the leaf blade, causing the leaf blade to drop off, a scale unit of 4 is to be given.\n\n\nEntries with consistent rating, between 4 and 6 with overall average not higher than 5.5 may have a good level of quantitative resistance.\n\n\nLesion types 5, 7 and 9 are considered typical susceptible lesions.";"SCALE (for blast nursery)\n0= No lesions observed\n1= Small brown specks of pin-point size or larger brown specks without sporulating center\n2= Small roundish to slightly elongated, necrotic gray spots, about 1-2 mm in diameter, with a distinct brown margin\n3= Lesion type is the same as in scale 2, but a significant number of lesions are on the upper leaves\n4= Typical susceptible blast lesions2 3 mm or longer, infecting less than 4% of the leaf area\n5= Typical blast lesions infecting 4-10% of the leaf area\n6= Typical blast lesions infection 11-25% of the leaf area\n7= Typical blast lesions infection 26-50% of the leaf area\n8= Typical blast lesions infection 51-75% of the leaf area and many leaves are dead\n9= More than 75% leaf area affected.";;"categorical";;;1;9;"stress";;;"CODE (Predominant lesion type)\n0= No lesions observed\n1 Small brown specks of pinpoint size or larger brown specks without sporulating center\n3= Small, roundish to slightly elongated necrotic sporulating spots, about 1-2 mm in diameter with a distinct brown margin or yellow halo\n5= Narrow or slightly elliptical lesions, 1-2 mm in breadth, more than 3 mm long with a brown margin\n7= Broad spindle-shaped lesion with yellow, brown, or purple margin\n9= Rapidly coalescing small, whitish, grayish, or bluish lesions without distinct margins."
-;"LF";"leaf folder";"Causal agent: Cnaphalocrosis medinalis; Marasmia patnalis.\nSymptoms: Larvae consume the leaf tissue except the epidermis, causing typical white streaks. They create a leaf tube during later stages of feeding.";"integer";"no";"observation";;"leaffolder";;"SES 4th Ed. 1996";"Plant a susceptible and resistant check (if available) after every 10 test entries. replicate test entries three times if seed is available. Determine the percentage of damaged and folded leaves. Damaged leaves of the susceptible check should average at least 40% for the test to be considered valid. Use the following scale on the basis of the converted figures to place percentage of damaged leaves on a 0-9 scale.\nAt growth stage: 2-3 (greenhouse)\n3-9 (field)";"Scale (Damaged plants)\n\n0= No damage\n1= 1-10%\n3= 11-20%\n5= 21-35%\n7= 36-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;"Greenhouse screening\nFor greenhouse screning, consider both the % of leaves with damage and the extent on each leaf. For each entry, first examine all of the leaves and rate each one from 0-3 as based on the extent of damage.\n\nBased on the number of leaves with each damage grade, compute as follows:\n\n% Rating (R) = (no. of leaves with damage grade of 1 x 100) 1/Total no. of leaves observed + (no. of leaves with damage grade of 2 x 100) 2/Total no. of leaves observed + (no. of leaves with damage grade of 3 x 100) 3/Total no. of leaves observed /6 \n\n\nCalculate as above for each test entry and the susceptible check. Then adjust for extent of damage in the susceptible check by: Adjusted % damage (D) rating = R of test entry/R of susc. check x 100\n\n\nthe overall damage rating (D) is converted to a 0-9 scale.";"Grade    Damage\n\n0    no damage\n1    up to 1/3 of leaf area scraped\n2    1/3 to 1/2 of leaf area scraped\n3    more than 1/2 of leaf area scraped\n\n\nScale    % Damage Rating (D)\n\n0    No damage\n1    1-10\n3    11-30\n5    31-50\n7    51-75\n9    more than 75"
-;"LL";"leaf length";"Actual measurement of the leaf just below the flag leaf. Expressed in centimeters. [CO:rs]";"float";"no";"observation";"active";"Leaf Length";"CO_320:0000267";"SES 4th editon 1996";"Measure the penultimate leaf (i.e. highest leaf below the flag leaf) on the main culm, from the ligule to the tip of the blade, on five representative plants. Calculate average to nearest cm.\nCultivated species: measure at early reproductive stage.\nWild species: measure 7 days after anthesis. [RD:7.3.18]";"Measured in cm. [RD:7.3.18]";"cm";"continuous";;;;;"morphological";;;
-"LL_SCOR_1_9";"LL";"leaf length";"Actual measurement of the leaf just below the flag leaf. Expressed in centimeters. [CO:rs]";"float";"no";"observation";"active";"Leaf Length";"CO_320:0000267";"Crop Ontology";"Measure the penultimate leaf (i.e. highest leaf below the flag leaf) on the main culm, from the ligule to the tip of the blade, on five representative plants. Calculate average to nearest cm.\nCultivated species: measure at early reproductive stage.\nWild species: measure 7 days after anthesis. [RD:7.3.18]";"1= Very short (<21 cm)\n3= Short (~30 cm)\n5= Intermediate (~50 cm)\n7= Long (~70 cm)\n= 9 Very long (>80 cm).";;"categorical";;;1;9;"morphological";;;
-;"LSc";"leaf scald";"The trait is scored for the plant response to the agent Monographella albescens (Microdochium oryzae) causing leaf scald. [CO:rs]\n\n\nSymptoms: The lesions occurs mostly near leaf tips, but sometimes starts at the margin of the blade and develops into large ellipsoid areas encircled by dark-brown, narrow bands accompanied by a light-brown halo.\n\nAt growth stage: 5-8.";"integer";"no";"observation";"active";"Leaf Scald";;"Crop Ontology";;"SCALE (Severity: % leaf area diseased)\n\n0= No disease observed\n1= Less than 1% (apical lesions)\n3= 1-5% (apical lesions)\n5= 6-25% (apical and some marginal lesions)\n7= 26-50% (apical and marginal lesions)\n9= 51-100% (apical and marginal lesions).";;"categorical";;;0;9;"stress";;;
-;"LSc";"leaf scald";"Causal agent: Monographella albescens (Microdochium oryzae).\n\nSymptoms: The lesions occurs mostly near leaf tips, but sometimes starts at the margin of the blade and develops into large ellipsoid areas encircled by dark-brown, narrow bands accompanied by a light-brown halo.\n\nAt growth stage: 5-8.";"integer";"no";"observation";"active";"Leaf Scald";;"SES 4th Ed. 1996";;"Scale (Affected leaf area)\n\n0= No incidence\n1= Less than 1% (apical lesions)\n3= 1-5% (apical lesions)\n5= 6-25% (apical and some marginal lesions)\n7= 26-50% (apical and marginal lesions)\n9= 51-100% (apical anf marginal lesions)";;"categorical";;;0;9;"stress";;;
-"SEN_CO_1_9";"Sen";"leaf senescence";"A measure of aging of leaf. Rapid senescence of leaves can be detrimental to yield. It is commonly thought that rapid senescence of leaves can be detrimental to yield if the rice grains have not completely filled. At growth stage: 9. [CO:rs]";"integer";"no";"observation";"active";"Leaf Senescence";"CO_320:0000283";"Crop Ontology";"Estimated by observing all leaves below the flag leaf for their retention of greenness. Stage: at harvest. [RD:7.3.35]";"1= Very early (all leaves lost their green colour before grain maturity)\n3= Early (all leaves have lost their green colour at harvest)\n5= Intermediate (one leaf still green at harvest)\n7= Late (two or more leaves still green at harvest)\n9= Very late (all leaves still green at harvest). [RD:7.3.35, SES:6]";;"categorical";;;1;9;"agronomic";;;
-"SEN_SES_1_9";"Sen";"leaf senescence";"It is commonly thought that rapid senescence of leaves can be detrimental to yield if the rice grains have not completely filled. At growth stage: 9.";"integer";"no";"observation";"active";"Leaf Senescence";;"SES 4th Ed. 1996";;"1= Late and slow (leaves have natural green color)\n5= Intermediate (upper leaves yellowing)\n9= Early and fast (all leaves yellow or dead)";;"categorical";;;1;9;"agronomic";;;
-;"LFSC";"leaf sheath color";;"integer";"no";"observation";"active";"Leaf Sheath Color";"CO_320:0000249";;"Observation at growth stage 3-5. At Growth Stage 3-5;Vegetative Stage. []";"1 = Yellow green\n2 = Light green\n3 = Green\n4 =Dark green\n5 = Light purple to red\n6 = Purple. []";;"categorical";;;1;6;"morphological";;;
-"LW_SCOR_3_7";"LW";"leaf width";"Measurement of the widest portion of the leaf blade just below the flag leaf. Expressed in centimeters. [CO:rs]";"integer";"no";"observation";"active";"Leaf Width";"CO_320:0000269";"crop ontology";"Measure at the widest portion of the penultimate leaf (i.e. highest leaf below the flag leaf) on the main culm on five representative plants. Calculate average to nearest cm. Cultivated species: measure at early reproductive. Wild species: measure 7 days after anthesis. [RD:7.3.19]";"3= Narrow (<1 cm)\n5= Intermediate\n7= Broad (>2 cm)";;"categorical";;;3;7;"morphological";;;
-"LW_CONT";"LW";"leaf width";"Measurement of the widest portion of the leaf blade just below the flag leaf. Expressed in centimeters. [CO:rs]";"integer";"no";"observation";"active";"Leaf Width";"CO_320:0000269";"SES 4th editon 1996";"Measure at the widest portion of the penultimate leaf (i.e. highest leaf below the flag leaf) on the main culm on five representative plants. Calculate average to nearest cm. Cultivated species: measure at early reproductive. Wild species: measure 7 days after anthesis.  At Growth stage 6 [RD:7.3.19]";"Measured in cm";"cm";"continuous";;;3;7;"morphological";;;
-;;"leaf folder";"The trait is scored for the plant damage caused by leaf folder (Marasmia patnalis). [CO:rs]";;"no";"observation";;"leaf folder";"CO_320:0000201";"Crop Ontology";;;;"categorical";;;;;"stress";;;
-;"LmPC";"lemma and palea color";;"integer";"no";"observation";"active";"Lemma And Palea Color";"CO_320:0000287";"crop ontology";"Stage: after anthesis to hard dough stage (pre-ripening stage). [RD:7.4.5]";"1 010 White\n2 012 Green-stripped white\n3 042 Gold and gold furrows\n4 052 Brown (tawny)\n5 053 Brown spots on green\n6 054 Brown furrows on green\n7 056 Blackish brown\n8 060 Green\n9 062 Yellowish green\n10 080 Purple\n11 082 Reddish to light purple\n12 083 Purple shade\n13 090 Purple spots on green\n14 091 Purple furrows on green\n15 100 Black. [RD:7.4.5]";;"discrete";;;1;15;"morphological";"hull color";;
-;"LmPC";"lemma and palea color";;"integer";"no";"observation";"active";"Lemma And Palea Color";;"SES 4th editon 1996";"Stage: after anthesis to hard dough stage (pre-ripening stage). [RD:7.4.5] At growth stage: 9";"0= Straw\n1= Gold and gold furrows on straw background\n2= Brown spots on straw\n3= Brown furrows on straw\n4= Brown (tawny)\n5= Reddish to light purple\n6= Purple spots on straw\n7= Purple furrows on straw\n8= Purple\n9 =Black\n10 =White";;"discrete";;;1;10;"morphological";"hull color";;
-;"LmPb";"lemma and palea pubescence";"Extent of pubescence (hairs) on the lemma and palea. [CO:rs]";"integer";"no";"observation";"active";"Lemma And Palea Pubescence";"CO_320:0000297";"SES 4th editon 1996";"At growth stage: 9 [SES:118]";"1 Glabrous\n2 Hairs on lemma keel\n3 Hairs on upper portion\n4 Short hairs\n5 Long hairs (velvety).";;"categorical";;;1;5;"morphological";"hull cover";;
-;"LgC";"ligule color";"Color of the ligule. [CO:rs]";"integer";"no";"observation";"active";"Ligule Color";"CO_320:0000026";"Crop ontology";"Stage: late vegetative. [RD:7.3.17]";"0 0 Absent (liguleless)\n1 011 Whitish\n2 062 Yellowish green\n3 080 Purple\n4 081 Light purple\n5 084 Purple lines. [RD:7.3.17]";;"categorical";;;0;5;"morphological";;;
-;"LgC";"ligule color";;"integer";"no";"observation";;"Ligule Color";;"SES 4th editon 1996";"At growth stage: 4-5";"Code\n\n1= White\n2= Purple lines\n3= Purple";;"categorical";;;1;3;"morphological";;;
-;"LgL";"ligule length";"Actual measurement of ligules from the base of the collar to the tip. Expressed in millimeters. [CO:rs]";"float";"no";"observation";"active";"Ligule Length";"CO_320:0000025";"Crop ontology";"Measured on five samples from base of collar to the tip of the ligule of the penultimate leaf, i.e. the leaf below the flag leaf. Stage: after anthesis. [RD:7.3.13]";"Measured in mm. [RD:7.3.13]";"mm";"continuous";;;;;"morphological";;;
-;;"ligule pubescence";"Presence or absence of hairs in ligule. [CO:rs]";;"no";"observation";"active";"Ligule Pubescence";"CO_320:0000263";;"Visual assessment using hand lens. Stage: after anthesis. [RD:7.3.16]";"1 Glabrous\n2 Partially hirsute: hairs covering less than 50% of the ligule\n3 Mostly or generally hirsute: hairs covering more than\n50% of the ligule. [RD:7.3.16]";;"categorical";;;1;3;"morphological";;;
-;"LS";"ligule shape";"Defines the actual shape of the ligule. [CO:rs]";"integer";"no";"observation";"active";"Ligule Shape";"CO_320:0000027";"Crop Ontology";"Different scoring systems are used for cultivated and wild species. Stage: late vegetative (cultivated species). Stage: after anthesis (wild species). [RD:7.3.14]";"Cultivated species\n0 Absent\n1 Truncate\n2 Acute to acuminate\n3 2-cleft\n\nWild species\n0 Absent\n1 Fringe of hairs\n2 Truncate\n3 Obtuse or rounded\n4 Emarginate\n5 Acute\n6 Acuminate\n7 2-cleft. [RD:7.3.14]";;"categorical";;;0;7;"morphological";;;
-"LG_PERC";"LG";"lodging incidence";"Indicates percentage of plants that lodged. At growth stage: 6-9. [CO:rs]";"integer";"no";"observation";"active";"Lodging Incidence";"CO_320:0000080";"Crop Ontology";;"% of plants that lodged";;"continuous";;;0;100;"agronomic";;;
-;;"male sterility group";;"integer";"no";"observation";"active";"Male sterility group";"CO_320:0000325";"Crop Ontology";;"1= Cytoplasmic-nuclear interaction type\n2= Thermosensitive-genic type (TGMS)\n3= Photoperiod-sensitive genic type (PGMS)\n4= Thermo-photoperiod genic type (TPGMS)\n5= Genetically engineered (transgenic type)\n6= Nuclear type.";;"categorical";;;1;6;"hybrid";;;
-"MAT";"Mat";"maturity";"Use the number of days from seeding to grain ripening (85% of grains on panicle are mature). At growth stage: 9.";"integer";"no";"observation";"active";"Maturity";;"SES 4th Ed. 1996";"85% mature grains";"No. of Days";;"categorical";;;;;"agronomic";;;
-"MISS_Hill_CONT";;"missing hill";"Missing hill per plot";"float";"no";"observation";;"Missing Hill";;;"Count the missing hills per plot";;;"continuous";;;;;"plot metadata";;;
-"MC_CONT";"MC";"moisture content";"Grain moisture after drying";"float";"no";"observation";;"moisture content";;;"Record moisture content after drying at 50 degress C";;;"continuous";;;;;"grain quality";;;
-"MF_CONT";"MF";"moisture factor";"Grain moisture factor at 14%";"float";"no";"observation";;"moisture factor";;;"Computed as: MF= (100-MC)/86";;;"continuous";;;;;"grain quality";;;
-;;"narrow brown leaf spot";"The trait is scored for the plant response to the agent Sphaerulina oryzina (Cercospora janseana) causing narrow brown leaf spot. [CO:rs]";"integer";"no";"observation";"active";"Narrow Brown Leaf Spot";"CO_320:0000345";"Crop Ontology";;"SCALE (Severity: % leaf area diseased)\n\n0= No disease observed\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%.";;"categorical";;;0;9;"stress";"NBLS";;
-;"NBLS";"narrow brown leaf spot";"Causal agent: Sphaerulina oryzina (Cercospora janseana)";"integer";"no";"observation";"active";"Narrow Brown Leaf Spot";;"SES 4th Ed. 1996";;"Scale (Affected leaf area)\n\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;1;9;"stress";;;
-;;"number of panicles";"Average number of panicles per plant in a study. [CO:rs]";"integer";"no";"observation";"active";"Number Of Panicles";"CO_320:0000240";;"Record the number of panicles per plant. Stage:early ripening. [RD:7.4.17]";"3 Low\n5 Intermediate\n7 High. [RD:7.4.17]";;"categorical";;;3;7;"morphological";"panicle number";;
-;;"outcrossing potential";"It is a measure of percent seed set on the out-pollinated primary panicle. This trait is measured at growth stages 8 and 9. [CO:rs]";"integer";"no";"observation";"active";"outcrossing potential";"CO_320:0000333";"Crop Ontology";;"Scale Seed set (%) on out-pollinated primary panicles.\n1= Above 30\n3= 20-29.9\n5= 10-19.9\n7= 5-9.9\n9= 0-4.9.";;"categorical";;;1;9;"hybrid";"extent of outcrossing on male sterile lines";;
-"PB_SCOR_1_9";"PB";"panicle blast";"Causal agent: Magnaporthe grisea (Pyricularia oryzae).\n\nSymptoms: Dark, necrotic lesions cover partially or completely around the panicle base (node) or the uppermost internode ot the lower part pf panicle axis. The panicles are greyish and have either partially filled or unfilled grains.";"integer";"no";"observation";"active";"Panicle Blast";;"SES 4th Ed. 1996";"Based on the number of panicles with each scale, compute panicle blast severity (PBS) as follows:\n\n\nPBS = [(10xN1) + (20xN3) + (40xN5) + (70xN7) + (100xN9)]/Total no. of panicles observed, where N1-N9 are the number of panicles with score 1-9.\n\nAt growth stage: 8 (20-25 days after heading).\n\n\nFor the mass evaluation of panicle blast incidence count only the number of panicles with lesion covering completely around node, neck or the lower part of panicle axis (symptom type 7-9).\n\n At growth stage: 8-9.";"Scale (based on symptoms)\n\n0= No visible lesion observed or lesions on only a few pedicels\n1= Lesions on several pedicels or secondary branches\3= Lesion on a few primary branches or the middle part of panicle axis\n5= Lesion partially around the base (node) or the uppermost internode or the lower part of panicle axis near the base\n7= Lesion completely around panicle base or uppermost internode or panicle axis near the base with more than 30% of filled grains\n9= Lesion completely around panicle base or uppermost internode or the panicle axis near the base with less than 30% of filled grains.\n\n\nScale (Incidence of severely infected panicles)\n\n0= No incidence\n1= Less than 5%\n3= 5-10%\n5= 11-25%\n7= 26-50%\n9= More than 50%";;"categorical";;;0;9;"stress";;;
-"EXS_CROP_1_9";"Exs";"panicle exsertion";"Trait is monitored by observing the extent of coverage of panicle by the flag leaf sheath. At growth stage: 7-9 [CO:rs]";"integer";"no";"observation";"active";"Panicle Exsertion";"CO_320:0000074";"Crop Ontology";;"1= Enclosed (panicle is partly or entirely enclosed within the leaf sheath of the flag leaf blade)\n3= Partly exserted (panicle base is slightly beneath the collar of the flag leaf blade)\n5= Just exserted (panicle base coincides with the collar of the flag leaf blade)\n7= Moderately well exserted (panicle base is above the collar of the flag leaf blade)\n9= Well exserted (panicle base appears well above the collar of the flag leaf blade).";;"categorical";;;1;9;"agronomic";"Exs;panicle exsertion of male sterile lines";;
-"EXS_SES_1_9";"Exs";"panicle exsertion";"The inability of panicles to exsert fully is commonly considered a genetic defect. Environmental and disease factors also contribute to such defect. At growth stage: 7-9.";"integer";"no";"observation";"active";"Panicle Exsertion";;"SES 4th Ed. 1996";;"1= Well exserted\n3= Moderately well exserted\n5= Just exserted\n7= Partly exserted\n9= Enclosed";;"categorical";;;1;9;"agronomic";;;
-"PnL_SCOR_1_9";"PnL";"panicle length";"Measurement from panicle base to tip. Expressed in cm. [CO:rs]";"integer";"no";"observation";"active";"Panicle Length";"CO_320:0000242";;"Length of main axis of panicle measured from base to the tip. Record the average of five representative plants. [RD:7.5.1]";"1 Very short (<11 cm)\n3 Short (~15 cm)\n5 Medium (~25 cm)\n7 Long (~35 cm)\n9 Very long (>40 cm). [RD:7.5.1]";;"categorical";;;1;9;"morphological";;;
-"PnL_CONT";"PnL";"panicle length";"Measurement from panicle base to tip. Expressed in cm. [CO:rs]";"float";"no";"observation";"active";"Panicle Length";"CO_320:0000476";;"Enter actual measurements in centimeters from panicle base to tip. []";"Measured in cm";"cm";"continuous";;;;;"morphological";;;
-"Thr_SCOR_1_3";"Thr";"panicle threshability";"Percentage of shattered grains, determined by firmly grasping and pulling the hand over the panicle. [CO:rs]";"integer";"no";"observation";"active";"Panicle Threshability";"CO_320:0000078";"Crop Ontology";"(Cultivated species). Determined by grasping the panicle with the hand, applying a slight rolling pressure with the palm and fingers, and assessing the percentage of grains that are removed by the action. [RD:7.5.2]";"1= Difficult (few or no grains removed)\n2= Intermediate (25-50% of grains removed)\n3= Easy (>50% of grains removed). ";;"categorical";;;1;3;"agronomic";"leaf shattering;PNTHR;SHAT;Thr;threshability";;
-"Thr_SCOR_1_9";"Thr";"panicle threshability";"At growth stage: 9";"integer";"no";"observation";"active";"Panicle Threshability";;"SES 4th Ed. 1996";"Firmly grasp and pull the hand over the panicle and estimate the percentage of shattered grains.";"1= Difficult (less than 1%)\n3= Moderately difficult (1-5%)\n5= Intermediate (6-25%)\n7= Loose (26-50%)\n9= Easy (51-100%)";;"categorical";;;1;9;"agronomic";;;
-"PnT_SCOR_1_3";"PnT";"panicle type";"Panicle types are classified according to their mode of branching, angle of primary branches, and spikelet density. [CO:rs]";"integer";"no";"observation";"active";"Panicle Type";"CO_320:0000018";"Crop Ontology";;"1 Compact\n2 Intermediate\n3 Open. [SES:110]";;"categorical";;;1;3;"morphological";;;
-"PnT_SCOR_1_9";"PnT";"panicle type";"Panicles are classified according to their mode of branching, angle of primary branches, and spikelet density.";"integer";"no";"observation";;"Panicle Type";;"SES 4th Ed. 1996";"At growth stage: 8";"1= Compact\n5= Intermediate\n9= Open";;"categorical";;;1;9;"morphological";;;
-;;"panicle weight";"Average weight of the panicle from the plants or tillers in a given study. [CO:rs]";;"no";"observation";"active";"Panicle Weight";"CO_320:0000478";;;;;"continuous";;;;;"morphological";;;
-"PAcp_SCOR_1_7";"PAcp";"phenotypic acceptability";"Breeding objectives for each variety and trait varies. The evaluation should reflect the overall acceptability of the variety. At growth stage: 9. [CO:rs]";"integer";"no";"observation";"active";"Phenotypic Acceptability";"CO_320:0000075";"Crop Ontology";;"1= Excellent\n3= Good\n5= Fair\n7= Poor\n9= Unacceptable.";;"categorical";;;1;9;"agronomic";"PAcp;phenotyphic acceptability";;
-"PDef_SCOR_1_9";"PDef";"phosphorus deficiency";"Sensitivity to the phosphorous content in the growth environment. [CO:rs]";"integer";"no";"observation";;"Phosphorus deficiency";"CO_320:0000065";"Crop Ontology";;"SCALE (Relative tillers)\n1= 80-100%\n3= 60-79%\n5= 40-59%\n7= 20-39%\n9= 0-19%. [SES:73]";;"categorical";;;1;9;"stress";"phosphorus sensitivity";;
-"PDef_GRNH_1_9";"PDef";"phosphorus deficiency";;"integer";"no";"observation";;"Phosphorus deficiency";;"SES 4th Ed. 1996";"At growth stage: 2-5\n\nGreenhouse: [No. of tillers in 0.5 ppm P culture solution/No. of tillers in 10 ppm P culture solution]  X  100\n\nField: [No. of tillers with no P/No. of tillers with 25 kg P per ha]  X  100";"SCALE (Relative tillers)\n1= 80-100%\n3= 60-79%\n5= 40-59%\n7= 20-39%\n9= 0-19%";;"categorical";;;1;9;"stress";;;
-"P1_FLD_1_9";"P1";"phosphorus deficiency";"Observation done in the field";"integer";"no";"observation";;"Phosphorus deficiency";;;;"SCALE (Relative tillers)\n1= 80-100%\n3= 60-79%\n5= 40-59%\n7= 20-39%\n9= 0-19%";;"categorical";;;1;9;"stress";;;
-"HT_SCOR_1_9";"HT";"plant height";"Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]";"integer";"no";"observation";"active";"Plant Height";"CO_320:0000480";"Crop Ontology";"Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []";"1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)";;"categorical";;;1;9;"agronomic";"Ht,PLHT";;
-"HT1_CONT";"HT1";"plant height";"Plant height from plant sample 1";"character varying";"no";"observation";;"Plant height";;;"At maturity (Stages 7-9) - Plant sample 1";"Measured in cm";"cm";"continuous";;;;;"stress";;;
-"HT2_CONT";"HT2";"plant height";"Plant height from plant sample 2";"character varying";"no";"observation";;"Plant height";;;"At maturity (Stages 7-9) - Plant sample 2";"measured in cm";"cm";"continuous";;;;;"stress";;;
-"HT3_CONT";"HT3";"plant height";"Plant height from plant sample 3";"character varying";"no";"observation";;"plant height";;;"At maturity (Stages 7-9) - Plant sample 3";"measured in cm";"cm";"continuous";;;;;"stress";;;
-;;"pollen sterility";"Determination of sterile pollen. Expressed in percentage. [CO:rs]";"character varying";"no";"observation";"active";"Pollen Sterility";"CO_320:0000327";"Crop Ontology";"Observed under a microscope at magnification 10x10 after staining with 1% iodine potassium iodide (IKI) solution";;;"categorical";;;;;"hybrid";;;
-;;"pollen sterility";;"integer";"no";"observation";"active";"Pollen Sterility";;"SES 4th Ed. 1996";"It is observed in the microscope under magnification of 10x10 after staining pollen grains with 1% Iodine Potassium Iodine (IKI) solution. Saples for pollen are collected from at least ten florets from individual plants at growth stages 6 and fixed in 70% alcohol. Two to three anthers are extracted from five of the florets on a glass slide and pollen are squeezed out with a spear-shaped needle in a drop of IKI solution. At least three microscopic fields are used to cout sterile pollen grains (viz., unstrained withered, unstained spherical and partially-stained round) and fertile pollen grains (stained round); percentage sterility is calculated as: [number of (unstained withered + unstained spherical + partially stained round) pollen/total number of pollen grains (including fertile)] x 100";"1= Completely sterile (100)\n3= Highly sterile (99.0-99.9)\n5= Sterile (95.098.9)\n7= Partially sterile (70.0-94.9)\n9= Partially fertile to fertile (<70)";;"categorical";;;1;9;"hybrid";;;
-;;"ragged stunt";;;"no";"observation";;"Ragged stunt";"CO_320:0000183";"Crop Ontology";;;;;;;;;"stress";;;
-;;"rat damage";"The trait is scored for the plant damage caused by rat. [CO:rs]";;"no";"observation";;"rat damage";"CO_320:0000214";"crop Ontology";;;;;;;;;"stress";;;
-;"RD";"rat damage";"Since there is no genetic resistance to rats, the damage can be quantified as it does not represent resistance.";"integer";"no";"observation";;"rat damage";;"SES 4th Ed. 1996";;"Scale (Damaged plants)\n0= No damage observed\n1= Less than 5%\n5= 6-25%\n9= 26-100%";;"categorical";;;0;9;"stress";;;
-;;"rhizome formation";;"integer";"no";"observation";"active";"Rhizome Formation";"CO_320:0000285";;"Observe when plants are ready for harvest. [RD:7.3.36]";"1 Vegetative crown\n2 Vegetative crown and stolon\n3 Vegetative crown and weak rhizomes\n4 Vegetative crown, stolon and weak rhizomes\n5 Strong rhizomes and no tubers\n6 Strong rhizomes with tubers. [RD:7.3.36]";;"categorical";;;1;6;"morphological";;;
-;"RB";"rice bug";"Causal agent: Leptocorisa oratorius";"integer";"no";"observation";;"rice bug damage";;"SES 4th Ed. 1996";"At growth stage: 7-9";"0= No damage\n1= Less than 3\n3= 4-7\n5= 8-15\n7= 12-25\n9= 26-100";;"categorical";;;0;9;"stress";;;
-;;"rice bug damage";"The trait is scored for the plant damage caused by rice bug (Leptocorisa oratorisa). [CO:rs]";"integer";"no";"observation";;"rice bug damage";"CO_320:0000203";"Crop Ontology";;"Scale Injured grains per panicle (%)\n0 No injury\n1 Less than 3\n3 4-7\n5 8-15\n7 12-25\n9 26-100. [SES:68]";;"categorical";;;0;9;"stress";;;
-;;"rice delphacid";"The trait is scored for the plant damage caused by rice delphacid [Sogatodes oryzicola (Tagosodes orizicolus)]. [CO:rs]";"integer";"no";"observation";;"rice delphacid";"CO_320:0000216";"Crop Ontology";"Symptoms: Similar to whitebacked planthopper (WBHP).At growth stage: 2 (green house); 2-6 (field).";"0= No injury\n1= 1-10%\n3= 11-20%\n5= 21-30%\n7= 31-60%\n9= 61% and above. [SES:62]";;"categorical";;;0;9;"stress";"RDel";"Note: The scale is based on symptoms. Incidence of dead plants could be considered for final evaluation.";
-;"RDel";"rice delphacid";"Causal agent: Tagosodes orizicolus.\nSymptoms: Similar to WBPH.";"integer";"no";"observation";;"rice delphacid";;"SES 4th Ed. 1996";"At growth stage: 2 (greenhouse)\n2-6 (field).\n\nNote: The scale if based on symptoms. Incidence of dead plants could be considered for final evaluation.";"0= No damage\n1= Very slight damage/leaf discoloration\n3= Yellowing of 1st and 2nd leaves\n5= Pronounced yellowing of leaves and some stunting, less than 50% of plants dead\n7= Strong yellowing of leaves and pronounced stunting, greated than 50% of plants dead\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-;"MLO";"rice disease caused by  viruses and mycoplasma-like organisms";"The reaction of a certain genotype to rice virus infection can be assessed by a skilled worker based on visible symptoms after inoculation under natural conditions (in a field), or under controlled conditions (in a greenhouse). The factors needed for a successful test are the presence of virus souces and insect vectors, inoculation at the susceptible growth stage of the test plants and favorable environmental conditions. ";"integer";"no";"observation";;"MOL";;"SES 4th Ed. 1996";"Field test: Screening of test materials, notably breeding lines, can be done in the field and their reaction to virus infection can  be assessed on a scale 0-9 based on the percentage of infection observed.\n\nGreenhouse test: However, field tests generallyselect vector resistance and are not appropriate for selecting virus resistance. Resistance to the virus can be assessed in the greenhouse where factors needed for infection can be manipulated. Inoculation using a high number of vectors is desired and the susceptible check should have at least 90% infection. A healthy check would be also useful as a reference to measure plant height. Since some fertilizers might affect symptoms, it is recommended not to use any during the experiment. A disease index (DI) for the genotype, which would represent both disease incidence and symptom severity, can be used as an indicator for virus resistance in a greenhouse test. DI can be calculated as: DI= n(3)+n(5)+n(7)+n(9)/tn\n\n\nWhere: n(3), n(5), n(7) and n(9) = number of plant showing a reaction in scale 3,5,7, or 9, respectively.\ntn= total number of plants scores";"Scale (% infection)\n\n0= No symptom observed\n1= 1-10%\n3= 11-30%\n5= 31-50%\n7= 51-70%\n9= 71-100%";;"categorical";;;0;9;"stress";;"The resulting DI can be classified as:\n\nDI   Reaction\n\n0-3   Resistance/Tolerant\n4-6   Moderate\n7-9   Susceptible";
-;"RHBV";"rice hoja blanca";"Causal agent: Rice hoja blanca virus.\n\nSymptoms: Cream colored to yellow spots, elongating and coalescing fo form longitudinal yellowish green to pale green striations. Streaks may coalesce to cover the whole leaf. Brown and sterile glumes with typical ""parrot beak"" shape of deformation.\n\n\nAt growth stage: 2-4 (leaf)\n7-8 (panicle).\n\n\nNote: To determine the degree of resistance in fixed lines under field conditions, susceptible check should have at least more than 50% infection.";"integer";"no";"observation";"active";"Rice Hoja Blanca";;"SES 4th Ed. 1996";;"Scale (percent of affected plants)\n\n0= No symptoms\n1= Less than 1%\n3= 1-10%\n5= 11-30%\n7= 31-60%\n9= 61-100%";;"categorical";;;0;9;"stress";;;
-;;"rice leaf blast";;"character varying";"no";"observation";"active";"Blast";"CO_320:0000341";"Crop Ontology";;"SCALE (for blast nursery)\n0= No lesions observed\n1= Small brown specks of pin-point size or larger brown specks without sporulating center\n2= Small roundish to slightly elongated, necrotic gray spots, about 1-2 mm in diameter, with a distinct brown margin\n3= Lesion type is the same as in scale 2, but a significant number of lesions are on the upper leaves\n4= Typical susceptible blast lesions2 3 mm or longer, infecting less than 4% of the leaf area\n5= Typical blast lesions infecting 4-10% of the leaf area\n6= Typical blast lesions infection 11-25% of the leaf area\n7= Typical blast lesions infection 26-50% of the leaf area\n8= Typical blast lesions infection 51-75% of the leaf area and many leaves are dead\n9= More than 75% leaf area affected.\n\n\nCODE (Predominant lesion type)\n0= No lesions observed\n1 Small brown specks of pinpoint size or larger brown specks without sporulating center\n3= Small, roundish to slightly elongated necrotic sporulating spots, about 1-2 mm in diameter with a distinct brown margin or yellow halo\n5= Narrow or slightly elliptical lesions, 1-2 mm in breadth, more than 3 mm long with a brown margin\n7= Broad spindle-shaped lesion with yellow, brown, or purple margin\n9= Rapidly coalescing small, whitish, grayish, or bluish lesions without distinct margins. [SES:30]";;"categorical";"ordinal";;"0 No lesions observed";"9 More than 75% leaf area affected.";"stress";"Blast;leaf blast;rice blast";;"0 No lesions observed;1 Small brown specks of pin-point size or larger brown specks without sporulating center;2 Small roundish to slightly elongated, necrotic gray spots, about 1-2 mm in diameter, with a distinct brown margin;3 Lesion type is the same as in scale 2, but a significant number of lesions are on the upper leaves;4 Typical susceptible blast lesions2 3 mm or longer, infecting less than 4% of the leaf area;5 Typical blast lesions infecting 4-10% of the leaf area;6 Typical blast lesions infection 11-25% of the leaf area;7 Typical blast lesions infection 26-50% of the leaf area;8 Typical blast lesions infection 51-75% of the leaf area and many leaves are dead;9 More than 75% leaf area affected."
-;"RRSV";"rice ragged stunt disease";"Causal agent: Rice ragged stunt virus (RRSV).\n\nSymptoms: Plants are stunted but remain dark green. Leaves are ragged and twisted. Vein swelling on leaf collar, leaf blades and leaf sheaths.\n\nAt growth stages:\n2-3 (for the greenhouse)\n4-6 (for the field)";"integer";"no";"observation";"active";"Rice ragged stunt disease";;"SES 4th Ed. 1996";"Score and calculate DI at 5 weeks after inoculation in the greenhouse.";"1= No symptom observed\n3= 0-10% height reduction, no ragged/twisted leaf, small and very few vein swelling usually on leaf collar.\n5= 0-10% height reduction, 1-2 leaves have ragged/twisted symptoms, few vein swelling on leaf collar.\n7= 11-30% height reduction, 3-4 leaves have ragged/twisted symptoms, more vein swelling on leaf collar, and some on leafblades and leafsheaths.\n9= More than 30% height reduction, most leaves have ragged/twisted symptoms, vein swelling common on leafsheaths and leafblades.";;"categorical";;;1;9;"stress";;;
-"RTD1_FLD_1_9";"RTD1";"rice tungro disease";"Causal agent: Rice tungro virus bacilliform virus (RTBV) and rice tungro spherical virus (RTSV).\n\nSymptoms: Yellow to yellow orange leaves, stunting and slightly reduced tillering.\nAt growth stages: 2 (for the greenhouse)\n3-5 (for the field).";"integer";"no";"observation";"active";"Rice tungro disease";;"SES 4th Ed. 1996";"Score and calculate DI at 4 weeks after inoculation in the greenhouse.";"1= No symptom observed\n3= 1-10% height reduction, no distinct yellow to yellow orange leaf discoloration\n5= 11-30% height reduction, no distinct yellow to yellow orange leaf discoloration\n7= 31-50% height reduction, with distinct yellow to yellow orange leaf discoloration\n9= More than 50% height reduction, with distinct yellow to yellow orange discoloration";;"categorical";;;1;9;"stress";;;
-"RTD_GRNH_PERC";"RTD";"rice tungro disease";"Causal agent: Rice tungro virus bacilliform virus (RTBV) and rice tungro spherical virus (RTSV).\n\nSymptoms: Yellow to yellow orange leaves, stunting and slightly reduced tillering.\nAt growth stages: 2 (for the greenhouse)\n3-5 (for the field).";"float";"no";"observation";"active";"Rice tungro disease";;;;"Percent";"%";"continuous";;;;;"stress";;;
-;"RTV1";"rice tungro virus";"The trait is scored for the plant response to the agent rice tungro bacilliform virus (RTBV) and rice tungro spherical virus (RTSV). [CO:rs]";"integer";"no";"observation";"active";"Rice Tungro Virus";"CO_320:0000351";"Crop Ontology";;"1= No symptom observed\n3= 1-10% height reduction, no distinct yellow to yellow orange leaf discoloration\n5= 11-30% height reduction, no distinct yellow to yellow orange leaf discoloration\n7= 31-50% height reduction, with distinct yellow to yellow orange leaf discoloration More than 50% height reduction, with distinct yellow to yellow orange discoloration.";;"categorical";;;1;7;"stress";;;
-;;"rice whorl maggot";"The trait is scored for the plant damage caused by rice whorl maggot (Hydrellia philippina). [CO:rs]";"integer";"no";"observation";;"rice whorl maggot";"CO_320:0000206";"Crop Ontology";;"SCALE (for field test)\n0 No injury\n1 Less than 2 leaves/hill injured\n3 2 or more leaves/hill but less than 1/3 of leaves injured\n5 1/3 to 1/2 of leaves injured\n7 More than 1/2 of the leaves injured with no broken leaves\n9 More than 1/2 of the leaves injured with some broken leaves. [SES:67]";;"categorical";;;0;9;"stress";;;
-;"RWM";"rice whorl maggot";"Causal agent: Hydrellia philippina.\nSymptoms: Leaf margin feeding causes conspicuous damage and sometimes stunting of plants.";"integer";"no";"observation";;"rice whorl maggot";;"SES 4th Ed. 1996";"At growth stage: 3";"0= No damage\n1= Less than 2 leaves/hill damaged\n3= 2 or more leaves/hill but less than 1/3 of leaves damage\n5= 1/3 to 1/2 of leaves damage\n7= More than 1/2 of the leaves damage with no broken leaves\n9= More than 1/2 of the leaves damage with some broken leaves.";;"categorical";;;0;9;"stress";;;
-;"RYMV";"rice yellow mottle ";"Causal agent: Rice yellow mottle virus.\n\nSymptoms: Stunting, reduced tillering, mottling and yellowing streaking of the leaves, delayed flowering or incomplete emergence of the panicles; in extreme cases, death of plants.\n\nAt growth stage: 4-6 (field).";"integer";"no";"observation";"active";"Rice yellow mottle";;"SES 4th Ed. 1996";;"SCALE (for field test)\n1= No symptom observed\n3= Leaves green but with sparse dots or streaks and less than 5% of height reduction\n5= Leaves green or pale green with mottling and 6% to 25% of height reduction, flowering slightly delayed\n7= Leaves pale yellow or yellow and 26-75% of height reduction, flowering delayed\n9= Leaves turn yellow or orange, more than 75% of height reduction, no flowering or some plants dead.";;"categorical";;;1;9;"stress";;;
-"SAL1_FLD_1_9";"Sal1";"salinity injury";"Observation done in the field";"integer";"no";"observation";;"salinity injury";;"SES 4th Ed. 1996";;"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;
-"SAL_GRNH_1_9";"SAL";"Salt injury";"Observe general growth conditions in relation to standard resistance and susceptible checks. Since some soil problems are very heterogenous in the field, several replications may be needed to obtain precise reading.";"integer";"no";"observation";;"Salt injury";;"SES 4th Ed. 1996";"At growth stage: 3-4";"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;"Leaf is counted as discolored or dead if more than half of its area if discolored or dead.";
-;"SALTOL";"salt tolerance";"Tolerance to the high salt content in the growth medium. [CO:rs]";;"no";"observation";;"Salt tolerance";"CO_320:0000066";"Crop Ontology";;;;;;;;;"stress";"Sal;salinity tolerance;salt injury;salt sensitivity";;
-"SCT_SCOR_0_2";"Sct";"scent";;"integer";"no";"observation";;"scent";;"SES 4th Ed. 1996";"at growth stage: 6-9";"Code (At flowering or at maturity - by cooking test)\n\n0= Nonscented\n1= Lightly scented\n2= Scented";;"categorical";;;0;2;"grain quality";;;
-;"PnBr";"secondary branching of panicles";"The extent of secondary branching usually determines the shape and compactness of the panicle. [CO:rs]";"integer";"no";"observation";"active";"Secondary Branching Of Panicles";"CO_320:0000421";;;"0 Absent\n1 Light\n2 Heavy\n3 Clustered. [SES:111]";;"categorical";;;0;3;"morphological";"secondary branching of inflorescence";;
-"SG_PERC";;"seed germination";"The physiological and developmental changes that occur in a seed commencing with water uptake (imbibition) and terminating with the elongation of the embryonic axis. [CO:rs]";"float";"no";"observation";;"Seed germination";"CO_320:0000086";"Crop Ontology";;"% germinated seeds";"%";"continuous";;;;;"agronomic";;;
-;;"seedling height";"Actual measurements of 10 seedlings in centimeters, from the base of the shoot to the tip of the tallest leaf blade. [CO:rs]";"integer";"no";"observation";"active";"Seedling Height";"CO_320:0000228";;"Measured from the base of the shoot to the tip of the tallest leaf blade, to nearest cm. Average of 10 seedlings. Stage: 5-leaf stage. [RD:7.3.2]";"3 Short (<30 cm)\n5 Intermediate (~45 cm)\n7 Tall (>60 cm). [RD:7.3.2]";;"categorical";;;3;7;"morphological";"SH";;
-;;"seedling height";"Actual measurements of 10 seedlings in centimeters, from the base of the shoot to the tip of the tallest leaf blade. [CO:rs]";"float";"no";"observation";"active";"Seedling Height";"CO_320:0000233";"SES 4th editon 1996";"Measured from the base of the shoot to the tip of the tallest leaf blade, to nearest cm. Average of 10 seedlings. Stage: 5-leaf stage. [RD:7.3.2]";"Measured in cm. [RD:7.3.2]";"cm";"continuous";;;;;"morphological";"SH";;
-;;"seedling height";"Actual measurements of 10 seedlings in centimeters, from the base of the shoot to the tip of the tallest leaf blade. [CO:rs]";"integer";"no";"observation";"active";"Seedling Height";"CO_320:0000228";"Crop Ontology";"Measured from the base of the shoot to the tip of the tallest leaf blade, to nearest cm. Average of 10 seedlings. Stage: 5-leaf stage. [RD:7.3.2]";"3= Short (<30 cm)\n5= Intermediate (~45 cm)\n7=Tall (>60 cm)";;"categorical";;;;;"morphological";"SH";;
-"VG_SCOR_1_9";"VG";"Seedling vigor";;"integer";"no";"observation";"active";"Seedling Vigor";"CO_320:0000077";"Crop Ontology";;"1= Extra vigorous (very fast growing; plants at 5-6 leaf stage have 2 or more tillers in majority of population)\n3= Vigorous (fast growing; plants at 4-5 stage have 1-2 tillers in majority of population)\n5= Normal (plant at 4-leaf stage)\n7= Weak (plants somewhat stunted; 3-4 leaves; thin population; no tiller formation)\n9= Very weak (stunted growth; yellowing of leaves).";;"categorical";;;1;9;"agronomic";"germination vigor;GRVG;plant vigor;PLVG;SDVG;seedling vigor;Vg";;
-;"VG";"Seedling/vegetative vigor";"Several factors may interact, influencing seedling vigor (e.g. tillering ability, plant heighjt, etc.). Use this scale for evaluating genetic material and varieties under stress and non-stress conditions. At growth stage, seedling vigor: 2, vegetative vigor: 3.";"integer";"no";"observation";"active";"Seelding/Vegetative vigor";;"SES 4th Ed. 1996";;"1= Extra vigorous (very fast growing; plants at 5 leaf stage have 2 or more tillers in majority of population)\n3= Vigorous (fast growing; plants at 4-5 leaf stage have 1-2 tillers in majority of population)\n5= Normal (plant at 4-leaf stage)\n7= Weak (plants somewhat stunted; 3-4 leaves; thin population; no tiller formation)\n9= Very weak (stunted growth; yellowing of leaves).";;"categorical";;;1;9;"agronomic";"seedling/vegetative vigor";;
-;"VG";"Seedling/vegetative vigor";"Several factors may interact, influencing seedling vigor (e.g. tillering ability, plant height, leaf number, leaf area, leaf greenness, etc.). Use this scale for evaluating genetic material and varieties under stress and non-stress conditions. At growth stage, seedling vigor: 2, vegetative vigor: 3.";"integer";"no";"observation";"active";"Seedling/Vegetative Vigor";;"SES 5th Ed. 2013";;"1= Extra vigorous (very fast growing; plants at 5-6 leaf stage have 2 or more tillers in majority of population)\n3= Vigorous (fast growing; plants at 4-5 stage have 1-2 tillers in majority of population)\n5= Normal (plant at 4-leaf stage)\n7= Weak (plants somewhat stunted; 3-4 leaves; thin population; no tiller formation)\n9= Very weak (stunted growth; yellowing of leaves).";;"categorical";;;1;9;"agronomic";"seedling/vegetative vigor";;
-"SHB_SCOR_0_9";"ShB";"sheath blight";"The trait is scored for the plant response to the agent Thanethoporus cucumeris (Rhizoctonia solani) causing narrow sheath blight. [CO:rs]\n\nSymptoms: Grayish-green lesions may enlarge and coalesce with other lesions, mostly on lower leaf sheaths, but occasionally on the leaves.";"integer";"no";"observation";;"Sheath Blight";"CO_320:0000189";"Crop Ontology";;"SCALE (relative lesion height: disease progress relative to plant height; Ahn and Mew, 1986)\n0= No infection observed\n1= Lesions limited to lower 20% of the plant height\n3= 20-30%\n5= 31-45%\n7= 46-65%\n9= More than 65%. [SES:37]";;"categorical";;;0;9;"stress";;;
-;;"sheath rot";"The trait is scored for the plant response to the agent Soracladium oryzae causing sheath rot. [CO:rs]\n\nSymptoms: Oblong or irregular brown to grey lesions on the leaf sheath near panicle; sometimes coalescing to prevent emergence of panicle.";"integer";"no";"observation";;"Sheath rot";"CO_320:0000185";"Crop Ontology";"At growth stage: 7-9";"SCALE (Incidence: % diseased tillers)\n0= No disease observed\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%. [SES:38]";;"categorical";;;0;9;"stress";;;
-;"ShR";"sheath rot";"Causal agent: Sarocladium oryzae.\n\nSymptoms: Obling or irregular brown to grey lesions on the lead sheath near panicle; somtimes coalescing to prevent emergence of panicle.";"integer";"no";"observation";;"Sheath rot";;"SES 4th Ed. 1996";"At growth stage: 7-9";"Scale (Incidence of severely affected tillers)\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5= 6-25%\7= 26-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;;
-;"SpFert";"spikelet fertility";"The abundance of well-developed spikelets as a percentage of the total number of spikelets on five representative panicles. At growth stage: 9 [RD:7.5.14.]";"integer";"no";"observation";"active";"Spikelet Fertility";"CO_320:0000303";"Crop Ontology";"Determined by pressing the spikelets with the fingers and counting those that have no grains or the percent seed setting."" [CO:rs]";"1= Completely sterile (0%)\n2= Highly sterile (1-49%)\n3= Partly sterile (50-74%)\n4= Fertile (75-90%)\n5= Highly fertile (>90%).";;"categorical";;;1;5;"agronomic";"fertile spikelets;SpFert";;
-;"SpFert";"spikelet fertility";"At growth stage: 9";"integer";"no";"observation";"active";"Spikelet Fertility";;"SES 4th Ed. 1996";"Identify the fertile spikelets by pressing the spikelets with the fingers and noting those that have no grains.";"1= Highly fertile (>90%)\n3= Fertile (75-89%)\n5= Partly sterile (50-74%)\n7= Highly sterile (<50% to trace)\n9= (0%)";;"categorical";;;1;9;"agronomic";;;
-;;"spikelet sterility";;"integer";"no";"observation";"active";"Spikelet Sterility";"CO_320:000032";"Crop Ontology";;"1= Completely sterile 100\n3= Highly sterile 99.0-99.9\n5= Sterile 95.0-98.9\n7= Partially sterile 70.0-94.9\n9= Partially fertile to fertile <70. [SES:21B]";;"categorical";;;1;9;"hybrid";;;
-;;"spikelet sterility";"This trait of male sterile line is monitored at growth stages 8 and 9. ";"integer";"no";"observation";"active";"Spikelet Sterility";;"SES 4th Ed. 1996";"Two primary panicles of at least 50 plants of a male sterile line are bagged with glassine bags at growth stage 5-6 before their anthesis begins. Filled and unfilled spikelets of the bagged panicles are counted. A male sterile line is considered stable if its pollen and/or spikelets sterility ranges from scale 1 to 3. Otherwise, it is considered unstable.";"1= Completely sterile 100\n3= Highly sterile 99.0-99.9\n5= Sterile 95.0-98.9\n7= Partially sterile 70.0-94.9\n9= Partially fertile to fertile <70";;"categorical";;;1;9;"hybrid";;;
-;"YSB";"stem borer damage";"The trait is scored for the plant damage caused by stem borers, Chilo suppressalis (striped), C. polychrysus (dark headed), Rupela albinella (South American white), Scirpophaga incertulas (yellow), S innotata (white), Sesamia inferens (pink), Maliarpha separatella (african whiteheads), Diopsis macrophthalma (stalked-eyed fly), and several other species. [CO:rs]";"integer";"no";"observation";;"Stem borer damage";"CO_320:0000208";"Crop Ontology";"At growth stage: 3-5 (deadhearts); 8-9 (white heads)";"SCALE (Deadhearts)\n0= No injury\n1= 1-10%\n3= 11-20%\n5= 21-30%\n7= 31-60%\n61% and above. [SES:63]";;"categorical";;;0;7;"stress";"stem borer deadheart;striped stem borer;yellow stem borer";;
-"SB_DEAD_0_9";"SB";"stem borers";"Causal agent: Chilo suppressalis (striped); C. polychrysus (dark headed); Rupela albinella (South American white); Scirpophaga incertulas (yellow); S. Innotata (white); Sesamia inferens (pink); Maliarpha separatella (African whiteheads); Diopsis macrophthalma (Stalked-eyed fly); and several other species.";"integer";"no";"observation";;"stem borers";;"SES 4th Ed. 1996";"Stem dissections from 10 hills of susceptible checks are necessary at maximum tillering, panicle initiation and late ripening, in order to identify SB species and to assess more accurately the actual incidence of stem damage.\n\n\nAt growth stage: 3-5 (deadhearts)\n8-9 (whiteheads)";"Scale (Deadhearts)\n0= No damage\n1= 1-10%\n3= 11-20%\n5= 21-30%\n7= 31-60%\n9= 61% and above";;"categorical";;;0;9;"stress";;"Deadhearts and whiteheads in the susceptible check should average more than 20 and 10%, respectively, of infested tillers for the test to be considered valid. Percentage of susceptible check should be recorded. Percentage of deadhearts and whiteheads is based on tiller count and productive tillers (panicles), respectively. For Diopsis spp., it is not necessary to estimate whiteheads since infestation occurs usually at growth stages 2-4. For Maliarpha separatella, however, stem dissection is the only way to accurately estimate both the damage  and incidence. Ten to 50 hills are dissected and percentage infested tiller are rated in accordance with the scale for deadhearts. Unlike whiteheads, infested tillers do produce some panicles and so the relationships between whiteheads/infested tillers and yield are not quite the same. For deepwater rice, make dissections of 20 or more tillers per plot or row at growth stages 6-8 and count the numbers of infested (or damaged) tillers. Apply the above index using the numbers of deadhearts. Scoring for whiteheads is of little value in deepwater rice.";
-"SB_WHITE_0_9";"SB";"stem borers";"Causal agent: Chilo suppressalis (striped); C. polychrysus (dark headed); Rupela albinella (South American white); Scirpophaga incertulas (yellow); S. Innotata (white); Sesamia inferens (pink); Maliarpha separatella (African whiteheads); Diopsis macrophthalma (Stalked-eyed fly); and several other species.";"integer";"no";"observation";;"stem borers";;"SES 4th Ed. 1996";"Stem dissections from 10 hills of susceptible checks are necessary at maximum tillering, panicle initiation and late ripening, in order to identify SB species and to assess more accurately the actual incidence of stem damage.\n\n\nAt growth stage: 3-5 (deadhearts)\n8-9 (whiteheads)";"Scale (Whiteheads)\n0= No damage\n1= 1-5%\n3= 6-10%\n5= 11-15%\n7= 16-25%\n9= 26% and above";;"categorical";;;0;9;"stress";;"Deadhearts and whiteheads in the susceptible check should average more than 20 and 10%, respectively, of infested tillers for the test to be considered valid. Percentage of susceptible check should be recorded. Percentage of deadhearts and whiteheads is based on tiller count and productive tillers (panicles), respectively. For Diopsis spp., it is not necessary to estimate whiteheads since infestation occurs usually at growth stages 2-4. For Maliarpha separatella, however, stem dissection is the only way to accurately estimate both the damage  and incidence. Ten to 50 hills are dissected and percentage infested tiller are rated in accordance with the scale for deadhearts. Unlike whiteheads, infested tillers do produce some panicles and so the relationships between whiteheads/infested tillers and yield are not quite the same. For deepwater rice, make dissections of 20 or more tillers per plot or row at growth stages 6-8 and count the numbers of infested (or damaged) tillers. Apply the above index using the numbers of deadhearts. Scoring for whiteheads is of little value in deepwater rice.";
-;;"stem rot";;"integer";"no";"observation";;"stem rot";"CO_320:0000186";"Crop Ontology";;"SCALE (Incidence: percentage of infected tillers)\n0= No disease observed\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%. [SES:42]";;"categorical";;;0;9;"stress";;;
-;"SR";"stem rot";"Causal agent: Magnaporthe salvinii (Nakataea sigmoidea, Sclerotium oryzae), and Helminthosporium sigmoideum var. irregulare.\n\nSymptoms: Dar lesions develop on the stems near the water line. Small, dark bodies (sclerotia) develop, weaken the stem, and cause lodging.";"integer";"no";"observation";;"stem rot";;"SES 4th Ed. 1996";"At growth stage: 7-9";"Scale (Stems with lesions and sclerotia)\n\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;;
-;"SLmC";"sterile lemma color";"Color of the sterile lemma. [CO:rs]";"integer";"no";"observation";"active";"Sterile Lemma Color";"CO_320:0000301";;"Observe five representative plants. [RD:7.5.13]";"1 020 Straw\n2 040 Gold\n3 070 Red\n4 080 Purple. [RD:7.5.13]";;"categorical";;;1;4;"morphological";;;
-;"SLmL";"sterile lemma length";"Length of sterile lemma. [CO:rs]";"float";"no";"observation";"active";"Sterile Lemma Length";"CO_320:0000223";;"Record the average length of five spikelets. For spikelets with symmetrical sterile lemmas (i.e. sterile length the same on both sides), record the length here. For spikelets with asymmetrical sterile lemmas (i.e. sterile lemma on one side longer than that on the other), record here only the length of the shorter sterile lemma. [RD:7.5.10]";"Measured in mm. [RD:7.5.10]";"mm";"continuous";;;;;"morphological";;;
-;"SLmL";"sterile lemma length";"Length of sterile lemma. [CO:rs]";"integer";"no";"observation";"active";"Sterile Lemma Length";"CO_320:0000224";;"Record the average length of five spikelets. For spikelets with symmetrical sterile lemmas (i.e. sterile length the same on both sides), record the length here. For spikelets with asymmetrical sterile lemmas (i.e. sterile lemma on one side longer than that on the other), record here only the length of the shorter sterile lemma. [RD:7.5.10]";"3 Short\n5 Medium\n7 Long\n9 Extra long. [RD:7.5.10]";;"categorical";;;3;9;"morphological";;;
-;;"sterile lemma shape";"Shape of sterile lemma. [CO:rs]";"integer";"no";"observation";"active";"Sterile Lemma Shape";"CO_320:0000299";;"For wild species. [RD:7.5.12]";"0 Absent\n1 Linear (long and slender)\n2 Subulate or setaceous (linear and tapering to a fine point, set with\nor consisting of bristles)\n3 Triangular (and very small). [RD:7.5.12]";;"categorical";;;0;3;"morphological";;;
-;"SgC";"stigma color";"Color of stigma. [CO:rs]";"integer";"no";"observation";"active";"Stigma Color";"CO_320:0000226";;"Observed at anthesis (between 0900 and 1400) using a hand lens. [RD:7.4.2]";"1 010 White\n2 061 Light green\n3 030 Yellow\n4 081 Light purple\n5 080 Purple. [RD:7.4.2]";;"categorical";;;1;5;"morphological";;;
-;;"stigma exsertion";"This trait is monitored at growth stage 6-7.";"integer";"no";"observation";"active";"stigma exsertion";;"SES 4th Ed. 1996";"Counting the number of florets which have completed anthesis on a given day and the number of florets showing exserted stigma on one or both sides of the florets and expressed as percent stigma exsertion.";"1= above 70\n3= 41-70\n5= 21-40\n7= 11-20\n9= 0-10";;"categorical";;;1;9;"hybrid";;;
-"SUB_GRNH_1_9";;"submergence tolerance";;"integer";"no";"observation";;"Submergence Tolerance";"CO_320:0000067";"Crop Ontology";"Greenhouse screening: For greenhouse screening count or % survival (S) of test entries and resistant control entry such as FR13A. Compute for % comparative survival value as follows: % S of entry / % S of control x 100. At growth stage: 2.\n\n\nField evaluation: The period of submergence varies and often is not under full experimental control. Record actual % of plants that survived.";"SCALE (% comparative survival)\n1= 100\n3= 95-99\n5= 75-94\n7= 50-74\n9= 0-49. [SES:86]";;"categorical";;;1;9;"stress";"submergence sensitivity";;
-"SUB1_FLD_1_9";"SUB1";"submergence tolerance";"Field evaluation";"integer";"no";"observation";;"Submergence Tolerance";;;"Field evaluation: The period of submergence varies and often is not under full experimental control. Record actual % of plants that survived.";"SCALE (% comparative survival)\n1= 100\n3= 95-99\n5= 75-94\n7= 50-74\n9= 0-49.";;"categorical";;;1;9;"stress";;;
-;;"thrips";"Causal agent: Stenchaetothrips biformis";"integer";"no";"observation";;"thrips";;"SES 4th Ed. 1996";;"1= Rolling of terminal 1/3 area of 1st leaf\n3= Rolling of terminal 1/3-1/2 area of 1st and 2nd leaves\n5= Rolling of terminal 1/2 area of 1st, 2nd, and 3rd leaves; yellowing of leaf tips\n7= Rolling of entire length of all leaves; pronounced yellowing\n9= Complete plant wilting, followed by severe yellowing and scorching.";;"categorical";;;1;9;"stress";;;
-;;"thrips damage";"The trait is scored for the plant damage caused by thrips (Stenchaetothrips biformis). [CO:rs]";"integer";"no";"observation";;"thrips damage";"CO_320:0000210";"Crop Ontology";;"1 Rolling of terminal 1/3 area of 1st leaf\n3 Rolling of terminal 1/3-1/2 area of 1st and 2nd leaves\n5 Rolling of terminal 1/2 area of 1st, 2nd, and 3rd leaves; yellowing of leaf tips\n7 Rolling of entire length of all leaves; pronounced yellowing\n9 Complete plant wilting, followed by severe yellowing and scorching. [SES:69]";;"categorical";;;1;9;"stress";;;
-"TIL_AVE";"TIL";"tiller";"Number of tillers";"float";"no";"observation";;"Tiller";;;"At growth stage 5 - Average of Plant Samples";"Average number of tillers from plant samples";;"categorical";;;;;"stress";;;
-"TIL_SCOR_1_9";;"tillering";"Degree of tillering is affected by variety, spacing of plants in the field, season of planting, and environmental conditions e.g. nitrogen levels. [CO:rs] At growth stage 5.";"character varying";"no";"observation";"active";"Tillering";"CO_320:0000079";"Crop Ontology";;"1= Very high (more than 25 tillers/plant)\n3= Good (20/25 tillers/plant)\n5= Medium (10-19 tillers/plant)\n7= Low (5-9 tillers/plant)\n9= Very low (less than 5 tillers/plant). [SES:2]";;"categorical";"ordinal";;"9 Very low (less than 5 tillers/plant)";"1 Very high (more than 25 tillers/plant)";"agronomic";"Ti;tiller number;TN";;"1 Very high (more than 25 tillers/plant);3 Good (20/25 tillers/plant);5 Medium (10-19 tillers/plant);7 Low (5-9 tillers/plant);9 Very low (less than 5 tillers/plant)"
-"TILL1";"TILL1";"tillering";"Number of tillers from sample 1";"float";"no";"observation";;"Tillering";;"IRIS";"At growth stage 5 - Plant sample 1";"Number of tillers/plant";;"categorical";;;;;"stress";;;
-"TILL2";"TILL2";"tillering";"Number of tillers from sample 2";"float";"no";"observation";;"Tillering";;;"At growth stage 5 - Plant sample 2";"Number of tillers/plant";;"categorical";;;;;"stress";;;
-"TILL3";"TILL3";"tillering";"Number of tillers from sample 3";"float";"no";"observation";;"Tillering";;"IRIS";"At growth stage 5 - Plant sample 3";"Number of tillers/plant";;"categorical";;;;;"stress";;;
-"TOTAL";;"total?";;"integer";"no";"observation";;"Total";;;;;;"continuous";;;;;"unknown";;;
-"TOTAL_Hill";;"total hill";"Total number of hills in a plot";"float";"no";"observation";;"Total Hill";;"IRIS";"Count the number of hills per plot";;;"continuous";;;;;"plot metadata";;;
-;;"udbatta disease";"The trait is scored for the plant response to the agent Balansia oryzae-sativae (Ephelis oryzae) causing udbatta disease. [CO:rs]";"integer";"no";"observation";;"udbatta disease";"CO_320:0000194";"Crop Ontology";;"SCALE (Incidence: percent infected tillers)\n0= No disease observed\n1= Less than1%\n5= 1-25%\n9= 26-100%. [SES:41]";;"categorical";;;0;9;"stress";;"Symptoms: A white mycelial mat ties panicle branches together so that they emerge as single, small, cylindrical rods.";
-;"UDb";"udbatta disease";"Causal agent: Balansia oryzae-sativae (Ephelis oryzae).\nSymptoms: A white mycelial mat ties the panicle branches together so that they emerge as single, small, cylindrical rods.";"integer";"no";"observation";;"udbatta disease";;"SES 4th Ed. 1996";;"Scale (infected panicles or tillers)\n\n0= No incidence\n1= Less than 1%\n5= 1-25%\n9= 26-100%";;"categorical";;;0;9;"stress";;;
-;;"ufra";"The trait is scored for the plant response to the agent Nymphula depunctalis causing ufra. [CO:rs]";"character varying";"no";"observation";;"ufra";"CO_320:0000187";"Crop Ontology";;"Scale (Incidence percentage of infected tillers)\n0= 0% (may or may not be visible)\n1= 1-2% (visible symptoms)\n3= 21-40% (visible symptoms)\n5= 41-60% (visible symptoms)\n7= 61-80% (visible symptoms)\n81-100% (visible symptoms). [SES:43]";;"categorical";;;0;"81-100%";"stress";;;
-;"U";"ufra";"Causal agent: the stem nematode Ditylenchus angustus.\nSymptoms: A leaf mottling or chlorotic discoloration in a splash pattern at base of young leaves in stem elongation or mid-tillering stage; brown stains may develop on leaves and sheaths which later intensify to a dark brown color. A characteristic distortion consisting of twisting and withering of young leaves. A distortion of panicles which either remain enclosed within a swollen sheath, partially emerge but are twisted and with unfilled grains, or emerge completely but with unfilled grains and resembling a whitehead.";"integer";"no";"observation";;"ufra";;"SES 4th Ed. 1996";"At growth stage: 6-7";"Scale (Infected tillers)\n\n0= 0%\n1= 1-20% (may or may not be visible)\n3= 21-40% (visible symptoms)\n5= 41-60% (visible symptoms)\n7= 61-80% (visible symptoms)\n9= 81-100% (visible symptoms)";;"categorical";;;0;9;"stress";;;
-"VG_CO";;"Vegetative vigor";"Used to evaluate genetic material under stress and non-stress conditions, several factors may interact, influencing the seedling vigor (e.g. tillering ability, plant height, etc). Vegetative Vigor: at growth stage 3.";"integer";"no";"observation";"active";"Vegetative Vigor";"CO_320:0000167";"Crop Ontology";;;;"categorical";;;;;"agronomic";"vegetative vigor";;
-"WBPH_GRNH_0_9";"WBPH";"whitebacked planthopper";;"integer";"no";"observation";"active";"Whitebacked planthopper";"CO_320:0000211";"Crop Ontology";"Greenhouse evaluation";"0= No injury\n1= Very slight injury\n3= First and 2nd leaves with orange tips; slight stunting\n5= More than half the leaves with yellow-orange tips; pronounced stunting\n7= More than half of plants dead; remaining plants severely stunted and wilted\n9= All plants dead. [SES:62]";;"categorical";;;0;9;"stress";;;
-"WBPH_FLD_0_9";"WBPH";"whitebacked planthopper";"Causal agent: Sogatella furcifera.\n\nSymptoms: Partial to pronounced yellowing and increasing severity of stunting. Extreme signs are wilting and death of plants. Infested areas in the field may be patchy.";"integer";"no";"observation";;"Whitebacked planthopper";;"SES 4th Ed. 1996";"At growth stage: 2 (greenhouse)\n3-9 (field)";"0= No damage\n1= Very slight damage\n3= First and 2nd leaves with orange tips: slight stunting\n5= More than half the leaves with yellow-orange tips; pronounced stunting\n7= More than half the plants dead; remaining plants severely stunted and wilter\n9= All plants dead";;"categorical";;;0;9;"stress";;;
-;"YD";"yellow dwarf";"Causal agent: Mycoplasma.\n\nSymptoms: Pale yellow, droopy leaves, excessive tillering and stunting.\nAt growth stages: 4-6 (greenhouse, on secondary growth after cutting at the base).\nOn ratoon (fields).";;"no";"observation";"active";"Yellow dwarf";;"SES 4th Ed. 1996";;;;;;;;;"stress";;;
-;"YD";"yellow dwarf";"Causal agent: Mycoplasma.\n\nSymptoms: Pale yellow, droopy leaves, excessive tillering and stunting.\nAt growth stages: 4-6 (greenhouse, on secondary growth after cutting at the base).\nOn ratoon (fields).";"integer";"no";"observation";"active";"Yellow dwarf";;"SES 5th Ed. 2013";;"Scale (Severity)\n1= None to few leaves slightly yellow; tillering, height and flowering not affected\n3= Leaves slightly yellow; plants slightly stunted; flowering slightly delayed\n5= Leaves yellow; plants moderately stunted; flowering delayed\n7= Leaves yellow or orange yellow; plants moderately stunted; flowering very much delayed\n9= Leaves orange yellow or orange; plants severely stunted, sometimes dead; flowering very much delayed";;"categorical";;;1;9;"stress";;;
-;;"yellow mottle";"The trait is scored for the plant response to the agent rice yellow mottle virus (RYMV). [CO:rs]";"integer";"no";"observation";"active";"Yellow mottle";"CO_320:0000357";"Crop Ontology";;"SCALE (for field test)\n1= No symptom observed\n3= Leaves green but with sparse dots or streaks and less than 5% of height reduction\n5= Leaves green or pale green with mottling and 6% to 25% of height reduction, flowering slightly delayed\n7= Leaves pale yellow or yellow and 26-75% of height reduction, flowering delayed\n9= Leaves turn yellow or orange, more than 75% of height reduction, no flowering or some plants dead.";;"categorical";;;1;9;"stress";"RYMV";;
-;"ZDef";"zinc deficiency";;;"no";"observation";;"Zinc deficiency";"CO_320:0000069";"Crop Ontology";;;;"categorical";;;;;"stress";"zinc sensitivity";;
-"ZDEF_GRNH_1_9";"ZDef";"zinc deficiency";;"integer";"no";"observation";;"Zinc deficiency";;"SES 4th Ed. 1996";"At growth stage: 2-4";"1= Growth and tillering nearly normal, healthy\n3= Growth and tillering nearly normal, basal leaves slightly discolored\n5= Growth and tillering severely retarded, about half of all leaves brown or yellow\n7= Growth and tillering ceases, most leaves brown or yellow\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;
-"ZDEF_FLD_1_9";"Zn1";"zinc deficiency";"Observation done in the field";"integer";"no";"observation";;"zinc deficiency";;;;"1= Growth and tillering nearly normal, healthy\n3= Growth and tillering nearly normal, basal leaves slightly discolored\n5= Growth and tillering severely retarded, about half of all leaves brown or yellow\n7= Growth and tillering ceases, most leaves brown or yellow\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;
-"YLD_ADJ";;"grain yield (adjusted)";"Grain yield (adjusted)";"float";"no";"observation";;"Grain yield (adjusted)";"CO_320:0000469";"Crop Ontology";"Area harvested should not be less than 5 m2/plot (at least three border rows should be discarded). Report yield in kilogram per hectare on rough (paddy) rice at 14% moisture. [SES:12]";"kg/ha";"kg/ha";"continuous";;;;;"agronomic";;;
-"AREA_HA";;"area (ha)";"Area in hectares";"float";"no";"observation";;"Area (ha)";;;;;"ha";"continuous";;;;;"plot metadata";;;
-"BRPRTN";;"brprtn?";;"float";"no";"observation";;"BRPRTN";;;;;;"continuous";;;;;"unknown";;;
-;"PnAk";"panicle axis";"Represents the angle of panicle axis whether straight or droopy. [CO:rs]";"integer";"no";"observation";"active";"Panicle Axis";"CO_320:0000423";;;"1 Straight\n2 Droopy. [SES:112]";;"categorical";;;1;2;"morphological";"panicle axis angle";;
+"ABBREV";"LABEL";"NAME";"DESCRIPTION";"DATA_TYPE";"NOT_NULL";"TYPE";"STATUS";"DISPLAY_NAME";"ONTOLOGY_REFERENCE";"BIBLIOGRAPHICAL_REFERENCE";"PROPERTY";"METHOD";"SCALE";"SCALE_UNIT";"SCALE_TYPE";"SCALE_LEVEL";"DEFAULT_VALUE";"MINIMUM_VALUE";"MAXIMUM_VALUE";"VARIABLE_SET";"SYNONYM";"ENTRY_MESSAGE";"CODED_VALUES";"NOTES"
+"AP_SCOR_1_9";;"abortion pattern";"Observations are made on staining behavior and number of nuclei in most of the pollens. [CO:rs]";"integer";"FALSE";"observation";"active";"Abortion Pattern";"CO_320:0000331";"Crop Ontology";;"Florets are collected and fixed in 3:1 Acetic alcohol. Pollen grains are squeezed out from some anthers in Acetocarmine stain and observation are made on their staining behavior and number of nuclei visible in most of the pollen grains.";"1= Pollen free TGMS line Norin PL12\n3= Abortion at uni-nucleate stage of pollen 'CMS-WA' type\n5= Abortion at binucleate stage of pollen 'CMS-HL' type\n7= Abortion at trinucleate stage of pollen 'CMS-boro' type\n9= Abortion at later stage and pollen looks like a fertile pollen 518A (O. nivara cytoplasm).";;"categorical";;;1;9;"hybrid";"abortion pattern of male sterile line;pollen abortion type";;;"added by consie"
+"Alk_GRNH_1_9";"Alk";"Alkali tolerance";"Observe general growth conditions in relation to standard resistance and susceptible checks. Since some soil problems are very heterogenous in the field, several replications may be needed to obtain precise reading.";"integer";"FALSE";"observation";;"Alkali injury";;"SES 4th Ed. 1996";;"At growth stage: 3-4";"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;"Leaf is counted as discolored or dead if more than half of its area if discolored or dead.";;"added by consie"
+"Alk1_FLD_1_9";"Alk1";"Alkali tolerance";"Observation done in the field";"integer";"FALSE";"observation";;"alkali injury";;"SES 4th Ed. 1996";;;"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;;"added by consie"
+;"ALKTOL";"Alkali tolerance";"Sensitivity to the zinc content in the growth environment. [CO:rs]";;"FALSE";"observation";;"Alkali tolerance";"CO_320:0000055";"Crop Ontology";;;;;;;;;;"stress";"Alk;alkali injury";;;"added by consie"
+"OTFERT_CONT";"OTFERT";"Amount Other Fertilizer ";"Fertilizer other than nitrogen, phosphorous and potassium applied";"integer";"FALSE";"metadata";"active";"Amount other fertilizer ";;"IRIS";;;"measured in Kg or in grams";;"continuous";;;;;"field management";;;;"added by weusebio"
+"AMY_PERC";;"amylose content";"Percent amylose of milled rice. [CO:rs]";"double precision";"FALSE";"observation";"active";"Amylose";"CO_320:0000102";"Crop Ontology";;"Use standard laboratory procedure to determine amylose content. Give amylose content in actual percentage. []";;;"continuous";"ratio";;;;"grain quality";"AMY;amylose content of grain;";;;"consie"
+"AL_CONT";;"anther length";"Anther length in mm. [CO:rs]";"float";"FALSE";"observation";"active";"Anther Length";"CO_320:0000150";"Crop Ontology";;"(Wild species). Record the average of five samples. Stage: at anthesis. [RD:7.4.3]";"Measured in mm. [RD:7.4.3]";;"continuous";;;;;"morphological";;;;"consie"
+"ApC_SCOR_1_7";"ApC";"apiculus color";"Color of the apiculus. [CO:rs]";"integer";"FALSE";"observation";"active";"Apiculus Color";"CO_320:0000037";"Crop Ontology";;;"1 White\n2 Straw\n3 Brown (tawny)\n4 Red\n5 Red apex\n6 Purple\n7 Purple apex. [SES:115]";;"categorical";;;1;7;"morphological";;;;"consie"
+;;"area (ha)";;;"FALSE";;;;;;;;;;;;;;;;;;;
+;;"aroma";"The aroma of the cooked/uncooked grains. [CO:rs]";;"FALSE";"observation";;"aroma";"CO_320:0000103";"Crop Ontology";;;;;;;;;;"grain quality";"scent;SCT";;;"added by consie"
+"AC_SCOR_0_5";"AC";"auricle color";"Color of the auricle. [CO:rs]";"integer";"FALSE";"observation";"active";"Auricle Color";"CO_320:0000029";"Crop Ontology";;"Stage: late vegetative. [RD:7.3.11]";"0 0 Absent (no auricles)\n1 011 Whitish\n2 062 Yellowish green\n3 080 Purple\n4 081 Light purple\n5 084 Purple lines. [RD:7.3.11]";;"categorical";;;0;5;"morphological";;;;"consie"
+"AC_SCOR_1_2";"AC";"auricle color";;"integer";"FALSE";"observation";;"Auricle Color";;"SES 4th Ed. 1996";;"At growth stage: 4-5";"Code\n\n1= Light green\n2= Purple";;"categorical";;;1;2;"morphological";;;;"added by consie"
+"AC_SCOR_0_2";"AC";"auricle color";;"integer";"FALSE";"observation";;"Auricle Color";;"SES 5th Ed. 2013";;"At growth stage: 4-5";"Code\n\n0= Absent (no auricles)\n1= Light green\n2= Purple";;"categorical";;;0;2;"morphological";;;;"added by consie"
+"AnC_SCOR_0_8";"AnC";"awn color";"Describes the awn color. [CO:rs]";"integer";"FALSE";"observation";"active";"Awn Color";"CO_320:0000036";"Crop Ontology";;"Stage: after anthesis. [RD:7.4.10]";"0 0 Absent (awnless)\n1 011 Whitish\n2 020 Straw\n3 040 Gold\n4 052 Brown (tawny)\n5 061 Light green\n6 070 Red\n7 080 Purple\n8 100 Black. [RD:7.4.10]";;"categorical";;;0;8;"morphological";;;;"consie"
+"AnC_SCOR_0_6";"AnC";"awn color";;"integer";"FALSE";"observation";;"Awn Color";;"SES 4th Ed. 1996";;"At growth stage: 6";"0= Awnless\n1= Straw\n2=Gold\n3= Brown (tawny)\n4= Red\n5= Purple\n6= Black";;"categorical";;;0;6;"morphological";;;;"added by consie"
+"AnL_CONT";;"awn length";"Length of own. Expressed in mm. [CO:rs]";"float";"FALSE";"observation";"active";"Awn Length";"CO_320:0000237";"Crop Ontology";;"Record the average length of 10 representative spikelets. Cultivated species: measure the longest awn. Stage: maturity Wild species: measure random awns. Stage: after anthesis. [RD:7.4.11]";"Measured in mm. [RD:7.4.11]";;"continuous";;;;;"morphological";;;;"consie"
+"AnL_SCOR_0_9";;"awn length";"Length of own. Expressed in mm. [CO:rs]";"integer";"FALSE";"observation";"active";"Awn Length";"CO_320:0000238";"Crop Ontology";;"Record the average length of 10 representative spikelets. Cultivated species: measure the longest awn. Stage: maturity Wild species: measure random awns. Stage: after anthesis. [RD:7.4.11]";"0 None (awnless)\n1 Very short (<5 mm)\n3 Short (~8 mm)\n5 Intermediate (~15 mm)\n7 Long (~30 mm)\n9 Very long (>40 mm). [RD:7.4.11]";;"categorical";;;0;9;"morphological";;;;"consie"
+"AnP_SCOR_0_2";;"awn presence";"The presence or absence of awn. Observation may include relative awn size. [CO:rs]";"integer";"FALSE";"observation";"active";"Awn Presence";"CO_320:0000156";"Crop Ontology";;"Stage: flowering to maturity. [RD:7.4.8]";"0 Absent\n1 Partly awned\n2 Fully awned. [RD:7.4.8]";;"categorical";;;0;2;"morphological";;;;"consie"
+"AnT_CONT";;"awn thickness";;"float";"FALSE";"observation";"active";"Awn Thickness";"CO_320:0000144";"Crop Ontology";;"(Wild species). Record the average width of 10 representative spikelets, at 1 cm from the apiculus of the spikelet. Stage: after anthesis. [RD:7.4.12]";"Measured in mm. [RD:7.4.12]";;"continuous";;;;;"morphological";;;;"consie"
+"BB_SCOR_1_9";"BB";"bacterial blight";"Causal agent: Xanthomonas oryzae pv. oryzae.\n\nSymptoms: Lesion usually start near the leaf tip or leaf margins or both, and extend down the outer edge(s). Young lesions are pale green to grayish green, later turning yellow to gray (dead) with time. In very susceptible varieties, lesions may extend to the entire leaf length into the leaf sheath. Kresek or seedling blight causes wilting and death of the plants.\n\nAt growth stage: 3-4 kresek (greenhouse evaluation of leaf blight), 5-8 (leaf blight). \n\n\bNote: In both seedling and field tests, folded young leaves should not be  inoculated. Old or leaves with symptom of nutrient deficiency or other diseases should also be avoided for inoculation.";"integer";"FALSE";"observation";"active";"Bacterial Blight";;"SES 4th Ed. 1996";;;"Scale (for greenhouse test, lesion area)\n\n1= 0-3%\n2= 4-6%\n3= 7-12%\n4= 13-25%\n5=26-50%\n6= 51-75%\n7= 76-87%\n8= 88-94%\n9= 95-100%\n\n\nScale (for field test, lesion area)\n\n1= 1-5%\n3= 6-12%\n5= 13-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;1;9;"stress";;;;"Added by consie"
+"BB1_SCOR_1_9";"BB1";"bacterial blight (race 1) ";"Bacterial Blight (Race 1)";"integer";"FALSE";"observation";"active";"Bacterial blight (race 1)";;;;"Race 1 Field Trial ";"SCALE (field test, severity: % leaf area diseased)\n1= 1-5%\n3= 6-12%\n5= 13-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;1;9;"stress";;;;"consie"
+"BB2_SCOR_1_9";"BB2";"bacterial blight (race 2)";"Bacterial Blight (Race 2)";"integer";"FALSE";"observation";"active";"Bacterial blight (race 2)";;;;"Race 2 Field Trial";"SCALE (field test, severity: % leaf area diseased)\n1= 1-5%\n3= 6-12%\n5= 13-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;1;9;"stress";;;;"consie"
+"BB1_S";"BB1_S";"bacterial blight 1 (segregating)";;"character varying";"FALSE";"observation";"active";"Bacterial blight 1 (segregating)";;;;"Race 1 Field Trial";"Segregating Score (S or blank)";;"categorical";;;;;"stress";;;;"consie"
+"BB2_S";"BB2_S";"bacterial blight 2 (segregating)";;"character varying";"FALSE";"observation";"active";"Bacterial blight 2 (segregating)";;;;"Race 2 Field Trial";"Segregating Score (S or blank)";;"categorical";;;;;"stress";;;;"consie"
+;;"bacterial leaf blight";"The trait is scored for the plant response to the agent Xanthomonas oryzae pv. oryzae causing bacterial leaf blight. [CO:rs]\n\nSymptoms: Lesions usually start near the leaf tips or leaf margins or both, and extend down the outer edge(s).";"integer";"FALSE";"observation";"active";"Bacterial Leaf Blight";"CO_320:0000173";"Crop Ontology";;;"SCALE (greenhouse test, severity: % leaf area diseased)\n1 No disease observed\n2 Less than 1%\n3 1-3%\n4 4-5%\n5 11-15%\n6 16-25%\n7 26-50%\n8 51-75%\n9 76-100%.\n\n\nSCALE (field test, severity: % leaf area diseased)\n1 1-5%\n3 6-12%\n5 13-25%\n7 26-50%\n9 51-100%. [SES:35]";;"categorical";"interval";;1;9;"stress";"Bacterial blight (BB);Bacterial Blight Kreak (BBK);Bacterial Blight Race 1 (BB1);Bacterial Blight Race 2 (BB2)";;"greenhouse test::1 No disease observed;2 Less than 1%;3 1-3%;4 4-5%;5;11-15%;6 16-25%;7 26-50%;8 51-75%;9 76-100%;;field test::1 1-5%;3 6-12%;5 13-25%;7 26-50%;9 51-100%";"consie"
+;;"bacterial leaf streak";"The trait is scored for the plant response to the agent Xanthomonas oryzae pv. oryzicola causing bacterial leaf streak. [CO:rs]";;"FALSE";"observation";"active";"Bacterial leaf streak";"CO_320:0000174";"Crop Ontology";;;;;;;;;;"stress";;;;"added by consie"
+;"BLS";"bacterial leaf streak";"Causal agent: Xanthomonas oryzae pv. oryzicola.\n\nSymptoms: Linear lesions with small bacterial exudates evident.\nAt growth stage: 3-6.\n\nNote: This scale mayl also be used for lead smut caused by Entyloma oryzae.";;"FALSE";"observation";"active";"Bacterial Leaf Streak";;"SES 4th Ed. 1996";;;;;;;;;;"stress";;;;"added by consie"
+"BLS_SCOR_0_9";"BLS";"bacterial leaf streak";"Causal agent: Xanthomonas oryzae pv. oryzicola.\n\nSymptoms: Linear lesions with small bacterial exudates evident.\nAt growth stage: 3-6.\n\nNote: This scale mayl also be used for lead smut caused by Entyloma oryzae.";"integer";"FALSE";"observation";"active";"Bacterial Leaf Streak";;"SES 5th Ed. 2013";;;"Scale (Affected leaf area)\n\n0= No lesions observed\n1= Small brown specks of pinpoint size or large brown specks without sporulating center\n3= Lesion type is the same as in scale 2, but a significant number of lesions are on the upper leaves\n5= Typical blast lesions infecting 4-10% of the leaf area\n7= Typical blast lesions infection 26-50% of the leaf area\n9= More than 75% leaf area affected";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"bakanae disease";"The trait is scored for the plant response to the agent Gibberella fujikuroi causing bakanae disease. [CO:rs]";;"FALSE";"observation";;"bakanae disease";"CO_320:0000195";"Crop Ontology";;"At growth stage: 3-6";;;;;;;;"stress";;"Causal agent: Gibberella fujikuroi. Symptoms: the plant elongates abnormally, has few tillers and usually dies before producing grains.";;"added by consie"
+"Basal_CONT";"Basal";"basal fertilizer";"Basal fertilizer used";"character varying";"FALSE";"metadata";;"basal fertilizer";;;;"Record the basal fertilizer used.";;;"continuous";;;;;"field management";;;;"added by consie"
+"Amt_Basal_CONT";"Amount_Basal";"basal fertilizer amount";"Amount of basal fertilizer used";"character varying";"FALSE";"metadata";;"basal fertilizer amount";;;;"Record the amount of basal fertilizer used";"Measured in grams";;"continuous";;;;;"field management";;;;"added by consie"
+"Date_Basal_CONT";"Date_Basal";"basal fertilizer application date";"Date for basal fertilizer application";"character varying";"FALSE";"metadata";;"basal fertilizer application date";;;;"Record the date of basal fertilizer application";;;"continuous";;;;;"field management";;;;"added by consie"
+"DBI_CONT_CO";"DBI";"basal internode diameter";"Actual measurements in millimeters from the outer diameter of the stems (culms) at the basal portion of the main stem (culm). [CO:rs]";"float";"FALSE";"observation";"active";"Basal Internode Diameter";"CO_320:0000032";"Crop Ontology";;;"Measure in mm. [SES:107]";;"continuous";;;;;"morphological";;;;"consie"
+"BLSC_CO_1_4";"BLSC";"basal leaf sheath color";"The changes in the color of basal leaf sheath. [CO:rs]";"integer";"FALSE";"observation";"active";"Basal Leaf Sheath Color";"CO_320:0000023";"crop Ontology";;"Colour of the outer surface of the leaf sheath. Stage: late vegetative. [RD:7.3.3]";"1 060 Green\n2 084 Green with purple lines\n3 081 Light purple\n4 080 Purple. [RD:7.3.3]";;"categorical";;;1;4;"morphological";;;;"consie"
+"BLSC_SES_1_4";"BLSC";"basal leaf sheath color ";;"integer";"FALSE";"observation";;"basal leaf sheath color";;"SES 4th Ed. 1996";;"At growth stage: 3-5 early to late vegetative stage";"1= Green\n2= Purple lines\n3= Light purple\n4= Purple";;"categorical";;;1;4;"morphological";;;;"added by consie"
+;;"bird damage";"The trait is scored for the plant damage caused by bird. [CO:rs]";;"FALSE";"observation";;"bird damage";"CO_320:0000213";"crop Ontology";;;;;;;;;;"stress";"rodent damage";;;"added by consie"
+"BD_SCOR_0_9";"BD";"bird damage";"Since there is no genetic resistance to birds, the damage can be quantified as it does not represent resistance.";"integer";"FALSE";"observation";;"bird damage";;"SES 4th Ed. 1996";;;"Scale (Damaged panicles)\n0= No damage observed\n1= Less than 5%\n5= 6-25%\n9= 26-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"BLAST";"blast";;"integer";"FALSE";;"active";"Blast";;;;"Field Trial";"SES Score Blast Nursery (0-9)";;;;;0;9;"stress";;;;
+"BMETH";"BMETH";"Breeding Method";"Breeding method used";;"FALSE";"metadata";"active";"Breeding method";;"IRIS";;;;;;;;;;"field management";;;;"added by weusebio"
+;"BPH";"brown planthopper";"The trait is scored for the plant damage caused by brown plant hopper (Nilparvata lugens). [CO:rs]";"integer";"FALSE";"observation";"active";"Brown Plathopper";"CO_320:0000371";"Crop Ontology";;"Local colony";"SCALE (For greenhouse test)\n0= No injury\n1= Very slight injury\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting or dead and remaining plants severely stunted or dying\n7= More than half of the plants\n9= All plants dead.\n\n\nSCALE (For field test)\n0= No injury\n1= Slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead."" [SES:60]";;"categorical";;;0;9;"stress";"BPH1;BPH2;BPH3";;;"consie"
+"BPH_GRNH_0_9";"BPH";"brown planthopper";"Causal agent: Nilaparvata lugens.\n\nSymptoms: Partial to pronounced yellowing and increasing severity of stunting. Extreme signs are wilting to death of plants. Infested areas in the field may be patchy.\nAt growth stage: 2 (greenhouse)\n3-9 (field).\n\nTest evaluation for resistance can be considered valid if hopper population is unformly distributed at a high level across the screening box or field.";"integer";"FALSE";"observation";"active";"Brown Planthopper";;"SES 4th Ed. 1996";;"Greenhouse Screening";"Scale (For greenhouse test)\n\n0= No damage\n1= Very slight damage\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting\n7= More than half of the plants wilting or dead and remaining plants severely stunted or dying\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"BPH_FLD_0_9";"BPH";"brown planthopper";"Causal agent: Nilaparvata lugens.\n\nSymptoms: Partial to pronounced yellowing and increasing severity of stunting. Extreme signs are wilting to death of plants. Infested areas in the field may be patchy.\nAt growth stage: 2 (greenhouse)\n3-9 (field).\n\nTest evaluation for resistance can be considered valid if hopper population is unformly distributed at a high level across the screening box or field.";"integer";"FALSE";"observation";"active";"Brown Planthopper";;"SES 4th Ed. 1996";;"Field screening";"Scale (For field test)\n\n0= No damage\n1= slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;"For field screening, a minimum of the following hopper density on susceptible check is necessary:\n\na) 10 hoppers/hill at 10-15 days after transplanting\nb) 25hoppers/hill at maximum tillering\nc) 100 hoppers/hill at early booting stage";;"added by consie"
+"BPH1_GRNH_0_9";"BPH1";"brown planthopper";"Brown Planthopper (Biotype1)";"integer";"FALSE";"observation";;"brown planthopper";;;;"Greenhouse Screening";"Scale (For greenhouse test)\n\n0= No damage\n1= Very slight damage\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting\n7= More than half of the plants wilting or dead and remaining plants severely stunted or dying\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"BPH1_FLD_0_9";"BPH1";"brown planthopper";"Brown Planthopper (Biotype1)";"integer";"FALSE";"observation";;"brown planthopper";;;;"Field screening";"Scale (For field test)\n\n0= No damage\n1= slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"BPH2_GRNH_0_9";"BPH2";"brown planthopper";"Brown Planthopper (Biotype2)";"integer";"FALSE";"observation";;"brown planthopper";;;;"Greenhouse Screening";"Scale (For greenhouse test)\n\n0= No damage\n1= Very slight damage\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting\n7= More than half of the plants wilting or dead and remaining plants severely stunted or dying\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"BPH2_FLD_0_9";"BPH2";"brown planthopper";"Brown Planthopper (Biotype2)";"integer";"FALSE";"observation";;"brown planthopper";;;;"Field screening";"Scale (For field test)\n\n0= No damage\n1= slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"BPH3_GRNH_0_9";"BPH3";"brown planthopper";"Brown Planthopper (Biotype3)";"integer";"FALSE";"observation";;"brown planthopper";;;;"Greenhouse Screening";"Scale (For greenhouse test)\n\n0= No damage\n1= Very slight damage\n3= First and 2nd leaves of most plants partially yellowing\n5= Pronounced yellowing and stunting or about 10 to 25% of the plants wilting\n7= More than half of the plants wilting or dead and remaining plants severely stunted or dying\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"BPH3_FLD_0_9";"BPH3";"brown planthopper";"Brown Planthopper (Biotype3)";"integer";"FALSE";"observation";;"brown planthopper";;;;"Field screening";"Scale (For field test)\n\n0= No damage\n1= slight yellowing of a few plants\n3= Leaves partially yellow but with no hopperburn\n5= Leaves with pronounced yellowing and some stunting or wilting and 10-25% of plants with hopperburn, remaining plants severely stunted\n7= More than half the plants wilting or with hopperburn, remaining plants severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"PRT_PERC";"PRT";"brown rice protein";;"float";"FALSE";"observation";;"Brown rice Protein";"CO_320:0000111";"Crop Ontology";;"At growth stage: 9 (after dehulling).";"Percent of total brown rice weight (at 14% moisture) to one decimal place. [CO:rs]";;"continuous";;;;;"grain quality";"protein content";;;"added by consie"
+"BS_SCOR_1_9";;"brown spot";"The trait is scored for the plant response to the agent Cochliobolus miyabeanus (Bipolaris oryzae, Drechslera oryzae) causing brown spot. [CO:rs]";"integer";"FALSE";"observation";"active";"Brown Spot";"CO_320:0000343";"Crop Ontology";;;"SCALE (Severity: % leaf area diseased)\n\n1= No disease observed\n2= Less than 1%\n3= 1-3%\n4= 4-5%\n5= 11-15%\n6= 16-25%\n7= 26-50%\n8= 51-75%\n9= 76-100%.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"BS_SCOR_0_9";"BS";"brown spot";"Causal agent: Cochliobolus miyabeanus (Bipolaris oryzae, Drechslera oryzae).\n\nSymptoms: Typical leaf spots are small, oval or circular and dark brown. Larger lesions usually have the same color on the edges but have a pale, usually grayish center. Most spots have a light yellow halo around the outer edge.\n\nAt growth stage: 2 and 5-9.\n\n\nNote: This scale may also be used for eyespot disease caused by Drechslera gigantea.";"integer";"FALSE";"observation";"active";"Brown Spot";;"SES 4th Ed. 1996";;;"Scale (Affected leaf area)\n\n0= No incidence\n1= Less than 1%\n2= 1-3%\n3= 4-5%\n4=6-10%\n5= 11-15%\n6= 16-25%\n7= 26-50%\n8= 51-75%\n9= 76-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"case worm damage";"The trait is scored for the plant damage caused by caseworm (Nymphula depunctalis). [CO:rs]";;"FALSE";"observation";;"case worm damage";"CO_320:0000197";"Crop Ontology";;;;;"categorical";;;;;"stress";;;;"added by consie"
+"CW_SCOR_0_8";"CW";"caseworm";"Causal agent: Nymphula depunctalis.\nSymptoms: Larvae feed on leaf tissue, leaving only the papery upper epidermis.";"integer";"FALSE";"observation";;"caseworm";;"SES 4th Ed. 1996";;"At growth stage: 2-7";"Scale (Scraping index)\n0= No scraping\n1= Less than 1%\n3= 1-10%\n5= 11-25%\n7= 26-50%\n8= 51-100%";;"categorical";;;0;8;"stress";;;;"added by consie"
+;;"chalkiness";;"float";"FALSE";"observation";;"chalkiness";;;;;"Cervitec";;"continuous";;;;;"grain quality";;;;"added by consie"
+"CLK_SCOR_0_9";;"chalkiness of endosperm";"Defines a representative milled sample for the degree (extent) of chalkiness that will best describe the sample with respect to (a) white belly, (b) white center, (c) white back. [CO:rs]";"integer";"FALSE";"observation";"active";"Chalkiness of Endosperm";"CO_320:0000104";"Crop Ontology";;;"SCALE (% of kernel area)\n0= None\n1= Small (less than 10%)\n5= Medium (11% to 20%)\n9= Large (more than 20%). [SES:124]";;"categorical";;;0;9;"grain quality";"CLK";;;"added by consie"
+"CLK_CERV";"CHALK";"chalkiness of endosperm";"Chalkiness of endosperm measured using Cervitec";"integer";"FALSE";;"active";"Chalkiness of Endosperm";;;;"Average of Median Percentage";"Cervitec";;;;;;;"grain quality";;;;"added by consie"
+;"Clk";"chalkiness of endosperm";"Note: Evaluate a representative milled sample for the degree (extent) of chalkiness that will best describe the sample with respect to (a) white belly, (b) white center, (c) white back.";"float";"FALSE";"observation";;"chalkiness";;"SES 4th Ed. 1996";;"At growth stage: 9";"Scale (% of kernel area)\n\n0= None\n1= Small (less than 10%)\n5= Medium (11% to 20%)\n9= Large (more than 20%)";;"categorical";;;0;9;"grain quality";;;;"added by consie"
+"CTOL_SCOR_1_9";"CTol";"cold tolerance";;"integer";"FALSE";"observation";;"Cold Tolerance";"CO_320:0000057";"Crop Ontology";;;"1= No damage to leaves, normal leaf color (strongly tolerant)\n3= Tip of leaves slightly dried, folded and light green (tolerant)\n5= Some seedlings moderately folded and wilted, 30-50% seedlings dried, pale green to yellowish leaves (Moderate tolerant)\n7= Seedlings severely rolled and dried; reddish-brown leaves (Sensitive)\n9= Most seedlings dead and dying. (Highly sensitive). [SES:75]";;"categorical";;;1;9;"stress";;;;"added by consie"
+"CTOL_VEGE_1_9";"CTol";"cold tolerance";;"integer";"FALSE";"observation";;"Cold Tolerance";"CO_320:0000057";"Crop Ontology";;;"SCALE (vegetative) Temp:17-18??C??1\n1-3= All leaves normal color (Tolerant)\n4-6= Pale green leaves (moderately tolerant)\n7-9= Yellowing of leaves and stunted growth (sensitive). [SES:75]";;"categorical";;;1;9;"stress";;;;"added by consie"
+"CTOL_BOOT_1_9";"CTol";"cold tolerance";;"integer";"FALSE";"observation";;"Cold Tolerance";"CO_320:0000057";"Crop Ontology";;;"SCALE (reproductive/booting)\nTemp:17-18??C??1\n1-3= Normal growth, spikelet fertility (>70%) (tolerant)\n4-6= Heading delay, spikelet fertility (11-69%) (moderately tolerant)\n7-9= Reduced plant height, delayed heading, high sterility (<10%) (sensitive). [SES:75]";;"categorical";;;1;9;"stress";;;;"added by consie"
+"CTOL_SEED_1_9";"CTol";"cold tolerance";"Observe differences in vigor along with subtle changes inlead color. The optimum time to make observations would be the seedling, tillering, flowering, and mature stages.";"integer";"FALSE";"observation";;"Cold Tolerance";;"SES 4th Ed. 1996";;;"Scale (for seedlings)\n\n1= Seedlings dark green\n3= Seedlings light yellow\n5= Seedlings yellow\n7= Seedlings brown\n9= Seedlings dead";;"categorical";;;1;9;"stress";;;;"added by consie"
+"CTOL_TILL_1_9";"CTol";"cold tolerance";"Observe differences in vigor along with subtle changes inlead color. The optimum time to make observations would be the seedling, tillering, flowering, and mature stages.";"integer";"FALSE";"observation";;"Cold Tolerance";;"SES 4th Ed. 1996";;;"Scale (from tillering to maturity)\n1= Plants have a normal color; rate of growth and flowering normal\n3= Plants slightly stunted, growth slightly retarded\n5= Plants moderately stunted, leaves yellowish and development delayed\n7= Plants severly stunted, leaves yellow and development delayed, and panicles exserted\n9= Plants severely stunted, with leaves brown, development much delayed and panicles not exserted";;"categorical";;;1;9;"stress";;;;"added by consie"
+"CTOL_SPIK_1_9";"CTol";"cold tolerance";"Observe differences in vigor along with subtle changes inlead color. The optimum time to make observations would be the seedling, tillering, flowering, and mature stages.";"integer";"FALSE";"observation";;"Cold Tolerance";;"SES 4th Ed. 1996";;;"Scale (Spikelet fertility)\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%";;"categorical";;;1;9;"stress";;;;"added by consie"
+"CC_SCOR_0_4";"CC";"collar color";"Color changes monitored in leaf collar. [CO:rs]";"integer";"FALSE";"observation";"active";"Collar Color";"CO_320:0000028";"Crop Ontology";;"Stage: late vegetative. [RD:7.3.12]";"0 0 Absent (collarless)\n1 060 Green\n2 061 Light green\n3 080 Purple\n4 084 Purple lines. [RD:7.3.12]";;"categorical";;;0;4;"morphological";"leaf collar color";;;"consie"
+"CC_SCOR_1_3";"CC";"collar color";;"integer";"FALSE";"observation";;"Collar Color";;"SES 4th Ed. 1996";;"At growth stage: 4-5";"Code\n\n1= Light green\n2= Green\n3= Purple";;"categorical";;;1;3;"morphological";;;;"added by consie"
+"CC_SCOR_0_3";"CC";"collar color";;"integer";"FALSE";"observation";;;;"SES 5th Ed. 2013";;"At growth stage: 4-5";"Code\n\n0= Absent (collarless)\n1= Light Green\n2= Green\n3= Purple";;"categorical";;;0;3;"morphological";;;;"added by consie"
+"COL";"COL";"Column in layout";"Specific column position of plot in the Latin Square randomized layout in the field";"integer";"FALSE";"metadata";;"Coulmn in layout";;;;;;;"continuous";;;;;"design factor";;;;"please add details, marko - added by weusebio"
+"ESTAB";"ESTAB";"Crop establishment method";"transplanting (manual), transplanting (machine), direct seeding";"character varying";"FALSE";"metadata";;"Crop establishment ";;;;;"transplanting (manual)\n transplanting (machine)\n direct seeding";;"categorical";;;;;"design factor";;;;"please add details, marko"
+"CmA_CO_1_9";"CmA";"culm angle";"The angle of the culm with respect to the ground surface in a grass plant. [CO:rs]";"integer";"FALSE";"observation";"active";"Culm Angle";"CO_320:0000031";"Crop Ontology";;"The estimated average angle of inclination of the base of the main culm from vertical.\nStage: after flowering. [RD:7.3.23]";"1 Erect (<15??)\n3 Semi-erect (intermediate) (~20??)\n5 Open (~40??)\n7 Spreading (>60-80??, culms not resting on the ground)\n9 Procumbent (culm or its lower part rests on ground surface). [RD:7.3.23]";;"categorical";;;1;9;"morphological";;;;"consie"
+"CmA_SES_1_9";"CmA";"culm angle";;"integer";"FALSE";"observation";;"Culm Angle";;"SES 4th Ed. 1996";;"At growth stage: 7-9";"1= Erect (<30ﾰ)\n3= Intermediate (?45ﾰ)\n5= Open (?60ﾰ)\n7= Spreading (>60ﾰ)\n9= Procumbent (The culm or its lower part rests on ground surface)";;"categorical";;;1;9;"morphological";;;;"added by consie"
+"CmD_SCOR_1_2";;"culm diameter";"Measurement of culm diameter. [CO:rs]";"integer";"FALSE";"observation";"active";"Culm Diameter";"CO_320:0000155";"Crop Ontology";;"Measured as the outer diameter of basal portion of the main culm.\nCultivated species: record average of three representative plants during flowering or at late reproductive stage. Wild species: record average of five plants at late reproductive stage. [RD:7.3.27]";"1 Thin (<5 mm)\n2 Thick (>=5 mm). [RD:7.3.27]";;"categorical";;;1;2;"morphological";"culm width,stem width";;;"consie"
+"CmIC_SCOR_0_2";"CmIC";"culm internode color";"Color of the outer surface of internodes on the culm/stem. [CO:rs]";"integer";"FALSE";"observation";"active";"Culm Internode Color";"CO_320:0000016";"Crop Ontology";;"The presence and distribution of purple colour from anthocyanin, observed on the outer surface of the internodes on the culm. Stage: near colouration maturity. [RD:7.3.30]";"0 0 Absent\n1 080 Purple\n2 084 Purple lines. [RD:7.3.30]";;"categorical";;;0;2;"morphological";"internode color";"At growth stage: 7-9";;"consie"
+"CmIC_SCOR_1_4";"CmlC";"culm internode color";"The outer surface of the internodes on the culm is recorded.";"integer";"FALSE";"observation";;;;"SES 4th editon 1996";;"At growth stage: 7-9";"1= Green\n2= Light gold\n3= Purple lines\n4= Purple";;"categorical";;;1;4;"morphological";;;;"added by consie"
+"CmL_SCOR_1_9";"CmL";"culm length";"Length of culm (stem) which is measured from soil surface to panicle base in centimeters. [CO:rs]";"integer";"FALSE";"observation";"active";"Culm Length";"CO_320:0000230";"Crop Ontology";;"Measure from soil surface to panicle base in centimeters. Sample size=5. At growth stage 7-9 [SES:104]";"1 Very short (<50 cm)\n2 Very short to short (51-70 cm)\n3 Short (71-90 cm)\n4 Short to intermediate (91-105 cm)\n5 Intermediate (106 -120 cm)\n6 Intermediate to long (121-140 cm)\n7 Long (141-155 cm)\n8 Long to very long (156-180 cm)\n9 Very long (>180 cm). [RD:7.3.25]";;"categorical";;;1;9;"morphological";"stem length";;;"weusebio"
+"CmL_CONT";"CmL";"culm length";"Length of culm (stem) which is measured from soil surface to panicle base in centimeters. [CO:rs]";"float";"FALSE";"observation";"active";"Culm Length";"CO_320:0000234";"SES 4th editon 1996";;"Measure from soil surface to panicle base in centimeters. Sample size=5. At growth stage 7-9 [SES:104]";"Measured in cm. [RD:7.3.25]";;"continuous";;;;;"morphological";"stem length";;;"weusebio"
+"CmN_CONT";"CmN";"culm number";;"float";"FALSE";"observation";;"culm number";;"SES 4th Ed. 1996";;"Enter actual count of the total number of tillers after full heading. Specify if per plant, hill or area.\nAt growth stage: 6-9";;;"continuous";;;;;"morphological";;;;"added by consie"
+"CS_SCOR_1_9";"CS";"culm strength";"This test gives some indication of culm stiffness and resilience. Stage: Heading - Mature grain. [SES:3]";"integer";"FALSE";"observation";"active";"Culm Strength";"CO_320:0000321";"Crop Ontology";;"Culm strength is first rated after heading by gently pushing the tillers (30 cm from the ground) back and forth a few times. Final observation at maturity is made to record standing position of plants.";"1= Strong (no bending)/n3= Moderately strong (most plants bending)\n5= Intermediate (most plants moderately bending)\n7= Weak (most plants nearly flat)\n9= Very weak (all plants flat). ";;"categorical";;;1;9;"agronomic";"CMST;Cs;stem strength";;;"added by consie"
+"FLW_CONT";"FLW";"days to flowering";"Number of days from the seed sowing or the seedling transplant date to the anthesis (flowering) stage. [CO:rs";"integer";"TRUE";"observation";"active";"Days to flowering";"CO_320:0000083";;;"Determine the date when 80% flowering was observed, or express as number of days from seeding. []";"Count of number of days to flower";;"continuous";"ratio";;0;;"agronomic";"days to flower;DTF";"Count number of days to flower";;"consie"
+"DESIGNATION";"DESIGNATION";"Designation";;"character varying";"TRUE";"identification";"active";"Designation";;;;;;;"discrete";;;;;"entry identifier";;;;"added by weusebio"
+"An_SCOR_0_9";;"Detection for awn presence (SES)";"Presence of awn structure in the rice grain (kernel). [CO:rs]";"integer";"FALSE";"observation";"active";"Detection For Awn Presence (Ses)";"CO_320:0000015";"Crop Ontology";;"Observe for the presence of awn structure in the rice grain (kernel). []";"0 Absent\n1 Short and partly awned\n5 Short and fully awned\n7 Long and partly awned\n9 Long and fully awned. [SES:113]";;"categorical";;;0;9;"morphological";;;;"consie"
+"DBI_CONT";"DBI";"diameter of basal internode";"Enter actual measurement in millimeters from the outer diameter of the culms at the basal portion of the main culm.";"float";"FALSE";"observation";;"Diameter of basal internode";;"SES 4th Ed. 1996";;"Sample size= 3\n\nAt growth stage: 7-9";;;"continuous";;;;;"morphological";;;;"added by consie"
+"DISEASE_PROTECT";"Disease_proctect";"Disease protection";"Extent of disease protection implemented during trial";"character varying";"FALSE";"metadata";"active";"disease protection";;"IRIS";;;;;"continuous";;;;;"field management";;;;"added by weusebio"
+"DIST_BET_ROWS";;"distance between rows";"the space between rows";"float";"FALSE";"metadata";;"distance between rows";;;;"Measure the space between rows";;;"continuous";;;;;"field management";;;;"added  by consie"
+;;"drought recovery";"Scores are taken after 10 days following soaking rain or watering- Indicate the degree of stress before recovery. [CO:rs]";"integer";"FALSE";"observation";;"Drought recovery";;"Crop Ontology";;;"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%. [SES:80]";;"categorical";;;1;9;"stress";"drought recovery (2nd stress drought);drought recovery (9-10 bars);DRR2S;DRR910 ";;;"added by consie"
+"DRT2_SCOR_1_9";"DRT2";"drought recovery";"Drought recovery. Rate of recovery after first stress.";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 2 (After 1st stress)";"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"DRT4_SCOR_1_9";"DRT4";"drought recovery";"Drought resistance. Resistance score at early vegetative stage (40 DAS)";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 4 (Early Vegatative)";"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"DRT6_SCOR_1_9";"DRT6";"drought recovery";"Drought resistance. Resistance score at reproductive stage";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 6 (Reproductive)";"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"DRT7_ROLL_0_9";"DRT7";"drought recovery";"Drought sensitivity. Tolerance score at 3-4 bars";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 7 (3-4 Bars)";"SCALE (leaf rolling at vegetative stage)\n0= Leaves healthy\n1= Leaves start to fold (shallow)\n3= Leaves folding (deep V-shape)\n5= Leaves fully cupped (U-shape)\n7= Leaf margins touching (0-shape)\n9= Leaves tightly rolled";;"categorical";;;0;9;"stress";;;;"added by consie"
+"DRT7_DRY_0_9";"DRT7";"drought recovery";"Drought sensitivity. Tolerance score at 3-4 bars";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 7 (3-4 Bars)";"SCALE (leaf drying at vegetative stage)\n0= No symptoms\n1= Slight tip drying\n3= Tip drying extended up to 1/4 length in most leaves\n5= One-fourth to 1/2 of all leaves dried\n7= More than 2/3 of all leaves fully dried\n9= All plants apparently dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"DRT7_SPIK_1_9";"DRT7";"drought recovery";"Drought sensitivity. Tolerance score at 3-4 bars";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 7 (3-4 Bars)";"SCALE (spikelet fertility)\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%.";;"categorical";;;0;9;"stress";;;;"added by consie"
+"DRT8_ROLL_0_9";"DRT8";"drought recovery";"Drought sensitivity. Tolerance score at 9-10 bars";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 8 (9-10 Bars)";"SCALE (leaf rolling at vegetative stage)\n0= Leaves healthy\n1= Leaves start to fold (shallow)\n3= Leaves folding (deep V-shape)\n5= Leaves fully cupped (U-shape)\n7= Leaf margins touching (0-shape)\n9= Leaves tightly rolled";;"categorical";;;0;9;"stress";;;;"added by consie"
+"DRT8_DRY_0_9";"DRT8";"drought recovery";"Drought sensitivity. Tolerance score at 9-10 bars";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 8 (9-10 Bars)";"SCALE (leaf drying at vegetative stage)\n0= No symptoms\n1= Slight tip drying\n3= Tip drying extended up to 1/4 length in most leaves\n5= One-fourth to 1/2 of all leaves dried\n7= More than 2/3 of all leaves fully dried\n9= All plants apparently dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"DRT8_SPIK_1_9";"DRT8";"drought recovery";"Drought sensitivity. Tolerance score at 9-10 bars";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 8 (9-10 Bars)";"SCALE (spikelet fertility)\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%.";;"categorical";;;0;9;"stress";;;;"added by consie"
+"DRT9_SCOR_1_9";"DRT9";"drought recovery";"Drought recovery. Rate of recovery after exposure to 9-10 bars";"integer";"FALSE";"observation";;"Drought recovery";;;;"Drought 9 (9-10 Bars)";"SCALE (plants recovered)\n1= 90-100%\n3= 70-89%\n5= 40-69%\n7= 20-39%\n9= 0-19%.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"DRS_ROLL_0_9";"DRS";"drought sensitivity";"Drought sensitivity is highly interactive with crop phenology, plant growth prior to stress, and timing, duration, and intensity of drought stress.";"integer";"FALSE";"observation";;"Drought sensitivity";"CO_320:0000060";"Crop Ontology";;;"SCALE (leaf rolling at vegetative stage)\n0= Leaves healthy\n1= Leaves start to fold (shallow)\n3= Leaves folding (deep V-shape)\n5= Leaves fully cupped (U-shape)\n7= Leaf margins touching (O-shape)\n9= Leaves tightly rolled [SES:80]";;"categorical";;;0;9;"stress";"drought tolerance;drought tolerance (3-4 bars);drought tolerance (9-10 Bars);DRT34;DRT910";;;"added by consie"
+"DRS_DRY_0_9";"DRS";"drought sensitivity";"Drought sensitivity is highly interactive with crop phenology, plant growth prior to stress, and timing, duration, and intensity of drought stress.";"integer";"FALSE";"observation";;"Drought sensitivity";"CO_320:0000060";"Crop Ontology";;;"SCALE (leaf drying at vegetative stage)\n0= No symptoms\n1= Slight tip drying\n3= Tip drying extended up to 1/4 length in most leaves\n5= One-fourth to 1/2 of all leaves dried\n7= More than 2/3 of all leaves fully dried\n9= All plants apparently dead [SES:80]";;"categorical";;;0;9;"stress";"drought tolerance;drought tolerance (3-4 bars);drought tolerance (9-10 Bars);DRT34;DRT910";;;"added by consie"
+"DRS_SPIK_1_9";"DRS";"drought sensitivity";"Drought sensitivity is highly interactive with crop phenology, plant growth prior to stress, and timing, duration, and intensity of drought stress.";"integer";"FALSE";"observation";;"Drought sensitivity";"CO_320:0000060";"Crop Ontology";;;"SCALE (spikelet fertility)\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%. [SES:80]";;"categorical";;;0;9;"stress";"drought tolerance;drought tolerance (3-4 bars);drought tolerance (9-10 Bars);DRT34;DRT910";;;"added by consie"
+;"DRS";"drought sensitivity";"Note: Drought sensitivity is highly interactive wity crop phenology, plant growth prior to stress, and timing, duration and intensity of drought stress.\n\nFor many soils, it takes at least 2 rainless weeks to causew marked differences in drought sensitivity during the vegetative stage and at least 7 rainless days during the reproductive stage to cause severe drought injury.\n\nLeaf rolling precedes leaf drying during drought. Repeated ratings are recommended through progress of the drought. Record the stae of plant growth when the stress occurred and the number of stress days.";"integer";"FALSE";"observation";;"drought sensitivity";;"SES 4th Ed. 1996";;;"Scale (leaf rolling at vegetative stage)\n\n0= Leaves healthy\n1= Leaves start to fold (shallow V-shape)\n3= Leaves folding (deep V-shape)\n5= Leaves fully cupped (U-shape)\n7= Leaf margins touching (O-shape)\n9= Leaves tightly rolled\n\n\nScale (leaf drying at vegetative scale)\n\n0= No symptoms\n1= Slight tip drying\n3= Tip drying extended up to 1/4 length in most leaves\n5= One-fourth to 1/2 of all leaves fully dried\n7= More than 2/3 of all leaves fully dried\n9= All plants apparently dead\n\n\nScale (spikelet fertility)\n\n1= More than 80%\n3= 61-80%\n5= 41-60%\n7= 11-40%\n9= Less than 11%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"Elon";"elongation";"Elongation ability";"integer";"FALSE";"observation";;"Elongation";"CO_320:0000061";"Crop Ontology";;;"Scale Description : Biological check\n\n1= Best elongation response : Best local floating variety (i.e. Leb Mue Nahng 111)\n3= Response better than that of elongating semidwarf, but not as good as that of the best local floating variety\n5= Response similar to that of Elongating semidwarf : Elongating semidwarf (i.e. lR11141-6-1-4)\n7= Response better than that of the nonelongating semidwarf, but not as good as that of elongating semidwarf\n9= Poorest elongation, or none : Non-elongating semidwarf (i.e. IR42). [SES:85]";;"categorical";;;1;9;"stress";"stem elongation";;;"added by consie"
+"ELON_GRNH_1_9";"Elon";"elongation";"Some rices can elongate and grow in areas annually flooded to varying depths. The scale is based on the performance of check varieties.";"integer";"FALSE";"observation";;"Elongation";;"SES 4th Ed. 1996";;"Specify water depth under which the data was recorded. At growth stage: 5-6";"Scale Description : Biological check\n\n1= Best elongation response : Best local floating variety (i.e. Leb Mue Nahng 111)\n3= Response better than that of elongating semidwarf, but not as good as that of the best local floating variety\n5= Response similar to that of Elongating semidwarf : Elongating semidwarf (i.e. lR11141-6-1-4)\n7= Response better than that of the nonelongating semidwarf, but not as good as that of elongating semidwarf\n9= Poorest elongation, or none : Non-elongating semidwarf (i.e. IR42).";;"categorical";;;1;9;"stress";;;;"added by consie"
+"ELON1_FLD_1_9";"Elon1";"elongation";"Elongation ability (Field)";"integer";"FALSE";"observation";;"Elongation";;"SES 4th Ed. 1996";;;"Scale Description : Biological check\n\n1= Best elongation response : Best local floating variety (i.e. Leb Mue Nahng 111)\n3= Response better than that of elongating semidwarf, but not as good as that of the best local floating variety\n5= Response similar to that of Elongating semidwarf : Elongating semidwarf (i.e. lR11141-6-1-4)\n7= Response better than that of the nonelongating semidwarf, but not as good as that of elongating semidwarf\n9= Poorest elongation, or none : Non-elongating semidwarf (i.e. IR42).";;"categorical";;;1;9;"stress";;;;"added by consie"
+"ENTRY_COUNT_CONT";"ENTRY_COUNT";"entry count";"Number of entries";"integer";"FALSE";"metadata";;"Entry count";;;;"Record the number fo entries.";;;"continuous";;;;;"study metadata";;;;"added by consie"
+"ENTNO";"ENTNO";"Entry number";"Entry number unique within a study";"integer";"FALSE";"identification";"active";"Entry Number";;;;;;;"continuous";;;;;"entry system identifier";;;;"added by weusebio"
+"DESIGN";"DESIGN";"Experimental design";"experimental design used of a study";"character varying";"FALSE";"metadata";;"Experimental design";;;;;;;"continuous";;;;;"design factor";;;;"please add details, marko - added by weusebio"
+"FSm_SCOR_0_9";;"False smut";"The trait is scored for the plant response to the agent Ustilaginoidea virens causing false smut. [CO:rs]";"integer";"FALSE";"observation";;"False smut";"CO_320:0000178";"Crop Ontology";;;"SCALE (Incidence: percentage of infected florets)\n0= No disease observed\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%. [SES:40]";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"FSm";"False smut";"Causal agent: Ustilaginoidea virens.\nSymptoms: Infected grains are transformed into yellow-greenish or greenish-black velvety-looking spore balls.";"integer";"FALSE";"observation";;"False smut";;"SES 4th Ed. 1996";;;"Scale (Infected florets)\n\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5=6-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"fertility restoration";;"integer";"FALSE";"observation";"active";"fertility restoration";"CO_320:0000339";"Crop Ontology";;;"Scale Pollen Sterility (%) - Spikelet Fertility (%):\n1= 90 and above - 90 and above\n2= 80-89 - 90 and above\n3= 90 and above - 75-89\n4= 80-89 - 75-89\n5= 70-79 - 75-89\n6= 70-79 - 60-74\n7= 60-69 - 60-74\n9= <60 - <60.";;"categorical";;;1;9;"hybrid";;;;"added by consie"
+"FREST_SCOR_1_9";;"fertility restoration";"This trait is monitored at growth stage 6 for pollen fertility and growth stage 8-9 for spikelet fertility.";"integer";"FALSE";"observation";"active";"fertility restoration";;"SES 4th Ed. 1996";;"Pollen fertility is measured using 1% IKI solution and following the technique described for evaluating male sterile lines. However, in this case, emphasis is on extent of fertile pollen percentage. Spikelet fertility is monitored by counting the number of filled grains and total spikelets per panicle and converted into percentage.";"Scale Pollen Sterility (%) - Spikelet Fertility (%):\n1= 90 and above - 90 and above\n2= 80-89 - 90 and above\n3= 90 and above - 75-89\n4= 80-89 - 75-89\n5= 70-79 - 75-89\n6= 70-79 - 60-74\n7= 60-69 - 60-74\n9= <60 - <60.";;"categorical";;;1;9;"hybrid";;;;"added by consie"
+"FLD_LOC";;"field location";"Name of the field location";"character varying";"FALSE";"metadata";;"Field location";;;;;;;;;;;;"plot metadata";;;;"added by consie"
+"FLA_SCOR_1_7";"FLA";"flag leaf angle";"It is measured near the collar as the angle of attachment between the flag leaf blade and the main panicle axis. [CO:rs]";"integer";"FALSE";;"active";"Flag Leaf Angle";"CO_320:0000275";"Crop Ontology";;"Measured near the collar. Angle of attachment between the flag leaf blade and the main panicle axis. Record the average of five samples.\nCultivated species: score at anthesis.\nWild species: score 7 days after anthesis. [RD:7.3.22]";"1 Erect\n3 Semi-erect (intermediate)\n5 Horizontal\n7 Descending. [RD:7.3.22]";;"categorical";;;1;7;"morphological";;;;"consie"
+;"FLA";"flag leaf angle";"It is measured near the collar as the angle of attachment between the flag leaf blade and the main panicle axis. [CO:rs]";"integer";"FALSE";;"active";"Flag Leaf Angle";"CO_320:0000454";"Crop Ontology";;"1 = Erect\n3 = Intermediate\n5 = Horizontal\n7 = Descending. []";"1 = Erect\n3 = Intermediate\n5 = Horizontal\n7 = Descending. []";;"categorical";;;1;7;"morphological";;;;"consie"
+"FgLL_CONT";;"flag leaf length";"Length of flag leaf. [CO:rs]";"float";"FALSE";;"active";"Flag Leaf Length";"CO_320:0000271";"Crop Ontology";;"Measure length of the flag leaf, from the ligule to the tip of the blade, on five\nrepresentative plants. Calculate average to nearest cm. Stage: 7 days after\nanthesis. [RD:7.3.20]";"Measured in cm. [RD:7.3.20]";;"continuous";;;;;"morphological";;;;"consie"
+"FgLW_CONT";;"flag leaf width";"Width of flag leaf. [CO:rs]";"float";"FALSE";;"active";"Flag Leaf Width";"CO_320:0000137";"Crop Ontology";;"Measure width at the widest portion of the flag leaf on five representative plants. Calculate average to nearest cm. Stage: 7 days after anthesis. [RD:7.3.21]";"Measured in cm. [RD:7.3.21]";;"continuous";;;;;"morphological";;;;"consie"
+"GM_FLD_0_9";"GM";"gall midge";"Causal agent: Orseolia oryzae.";"integer";"FALSE";"observation";;"gall midge";;"SES 4th Ed. 1996";;"For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check. Similarly, 60% of the plants in susceptible check shoul show silver shoots under greenhouse tests.\n\nIf any of the test entry in field evaluation exhibits damage less than 10% on plants basis, rate it in ""0"" category, since such damage could be due to other reasons.\n\nAt growth stage: 2-5";"SCALE (Infected tillers in field test)\n0= No damage\n1= Less than 1%\n3= 1-5%\n5= 6-10%\n7= 11-25%\n9= More than 25%";;"categorical";;;0;9;"stress";;;;"added by consie"
+"GM_GRNH_0_9";"GM";"gall midge";"Causal agent: Orseolia oryzae.";"integer";"FALSE";"observation";;"gall midge";;"SES 4th Ed. 1996";;"For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check. Similarly, 60% of the plants in susceptible check shoul show silver shoots under greenhouse tests.\n\nIf any of the test entry in field evaluation exhibits damage less than 10% on plants basis, rate it in ""0"" category, since such damage could be due to other reasons.\n\nAt growth stage: 2-5";"SCALE (Plants with silver shoots in greenhouse test)\n0= No injury\n1= Less than 5%\n3= 6-10%\n5= 11-20%\n7= 21-50%\n9= More than 50%.";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"gall midge damage";"The trait is scored for the plant damage caused by gall midge (Orseolia oryzae). [CO:rs]";"integer";"FALSE";"observation";;"gall midge";"CO_320:0000199";"Crop Ontology";;"At growth stage: 2-5.\nNote: For the field test to be valid more than 60% of the plants should be affected with not less than 15% silver shoot in the susceptible check.";"SCALE (Infected tillers in field test)\n0 No injury\n1 Less than 1%\n3 1-5%\n5 6-10%\n7 11-25%\n9 More than 25%\n\n\n\nSCALE (Plants with silver shoots in greenhouse test)\n0 No injury\n1 Less than 5%\n3 6-10%\n5 11-20%\n7 21-50%\n9 More than 50%. [SES:65]";;"categorical";;;0;9;"stress";;;;"added by consie"
+"GELC_SCOR_1_5";"GELC";"gel consistency";"Scoring of carbohydrate composition in grain by gel consistency type in mm. It measures the tendency of cooked rice to harden when it cools down. [CO:rs]";"character varying";"FALSE";"observation";"active";"GelCon";"CO_320:0000244";"Crop Ontology";;"Ground rice (0.1 g) is placed in a test tube with thymol blue (0.025% in ethanol, 0.2 ml) and KOH (0.2N, 2 ml). The tube is shaken to ensure contents are mixed, boiled (8 min), rested (5 min) and then placed in an ice-bath (15 min). Cooled tubes are laid flat on graph paper for 1 hour, and then the distance that the gel travels is measured. [RD:8.1.6]";"Scale Gel length Gel consistency type\n1 81-100 mm Soft\n2 61-80 mm Soft\n3 41-60 mm Intermediate\n4 36-40 mm Hard\n5 <36 mm Hard. [RD:8.1.6]";;"categorical";"interval";;"9:Less than 35 Hard";"1:80-100 Soft";"agronomic";;;"1 80-100 Soft;3 61-80 Soft;5 41-60 Medium;7 36-40 Hard;9 Less than 35 Hard";"consie"
+"GELC_SCOR_1_9";"GELC";"gel consistency";"Scoring of carbohydrate composition in grain by gel consistency type in mm. It measures the tendency of cooked rice to harden when it cools down. [CO:rs]";"character varying";"FALSE";"observation";"active";"GelCon";"CO_320:0000455";"Crop Ontology";;"Use standard laboratory procedures to determine the gel consistency. [SES:132]";"Scale (mm) : Gel Consistency type\n1 = 80-100 mm : Soft\n3 = 61-80 mm : Soft\n5 = 41-60 mm : Medium\n7 = 36-40 mm : Hard\n9 = Less than 35 mm : Hard. [SES:132]";;"categorical";"interval";;"9:Less than 35 Hard";"1:80-100 Soft";"grain quality";;;"1 80-100 Soft;3 61-80 Soft;5 41-60 Medium;7 36-40 Hard;9 Less than 35 Hard";"consie"
+"GELC_CAT";"GELC";"gel consistency";"Scoring of carbohydrate composition in grain by gel consistency type in mm. ";"character varying";"FALSE";"observation";;"GelCon";;"Crop Ontology";;;;;"categorical";;;;;"grain quality";;;"1 80-100 Soft;3 61-80 Soft;5 41-60 Medium;7 36-40 Hard;9 Less than 35 Hard";"consie"
+"GELC_CONT";"GELC";"gel consistency";"Scoring of carbohydrate composition in grain by gel consistency type in mm.";"float";"FALSE";"observation";;"GelCon";;;;"Use actual value in mm.";"Measure in mm.";;"continuous";;;;;"grain quality";;;;"consie"
+"GELT_SCOR_1_7";"GELT";"gelatinization temperature";"Temperature for the gelatinization process. [CO:rs]";"character varying";"FALSE";"observation";"active";"GelTemp";"CO_320:0000107";"Crop Ontology";;"Place six milled-rice kernels in 10 ml 1.7% KOH in a shallow container and arrange them so that they do not touch. Let it stand for 23 hours at 30 C and score for spreading. []";"1 = High\n2 = High\n3 = High or intermediate\n4 = Intermediate\n5 = Intermediate\n6 = Low\n7 = Low. []";;"categorical";"ordinal";;"7:Low";"1:High";"grain quality";;"Place six milled-rice kernels in 10 ml 1.7% KOH in a shallow container and arrange them so that they do not touch. Let it stand for 23 hours at 30 C and score for spreading.";"1:High;2:High;3:High or intermediate;4:Intermediate;5:Intermediate;6:Low;7:Low";"consie"
+"GELT_CONT";"GELT";"gelatinization temperature";;"character varying";"FALSE";"observation";;"GelTemp";;;;"Six milled rice grains (kernels) are incubated for 23h in 10ml of 1.7% KOH. Individual kernels are scored based on the spreading. Scores of 6 kernels are NOT averaged. Combination of scores (example, 3 kernels with score of ""2"" and 3 kernels with score of ""3"") gives a final GT of H/HI (high/high-intermediate) and so on.";"Gelatinization Temperature     Score    Spreading\n\nHigh (H)    1    Kernel not affected\nHigh (H)    2    Kernel swollen\nHigh-intermediate (HI)    3    Kernel swollen; collar complete or narrow\nIntermediate (I)    4    Kernel swollen; collar complete and wide\nIntermediate (I)    5    kernel split or segregated; collar complete and wide\nLow (L)    6    Kernel dispersed; merging with collar\nLow (L)    7   Kernel completely dispersed and intermingle";;"continuous";;;"7: Low";"1: High";"grain quality";;;;"added by consie"
+"GID";"GID";"Germplasm ID";"IRIS Germplasm identification number";"integer";"TRUE";"identification";"active";"IRIS GID";;;;;;;"continuous";;;1;999999999;"product metadata";;;;"added by weusebio"
+"GlO_CONT";;"glume opening";"Angle of opening of glumes is measured on each floret, assessment based on mean angle of glume opening. [CO:rs]";"float";"FALSE";"observation";"active";"glume opening";"CO_320:0000094";"Crop Ontology";;;;;"continuous";;;;;"agronomic";"glume opening;opening of glume of male sterile lines";;;"added by consie"
+"GlO_SCOR_1_9";;"glume opening";"This trait is monitored at growth stage 6 during the time (9:00AM - 12:00Noon) when rice florets are blooming.";"integer";"FALSE";"observation";"active";"glume opening";;"SES 4th Ed. 1996";;"Between 5-10 blooming florets of a male sterile line are collected from different plants and angle of opening of glumes (viz., lemma and palea) is measured on each floret. Following scale is used to classify male sterile lines on the basis of mean angle of glume opening.";"1= 50 above\n3= 40-49\n5= 30-39\n7= 20-29\n9= Below 20";;"categorical";;;1;9;"agronomic";;;;"added by consie"
+;"Gd";"Grain discoloration";"Causal agent: Species of Sarocladium, Bipolaris, Alternaria, Gerlachia, Fusarium, Phoma, Curcularia, Trichoconiella, and Pseudomonas, etc.\n\nSymptoms: Darkening of glumes of spikelets, brown color to black including rotten glumes caused by one or more pathogens. Intensity ranges from sporadic discoloration to discoloration of the whole glume.";"integer";"FALSE";"observation";;"Grain discoloration";;"SES 4th Ed. 1996";;"Severity of grain discoloration can be estiamted by counting grains with more than 25% of glume surface affected.\nAt growth stage: 8-9";"Scale (Grains with severely discolored glumes)\n\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+"ELON_GRAIN_CONT";;"grain elongation in deepwater";"Elongation or growing of rice in areas annually flooded to varying depths. The scale is based on the performance of check varieties. [CO:rs]";"float";"FALSE";"observation";;"grain elongation in deepwater";"CO_320:0000105";"Crop Ontology";;"Specify water depth under which the data was recorded. At growth stage: 5-6.";;;;;;;;"grain quality";"elongation (grain)";;;"added by consie"
+"GRL_CONT";"GRL";"grain length";;"float";"FALSE";"observation";"active";"Grain Length";"CO_320:0000459";"Crop Ontology";;"Enter the mean length in millimeters as the distance from the base of the lowermost sterile lemma to the tip (apiculus) of the fertile lemma or palea. In the case of awned varieties, the grain is measured to a point comparable to the tip of the apiculus. [SES:121]\n\nAt Growth Stage 9 (Mature Grain)";"Measured in mm.";;"continuous";;;;;"grain quality";"seed length";;;"consie (edited by WE)"
+"GRL_CONT_1_7";"GRL";"grain length";;"integer";"FALSE";"observation";"active";"Grain Length";;"SES 4th Ed. 1996";;"Enter the mean length in millimeters as the distance from the base of the lowermost sterile lemma to the tip (apiculus) of the fertile lemma or palea. In the case of awned varieties, the grain is measure to a point comparable to the tip of the apciculus.  \n\nAt Growth Stage 9 (Mature Grain)";"1= Extra long (more than 7.5 mm)\n3= Long (6.6 to 7.5 mm)\n5= Medium (5.51-6.6 mm)\n7= Short (5.5mm or less)";;"continuous";;;1;7;"grain quality";;"Following the scale for Brown rice length.";;"consie (edited by WE)"
+"GRS_CONT";"GRS";"grain shape";"An assay to determine the variation in the shape of the dehulled grain. [CO:rs]";;"FALSE";"observation";"active";"Grain Shape";"CO_320:0000464";"Crop Ontology";;"Grain Length and Width Ratio. []";;;"continuous";;;;;"morphological";;;;"consie"
+"GRS_CONT_1_9";"GRS";"grain shape";;"integer";"FALSE";"observation";"active";"Grain Shape";;"SES 4th Ed. 1996";;"Grain Length and Width Ratio. Following the Brown rice shape scale. At Growth Stage 9 (after harvesting, cleaning and dehulling)";"1= Slender (Over 3.0)\n3= Medium (2.1 to 3.0)\n5= Bold (1.1 to 2.0)\n9= Round (Less than 1.1)";;"continuous";;;1;9;"grain quality";;"Kernel shape can be easily estimated by this method (avoid broken samples).";;"consie"
+;;"grain size";"Seed size is determined by its length to width ratio. [CO:rs]";"float";"FALSE";;"active";"Grain Size";"CO_320:0000466";;;"Measurement of grain size from the mature grain, still with lemma and palea. []";;;"continuous";;;;;"morphological";;;;
+;;"grain thickness";"Thickness of the seed or fruit caryopsis with the hull. [CO:rs]";"float";"FALSE";;"active";"Grain Thickness";"CO_320:0000309";;;"(Wild species). Preferably, measure with a calliper or photo-enlarger. Average of 10 representative grains. Stage: after harvest. [RD:7.5.17]";"Measured in mm. [RD:7.5.17]";;"continuous";;;3;7;;;;;
+"GRW_CONT";"GrW";"grain width";"Width of the dehulled grain with pericarp. [CO:rs]";"float";"FALSE";"observation";"active";"Grain Width";"CO_320:0000306";"Crop Ontology";;"Measured as the distance across the fertile lemma and palea at the widest point. Preferably, measure with calliper or photo-enlarger. Average of 10 representative grains. [RD:7.5.16]";"Measured in mm. [RD:7.5.16]";;"continuous";;;;;"morphological";"seed width";;;"weusebio"
+;"GRW";"grain width";"Width of the dehulled grain with pericarp. [CO:rs]";"float";"FALSE";"observation";"active";"Grain Width";"CO_320:0000467";"Crop Ontology";;"At Growth Stage 9 (Mature Grain)";"Measure in mm. [SES:122]";;"continuous";;;;;"morphological";"seed width";;;"consie"
+;;"grassy stunt virus";"The trait is scored for the plant response to the agent rice grassy stunt virus (RGSV). There are two known RGSV strains, rice grassy stunt virus 1 ( RGSV1) and rice grassy stunt virus 2 (RGSV2). [CO:rs]";"integer";"FALSE";"observation";"active";"Grassy stunt virus";"CO_320:0000353";"Crop Ontology";;;"SCALE (RGSV1)\n1= No symptom observed\n3= Pale green and slightly narrow leaves, no height reduction and with few small tillers.\n5= Pale green and slightly narrow leaves, 1-10% height reduction, and with numerous small tillers.\n7= Pale green to yellow and narrow leaves with some rusty spots, 11-30% height reduction, and with numerous small tillers.\n9= Pale green to yellow and narrow leaves with numerous rusty spots, more than 30% height reduction and with numerous small tillers.\n\n\nSCALE (RGSV2)\nNo symptom observed\n3= Pale yellow and slightly narrow leaves, no height reduction, and with numerous small tillers\n5= Distinct yellow and narrow leaves, 1-10% height reduction, and with numerous small tillers\n7= Yellow to orange and narrow leaves with some rusty spots, 11-30% height reduction, and with few small tillers\n9= Yellow to orange and narrow leaves with numerous rusty spots, >30% height reduction and with few small tillers.";;"categorical";;;1;9;"stress";"RSGV;RSGV1;RSGV2";;;"added by consie"
+"RGSV1_SCOR_1_9";"RGSV1";"grassy stunt virus";"Causal agent: Rice grassy stunt virus 1 (RGSV1) and rice grassy stunt virus 2 (RGSV2).\nSymptoms: RGSV1: Severe stunting, excessive tillering, pale green to yellow and narrow leaves with small rusty spots. RGSV2: Severe stunting, excessive tillering, yellow to orange and narrow leaves with and small rusty spots.\n\nAt growth stages: 2-3 (for the greenhouse)\n4-6 (for the field)";"integer";"FALSE";"observation";"active";"Grassy stunt virus 1";;"SES 4th Ed. 1996";;"Score and calculate DI at 5 weeks after inoculation in the greenhouse.";"Scale (RGSV1)\n1= No symptom observed\n3= Pale green and slightly narrow leaves, no height reduction and with few small tillers.\n5= Pale green and slightly narrow leaves, 1-10% height reduction, and with numerous small tillers.\n7= Pale green to yellow and narrow leaves with some rusty spots, 11-30% height reduction, and with numerous small tillers.\n9= Pale green to yellow and narrow leaves with numerous rusty spots, more than 30% height reduction and with numerous small tillers.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"RGSV2_SCOR_1_9";"RGSV2";"grassy stunt virus";"Causal agent: Rice grassy stunt virus 1 (RGSV1) and rice grassy stunt virus 2 (RGSV2).\nSymptoms: RGSV1: Severe stunting, excessive tillering, pale green to yellow and narrow leaves with small rusty spots. RGSV2: Severe stunting, excessive tillering, yellow to orange and narrow leaves with and small rusty spots.\n\nAt growth stages: 2-3 (for the greenhouse)\n4-6 (for the field)";"integer";"FALSE";"observation";"active";"Grassy stunt virus 2";;"SES 4th Ed. 1996";;"Score and calculate DI at 5 weeks after inoculation in the greenhouse.";"SCALE (RGSV2)\n1= No symptom observed\n3= Pale yellow and slightly narrow leaves, no height reduction, and with numerous small tillers\n5= Distinct yellow and narrow leaves, 1-10% height reduction, and with numerous small tillers\n7= Yellow to orange and narrow leaves with some rusty spots, 11-30% height reduction, and with few small tillers\n9= Yellow to orange and narrow leaves with numerous rusty spots, >30% height reduction and with few small tillers.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"GLH_SCOR_0_9";"GLH";"green leafhopper";"The trait is scored for the plant damage caused by green leafhopper (Nephotettix virescens and Nephotettix cincticeps). [CO:rs]";"integer";"FALSE";"observation";"active";"Green leafhopper";"CO_320:0000200";"Crop Ontology";;"Greenhouse evaluation";"0= No injury\n1= Very slight injury\n3= First and 2nd leaves yellowing\n5= All leaves yellow; pronounced stunting or both\n7= More than half the plants dead;stunting or both remaining plants wilting; severely stunted\n9= All plants dead. [SES:61]";;"categorical";;;0;9;"stress";;;;"consie"
+;"GLH";"green leafhopper";"Causal agent: Nephotettix spp.\nSymptoms: Partial to pronounced yellowing and increasing severity of stunting. Extreme signs are wilting to death of plants. Infested areas in the field may be patchy.\n\nAt growth stage: 2 (greenhouse)\n3-9 (field)";"integer";"FALSE";"observation";"active";"Green leafhopper";;"SES 4th Ed. 1996";;;"0= No damage\n1= Very slight damage\n3= First and 2nd leaves yellowing\n5= All leaves yellow; pronounced stunting or both\n7= More than half the plants, dead; remaining plants wilting; severely stunted\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+"HVDATE_CONT";"HVDATE";"harvest date";"Date of harvest";"character varying";"FALSE";"metadata";;"harvest date";;"IRIS";;"Record the harvest date";;;"continuous";;;;;;;;;"added by consie"
+"HVHILL_CONT";;"harvested hill";"Number of hills harvested";"float";"FALSE";"observation";;"harvested hill";;"IRIS";;"Count the number of hills harvested";;;"continuous";;;;;;;;;"added by consie"
+"HTol_SCOR_1_9";"HTol";"heat tolerance";"tolerance to warm temperatures if plant is exposed to above than permissive temperature limits. [CO:rs]";"integer";"FALSE";"observation";;"heat tolerance";"CO_320:0000062";"Crop Ontology";;;"1 More than 80%\n3 61-80%\n5 41-60%\n7 11-40%\n9 Less than 11%. [SES:76]";;"categorical";;;1;9;"stress";;;;"added by cosie"
+"HDR_CONT";"HDR";"head rice";"The 3/4 or longer whole milled kernels separated from the total milled rice. [CO:rs]";"float";"FALSE";"observation";"active";"Head rice";"CO_320:0000471";"Crop Ontology";;"Average length of kernels computed from 10 randomly selected whole kernels. 8/10th of the average length is the minimum length for head rice. All kernels with length equal to or more than this value are considered head rice.";;;"continuous";;;;;"grain quality";;;;"added by consie"
+;;"hoja blanca";"The trait is scored for the plant response to the agent rice hoja blanca virus (RHBV) causing hoja blanca. [CO:rs]";"integer";"FALSE";"observation";"active";"Hoja blanca";"CO_320:0000359";"Crop Ontology";;;"SCALE (Incidence: % plants or hills showing symptoms)\n0= No symptom observed\n1= Less than 1%\n3= 1-10%\n5= 11-30%\n7= 31-60%\n9= 61-100%.";;"categorical";;;0;9;"stress";"HBVRS;RHBV";;;"added by consie"
+"INSECT_PROT";"Insect_proctect";"Insect protection";"Extent of insect protection implemented during trial";"character varying";"FALSE";"metadata";"active";"insect protection";;"IRIS";;;;;"continuous";;;;;"field management";;;;"added by weusebio"
+"FETOX_SCOR_0_9";"FeTox";"iron toxicity";"Sensitivity to the iron ion content in the growth environment. [CO:rs]";"integer";"FALSE";"observation";;"Iron Toxicity";"CO_320:0000063";"Crop Ontology";;;"SCALE (Injured panicles)\n0= Growth and tillering nearly normal\n1= Growth and tillering nearly normal; reddish-brown spots or orange discoloration on tips of older leaves\n3= Growth and tillering nearly normal; older leaves reddish-brown, purple, or orange yellow\n5= Growth and tillering retarded; many leaves discolored\n7= Growth and tillering ceases; most leaves discolored or dead\n9= Almost all plants dead or dying. [SES:72]";;"categorical";;;1;9;"stress";"iron sensitivity";;;"added by consie"
+"FETOX_GRNH_1_9";"FeTox";"iron toxicity";;"integer";"FALSE";"observation";;"Iron Toxicity";;"SES 4th Ed. 1996";;"At growth stage: 2-5";"1= Growth and tillering nearly normal\n2= Growth and tillering nearly normal; reddish-brown spots or orange discoloration on tips of older leaves\n3= Growth and tillering nearly normal; older leves reddish brown, purple, or orange yellow\n5= Growth and tillering ceases; most leaves discolored or dead\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;;"added by consie"
+"FE1_FLD_1_9";"FE1";"iron toxicity";"Observation done in the field";"integer";"FALSE";"observation";;"iron Toxicity";;"SES 4th Ed. 1996";;;"1= Growth and tillering nearly normal\n2= Growth and tillering nearly normal; reddish-brown spots or orange discoloration on tips of older leaves\n3= Growth and tillering nearly normal; older leves reddish brown, purple, or orange yellow\n5= Growth and tillering retarded; many leaves discolored\n7= Growth and tillering ceases; most leaves discolored or dead\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;;"added by consie"
+;;"kernel smut";"The trait is scored for the plant response to the agent Tilletia barclayana causing kernel smut. [CO:rs]";;"FALSE";"observation";;"Kernel smut";"CO_320:0000180";"Crop Ontology";;"At growth stage: 9.";;;;;;;;"stress";;"Symptoms: Infected grains show minute black pustules or streaks bursting through the glumes. In severe infection, the rupturing glumes produce short beak-like or spur-like growths.";;"added by consie"
+;"KSm";"kernel smut";"Causal agent: Tilletia barclayana.\nSymptoms: Infected grains show minute black pustules or streaks bursting through the glumes. In severe infection, the rupturing glumes produce short beak-like or spur-like outgrowths.";;"FALSE";"observation";;"kernel smut";;"SES 4th Ed. 1996";;"At growth stage: 9.";;;;;;;;"stress";;;;"added by consie"
+;"KnA";"kneeing ability";"The tiller angle measurement for kneeing. [CO:rs]";"integer";"FALSE";"observation";;"kneeing ability";"CO_320:0000064";"Crop Ontology";;;"SCALE\n1 Tiller angle greater than 45?? for 50% of tillers\n3 Tiller angle greater than 45?? for 25% of tillers\n5 Maximum tiller angle is less than 45?? for 50% of tillers (Tiller angle greater than 45?? for 1 or 2 tillers)\n7 Maximum tiller angle less than 30??\n9 No kneeing. [SES:87]";;"categorical";;;1;9;"stress";;;;"added by consie"
+;"LA";"leaf angle";"The angle of openness of the blade tip is measured against the culm of the leaf below the flag leaf. [CO:rs]";"integer";"FALSE";"observation";"active";"Leaf Angle";"CO_320:0000014";"Crop Ontology";;"At growth stage: 4-5";"1 Erect\n5 Horizontal\n9 Drooping. [SES:97]";;"categorical";;;1;9;"morphological";;;;"consie"
+"LBC_SCOR_1_2";"LBC";"leaf blade color";"Color of the leaf lamina/blade. [CO:rs]";"integer";"FALSE";"observation";"active";"Leaf Blade Color";"CO_320:0000251";"Crop Ontology";;"Stage: late vegetative. [RD:7.3.5]";"0 Absent\n1 Present. [RD:7.3.5]";;"categorical";;;0;1;"morphological";"leaf lamina color";;;"weusebio"
+"LBC_SCOR_1_7";"LBC";"leaf blade color";"Color of the leaf lamina/blade. [CO:rs]";"integer";"FALSE";"observation";"active";"Leaf Blade Color";"CO_320:0000413";"SES 4th editon 1996";;"Observation at growth stage 4-6. At Growth Stage 4-6;Vegetative Stage. []";"1= Light green\n2= Green\n3= Dark Green\n4= Purple tips\n5= Purple margins\n6= Purple blotch (purple mixed with green)\n7= Purple."" [SES:95]";;"categorical";;;1;7;"morphological";"leaf lamina color";;;"added by weusebio"
+;"LBP";"leaf blade pubescence";"Extent of pubescence (presence of hairs) on the leaf blade surface. [CO:rs]";"integer";"FALSE";"observation";;"leaf blade pubescence";"CO_320:0000013";"Crop Ontology";;"Assess both visually and by touch, rubbing fingers over the leaf surface from the tip downwards. Stage: late vegetative. [RD:7.3.9]";"1 Glabrous (smooth-including ciliated margins)\n2 Intermediate\n3 Pubescent. [RD:7.3.9]";;"categorical";;;1;3;"morphological";;"Methodology: Aside from ocular inspection, rub fingers from the tip down on the leaf surface. Presence of hairs on the blade surface are classified as glabrous (1), Intermediate (2) and pubescent (3). At growth stage: 5-6.";;"added by consie"
+"BL_NURS_0_9";"Bl";"leaf blast";"Causal agent: Magnaporthe grisea (Pyricularia oryzae).";"integer";"FALSE";"observation";"active";"Leaf Blast";;"SES 4th Ed. 1996";;" Use this scale only for the nursery. Actual estimation of blast affected leaf area (%) is recommended for field assessment of blast disease together with predominant lesion type (see coding system for lesion type).\n\n\nEntries with scores 4-9 may also have lesions of scale 1 or 2. In cases where the lesion develop only on the collar, joint of the leaf sheath and the leaf blade, causing the leaf blade to drop off, a scale unit of 4 is to be given.\n\n\nEntries with consistent rating, between 4 and 6 with overall average not higher than 5.5 may have a good level of quantitative resistance.\n\n\nLesion types 5, 7 and 9 are considered typical susceptible lesions.";"SCALE (for blast nursery)\n0= No lesions observed\n1= Small brown specks of pin-point size or larger brown specks without sporulating center\n2= Small roundish to slightly elongated, necrotic gray spots, about 1-2 mm in diameter, with a distinct brown margin\n3= Lesion type is the same as in scale 2, but a significant number of lesions are on the upper leaves\n4= Typical susceptible blast lesions2 3 mm or longer, infecting less than 4% of the leaf area\n5= Typical blast lesions infecting 4-10% of the leaf area\n6= Typical blast lesions infection 11-25% of the leaf area\n7= Typical blast lesions infection 26-50% of the leaf area\n8= Typical blast lesions infection 51-75% of the leaf area and many leaves are dead\n9= More than 75% leaf area affected.";;"categorical";;;1;9;"stress";;;"CODE (Predominant lesion type)\n0= No lesions observed\n1 Small brown specks of pinpoint size or larger brown specks without sporulating center\n3= Small, roundish to slightly elongated necrotic sporulating spots, about 1-2 mm in diameter with a distinct brown margin or yellow halo\n5= Narrow or slightly elliptical lesions, 1-2 mm in breadth, more than 3 mm long with a brown margin\n7= Broad spindle-shaped lesion with yellow, brown, or purple margin\n9= Rapidly coalescing small, whitish, grayish, or bluish lesions without distinct margins.";"added by consie"
+;"LF";"leaf folder";"Causal agent: Cnaphalocrosis medinalis; Marasmia patnalis.\nSymptoms: Larvae consume the leaf tissue except the epidermis, causing typical white streaks. They create a leaf tube during later stages of feeding.";"integer";"FALSE";"observation";;"leaffolder";;"SES 4th Ed. 1996";;"Plant a susceptible and resistant check (if available) after every 10 test entries. replicate test entries three times if seed is available. Determine the percentage of damaged and folded leaves. Damaged leaves of the susceptible check should average at least 40% for the test to be considered valid. Use the following scale on the basis of the converted figures to place percentage of damaged leaves on a 0-9 scale.\nAt growth stage: 2-3 (greenhouse)\n3-9 (field)";"Scale (Damaged plants)\n\n0= No damage\n1= 1-10%\n3= 11-20%\n5= 21-35%\n7= 36-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;"Greenhouse screening\nFor greenhouse screning, consider both the % of leaves with damage and the extent on each leaf. For each entry, first examine all of the leaves and rate each one from 0-3 as based on the extent of damage.\n\nBased on the number of leaves with each damage grade, compute as follows:\n\n% Rating (R) = (no. of leaves with damage grade of 1 x 100) 1/Total no. of leaves observed + (no. of leaves with damage grade of 2 x 100) 2/Total no. of leaves observed + (no. of leaves with damage grade of 3 x 100) 3/Total no. of leaves observed /6 \n\n\nCalculate as above for each test entry and the susceptible check. Then adjust for extent of damage in the susceptible check by: Adjusted % damage (D) rating = R of test entry/R of susc. check x 100\n\n\nthe overall damage rating (D) is converted to a 0-9 scale.";"Grade    Damage\n\n0    no damage\n1    up to 1/3 of leaf area scraped\n2    1/3 to 1/2 of leaf area scraped\n3    more than 1/2 of leaf area scraped\n\n\nScale    % Damage Rating (D)\n\n0    No damage\n1    1-10\n3    11-30\n5    31-50\n7    51-75\n9    more than 75";"added by consie"
+;"LL";"leaf length";"Actual measurement of the leaf just below the flag leaf. Expressed in centimeters. [CO:rs]";"float";"FALSE";"observation";"active";"Leaf Length";"CO_320:0000267";"SES 4th editon 1996";;"Measure the penultimate leaf (i.e. highest leaf below the flag leaf) on the main culm, from the ligule to the tip of the blade, on five representative plants. Calculate average to nearest cm.\nCultivated species: measure at early reproductive stage.\nWild species: measure 7 days after anthesis. [RD:7.3.18]";"Measured in cm. [RD:7.3.18]";;"continuous";;;;;"morphological";;;;"weusebio"
+"LL_SCOR_1_9";"LL";"leaf length";"Actual measurement of the leaf just below the flag leaf. Expressed in centimeters. [CO:rs]";"float";"FALSE";"observation";"active";"Leaf Length";"CO_320:0000267";"Crop Ontology";;"Measure the penultimate leaf (i.e. highest leaf below the flag leaf) on the main culm, from the ligule to the tip of the blade, on five representative plants. Calculate average to nearest cm.\nCultivated species: measure at early reproductive stage.\nWild species: measure 7 days after anthesis. [RD:7.3.18]";"1= Very short (<21 cm)\n3= Short (~30 cm)\n5= Intermediate (~50 cm)\n7= Long (~70 cm)\n= 9 Very long (>80 cm).";;"categorical";;;1;9;"morphological";;;;"added by weusebio"
+;"LSc";"leaf scald";"The trait is scored for the plant response to the agent Monographella albescens (Microdochium oryzae) causing leaf scald. [CO:rs]\n\n\nSymptoms: The lesions occurs mostly near leaf tips, but sometimes starts at the margin of the blade and develops into large ellipsoid areas encircled by dark-brown, narrow bands accompanied by a light-brown halo.\n\nAt growth stage: 5-8.";"integer";"FALSE";"observation";"active";"Leaf Scald";;"Crop Ontology";;;"SCALE (Severity: % leaf area diseased)\n\n0= No disease observed\n1= Less than 1% (apical lesions)\n3= 1-5% (apical lesions)\n5= 6-25% (apical and some marginal lesions)\n7= 26-50% (apical and marginal lesions)\n9= 51-100% (apical and marginal lesions).";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"LSc";"leaf scald";"Causal agent: Monographella albescens (Microdochium oryzae).\n\nSymptoms: The lesions occurs mostly near leaf tips, but sometimes starts at the margin of the blade and develops into large ellipsoid areas encircled by dark-brown, narrow bands accompanied by a light-brown halo.\n\nAt growth stage: 5-8.";"integer";"FALSE";"observation";"active";"Leaf Scald";;"SES 4th Ed. 1996";;;"Scale (Affected leaf area)\n\n0= No incidence\n1= Less than 1% (apical lesions)\n3= 1-5% (apical lesions)\n5= 6-25% (apical and some marginal lesions)\n7= 26-50% (apical and marginal lesions)\n9= 51-100% (apical anf marginal lesions)";;"categorical";;;0;9;"stress";;;;"added by consie"
+"SEN_CO_1_9";"Sen";"leaf senescence";"A measure of aging of leaf. Rapid senescence of leaves can be detrimental to yield. It is commonly thought that rapid senescence of leaves can be detrimental to yield if the rice grains have not completely filled. At growth stage: 9. [CO:rs]";"integer";"FALSE";"observation";"active";"Leaf Senescence";"CO_320:0000283";"Crop Ontology";;"Estimated by observing all leaves below the flag leaf for their retention of greenness. Stage: at harvest. [RD:7.3.35]";"1= Very early (all leaves lost their green colour before grain maturity)\n3= Early (all leaves have lost their green colour at harvest)\n5= Intermediate (one leaf still green at harvest)\n7= Late (two or more leaves still green at harvest)\n9= Very late (all leaves still green at harvest). [RD:7.3.35, SES:6]";;"categorical";;;1;9;"agronomic";;;;"added by consie"
+"SEN_SES_1_9";"Sen";"leaf senescence";"It is commonly thought that rapid senescence of leaves can be detrimental to yield if the rice grains have not completely filled. At growth stage: 9.";"integer";"FALSE";"observation";"active";"Leaf Senescence";;"SES 4th Ed. 1996";;;"1= Late and slow (leaves have natural green color)\n5= Intermediate (upper leaves yellowing)\n9= Early and fast (all leaves yellow or dead)";;"categorical";;;1;9;"agronomic";;;;"added by consie"
+;"LFSC";"leaf sheath color";;"integer";"FALSE";;"active";"Leaf Sheath Color";"CO_320:0000249";;;"Observation at growth stage 3-5. At Growth Stage 3-5;Vegetative Stage. []";"1 = Yellow green\n2 = Light green\n3 = Green\n4 =Dark green\n5 = Light purple to red\n6 = Purple. []";;"categorical";;;1;6;"morphological";;;;
+"LW_SCOR_3_7";"LW";"leaf width";"Measurement of the widest portion of the leaf blade just below the flag leaf. Expressed in centimeters. [CO:rs]";"integer";"FALSE";"observation";"active";"Leaf Width";"CO_320:0000269";"crop ontology";;"Measure at the widest portion of the penultimate leaf (i.e. highest leaf below the flag leaf) on the main culm on five representative plants. Calculate average to nearest cm. Cultivated species: measure at early reproductive. Wild species: measure 7 days after anthesis. [RD:7.3.19]";"3= Narrow (<1 cm)\n5= Intermediate\n7= Broad (>2 cm)";;"categorical";;;3;7;"morphological";;;;"weusebio"
+"LW_CONT";"LW";"leaf width";"Measurement of the widest portion of the leaf blade just below the flag leaf. Expressed in centimeters. [CO:rs]";"integer";"FALSE";"observation";"active";"Leaf Width";"CO_320:0000269";"SES 4th editon 1996";;"Measure at the widest portion of the penultimate leaf (i.e. highest leaf below the flag leaf) on the main culm on five representative plants. Calculate average to nearest cm. Cultivated species: measure at early reproductive. Wild species: measure 7 days after anthesis.  At Growth stage 6 [RD:7.3.19]";"Measured in cm";;"continuous";;;3;7;"morphological";;;;"added by weusebio"
+;;"leaffolder";"The trait is scored for the plant damage caused by leaf folder (Marasmia patnalis). [CO:rs]";;"FALSE";"observation";;"leaf folder";"CO_320:0000201";"Crop Ontology";;;;;"categorical";;;;;"stress";;;;"added by consie"
+;"LmPC";"lemma and palea color";;"integer";"FALSE";"observation";"active";"Lemma And Palea Color";"CO_320:0000287";"crop ontology";;"Stage: after anthesis to hard dough stage (pre-ripening stage). [RD:7.4.5]";"1 010 White\n2 012 Green-stripped white\n3 042 Gold and gold furrows\n4 052 Brown (tawny)\n5 053 Brown spots on green\n6 054 Brown furrows on green\n7 056 Blackish brown\n8 060 Green\n9 062 Yellowish green\n10 080 Purple\n11 082 Reddish to light purple\n12 083 Purple shade\n13 090 Purple spots on green\n14 091 Purple furrows on green\n15 100 Black. [RD:7.4.5]";;"discrete";;;1;15;"morphological";"hull color";;;"weusebio"
+;"LmPC";"lemma and palea color";;"integer";"FALSE";"observation";"active";"Lemma And Palea Color";;"SES 4th editon 1996";;"Stage: after anthesis to hard dough stage (pre-ripening stage). [RD:7.4.5] At growth stage: 9";"0= Straw\n1= Gold and gold furrows on straw background\n2= Brown spots on straw\n3= Brown furrows on straw\n4= Brown (tawny)\n5= Reddish to light purple\n6= Purple spots on straw\n7= Purple furrows on straw\n8= Purple\n9 =Black\n10 =White ";;"discrete";;;1;10;"morphological";"hull color";;;"added by weusebio"
+;"LmPb";"lemma and palea pubescence";"Extent of pubescence (hairs) on the lemma and palea. [CO:rs]";"integer";"FALSE";;"active";"Lemma And Palea Pubescence";"CO_320:0000297";"SES 4th editon 1996";;"At growth stage: 9 [SES:118]";"1 Glabrous\n2 Hairs on lemma keel\n3 Hairs on upper portion\n4 Short hairs\n5 Long hairs (velvety).";;"categorical";;;1;5;"morphological";"hull cover";;;"weusebio"
+;"LgC";"ligule color";"Color of the ligule. [CO:rs]";"integer";"FALSE";"observation";"active";"Ligule Color";"CO_320:0000026";"Crop ontology";;"Stage: late vegetative. [RD:7.3.17]";"0 0 Absent (liguleless)\n1 011 Whitish\n2 062 Yellowish green\n3 080 Purple\n4 081 Light purple\n5 084 Purple lines. [RD:7.3.17]";;"categorical";;;0;5;"morphological";;;;"consie"
+;"LgC";"ligule color";;"integer";"FALSE";"observation";;"Ligule Color";;"SES 4th editon 1996";;"At growth stage: 4-5";"Code\n\n1= White\n2= Purple lines\n3= Purple";;"categorical";;;1;3;"morphological";;;;"added by consie"
+;"LgL";"ligule length";"Actual measurement of ligules from the base of the collar to the tip. Expressed in millimeters. [CO:rs]";"float";"FALSE";"observation";"active";"Ligule Length";"CO_320:0000025";"Crop ontology";;"Measured on five samples from base of collar to the tip of the ligule of the penultimate leaf, i.e. the leaf below the flag leaf. Stage: after anthesis. [RD:7.3.13]";"Measured in mm. [RD:7.3.13]";;"continuous";;;;;"morphological";;;;"consie"
+;;"ligule pubescence";"Presence or absence of hairs in ligule. [CO:rs]";;"FALSE";;"active";"Ligule Pubescence";"CO_320:0000263";;;"Visual assessment using hand lens. Stage: after anthesis. [RD:7.3.16]";"1 Glabrous\n2 Partially hirsute: hairs covering less than 50% of the ligule\n3 Mostly or generally hirsute: hairs covering more than\n50% of the ligule. [RD:7.3.16]";;"categorical";;;1;3;"morphological";;;;
+;"LS";"ligule shape";"Defines the actual shape of the ligule. [CO:rs]";"integer";"FALSE";"observation";"active";"Ligule Shape";"CO_320:0000027";"Crop Ontology";;"Different scoring systems are used for cultivated and wild species. Stage: late vegetative (cultivated species). Stage: after anthesis (wild species). [RD:7.3.14]";"Cultivated species\n0 Absent\n1 Truncate\n2 Acute to acuminate\n3 2-cleft\n\nWild species\n0 Absent\n1 Fringe of hairs\n2 Truncate\n3 Obtuse or rounded\n4 Emarginate\n5 Acute\n6 Acuminate\n7 2-cleft. [RD:7.3.14]";;"categorical";;;0;7;"morphological";;;;"consie"
+"LG_PERC";"LG";"lodging incidence";"Indicates percentage of plants that lodged. At growth stage: 6-9. [CO:rs]";"integer";"FALSE";"observation";"active";"Lodging Incidence";"CO_320:0000080";"Crop Ontology";;;"% of plants that lodged";;"continuous";;;0;100;"agronomic";;;;"added by consie"
+"LG_SCOR_1_9";"LG";"lodging incidence";"Indicates percentage of plants that lodged. At growth stage: 6-9.";"integer";"FALSE";"observation";"active";"Lodging Incidence";;;;;;;"continuous";;;1;9;"agronomic";;;;
+;;"male sterility group";;"integer";"FALSE";"observation";"active";"Male sterility group";"CO_320:0000325";"Crop Ontology";;;"1= Cytoplasmic-nuclear interaction type\n2= Thermosensitive-genic type (TGMS)\n3= Photoperiod-sensitive genic type (PGMS)\n4= Thermo-photoperiod genic type (TPGMS)\n5= Genetically engineered (transgenic type)\n6= Nuclear type.";;"categorical";;;1;6;"hybrid";;;;"added by consie"
+"MAT_CONT";"Mat";"maturity";"Use the number of days from seeding to grain ripening (85% of grains on panicle are mature). At growth stage: 9.";"integer";"FALSE";"observation";"active";"Maturity";;"SES 4th Ed. 1996";;"85% mature grains";"No. of Days";;"continuous";;;;;"agronomic";;;;"checked by consie"
+"MISS_Hill_CONT";;"missing hill";"Missing hill per plot";"float";"FALSE";"observation";;"Missing Hill";;;;"Count the missing hills per plot";;;"continuous";;;;;;;;;"added by consie"
+"MC_CONT";"MC";"moisture content";"Grain moisture after drying";"float";"FALSE";"observation";;"moisture content";;;;"Record moisture content after drying at 50 degress C";;;"continuous";;;;;;;;;"added by consie"
+"MF_CONT";"MF";"moisture factor";"Grain moisture factor at 14%";"float";"FALSE";"observation";;"moisture factor";;;;"Computed as: MF= (100-MC)/86";;;"continuous";;;;;;;;;"added by consie"
+;;"narrow brown leaf spot";"The trait is scored for the plant response to the agent Sphaerulina oryzina (Cercospora janseana) causing narrow brown leaf spot. [CO:rs]";"integer";"FALSE";"observation";"active";"Narrow Brown Leaf Spot";"CO_320:0000345";"Crop Ontology";;;"SCALE (Severity: % leaf area diseased)\n\n0= No disease observed\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%.";;"categorical";;;0;9;"stress";"NBLS";;;"added by consie"
+;"NBLS";"narrow brown leaf spot";"Causal agent: Sphaerulina oryzina (Cercospora janseana)";"integer";"FALSE";"observation";"active";"Narrow Brown Leaf Spot";;"SES 4th Ed. 1996";;;"Scale (Affected leaf area)\n\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;1;9;"stress";;;;"added by consie"
+;"Nitrogen";"Nitrogen Fertilizer";"Amount of nitrogen fertilizer applied";"integer";"FALSE";"metadata";"active";"Nitrogen Fertilizer applied";;"IRIS";;;"measured in Kg or in grams";;"continuous";;;;;"field management";;;;"added by weusebio"
+;;"number of panicles";"Average number of panicles per plant in a study. [CO:rs]";"integer";"FALSE";;"active";"Number Of Panicles";"CO_320:0000240";;;"Record the number of panicles per plant. Stage:early ripening. [RD:7.4.17]";"3 Low\n5 Intermediate\n7 High. [RD:7.4.17]";;"categorical";;;3;7;"morphological";"panicle number";;;
+"ROWS_Per_Plot";;"number of rows per plot";"total number of rows per plot";"integer";"FALSE";"metadata";;"number of rows per plot";;;;"Count the number of rows per plot";;;"continuous";;;;;"field management";;;;"added by consie"
+"NURSERY";"NURSERY";"NURSERY";"Nursery type";"character varying";"FALSE";"metadata";"active";"Type of Nursery";;"IRIS";;;"Nursery type";;"continuous";;;;;"design factor";;;;"added by weusebio"
+;;"Order of entry";"order number of a entry in a study";;"FALSE";;;;;;;;;;;;;;;;;;;"please add details, marko"
+;"OTFERT";"Other Fertilizer Applied";"Fertilizer other than nitrogen, phosphorous and potassium applied";"character varying";"FALSE";"metadata";"active";"Other fertilizer applied";;"IRIS";;;"Name of fertilizer";;"continuous";;;;;"field management";;;;"added by weusebio"
+;;"outcrossing potential";"It is a measure of percent seed set on the out-pollinated primary panicle. This trait is measured at growth stages 8 and 9. [CO:rs]";"integer";"FALSE";"observation";"active";"outcrossing potential";"CO_320:0000333";"Crop Ontology";;;"Scale Seed set (%) on out-pollinated primary panicles.\n1= Above 30\n3= 20-29.9\n5= 10-19.9\n7= 5-9.9\n9= 0-4.9.";;"categorical";;;1;9;"hybrid";"extent of outcrossing on male sterile lines";;;"added by consie"
+;"PnAk";"panicle axis";"Represents the angle of panicle axis whether straight or droopy. [CO:rs]";"integer";"FALSE";;"active";"Panicle Axis";"CO_320:0000423";;;;"1 Straight\n2 Droopy. [SES:112]";;"categorical";;;1;2;"morphological";"panicle axis angle";;;
+"PB_SCOR_1_9";"PB";"panicle blast";"Causal agent: Magnaporthe grisea (Pyricularia oryzae).\n\nSymptoms: Dark, necrotic lesions cover partially or completely around the panicle base (node) or the uppermost internode ot the lower part pf panicle axis. The panicles are greyish and have either partially filled or unfilled grains.";"integer";"FALSE";"observation";"active";"Panicle Blast";;"SES 4th Ed. 1996";;"Based on the number of panicles with each scale, compute panicle blast severity (PBS) as follows:\n\n\nPBS = [(10xN1) + (20xN3) + (40xN5) + (70xN7) + (100xN9)]/Total no. of panicles observed, where N1-N9 are the number of panicles with score 1-9.\n\nAt growth stage: 8 (20-25 days after heading).\n\n\nFor the mass evaluation of panicle blast incidence count only the number of panicles with lesion covering completely around node, neck or the lower part of panicle axis (symptom type 7-9).\n\n At growth stage: 8-9.";"Scale (based on symptoms)\n\n0= No visible lesion observed or lesions on only a few pedicels\n1= Lesions on several pedicels or secondary branches\3= Lesion on a few primary branches or the middle part of panicle axis\n5= Lesion partially around the base (node) or the uppermost internode or the lower part of panicle axis near the base\n7= Lesion completely around panicle base or uppermost internode or panicle axis near the base with more than 30% of filled grains\n9= Lesion completely around panicle base or uppermost internode or the panicle axis near the base with less than 30% of filled grains.\n\n\nScale (Incidence of severely infected panicles)\n\n0= No incidence\n1= Less than 5%\n3= 5-10%\n5= 11-25%\n7= 26-50%\n9= More than 50%";;"categorical";;;0;9;"stress";;;;"added by consie"
+"EXS_CROP_1_9";"Exs";"panicle exsertion";"Trait is monitored by observing the extent of coverage of panicle by the flag leaf sheath. At growth stage: 7-9 [CO:rs]";"integer";"FALSE";"observation";"active";"Panicle Exsertion";"CO_320:0000074";"Crop Ontology";;;"1= Enclosed (panicle is partly or entirely enclosed within the leaf sheath of the flag leaf blade)\n3= Partly exserted (panicle base is slightly beneath the collar of the flag leaf blade)\n5= Just exserted (panicle base coincides with the collar of the flag leaf blade)\n7= Moderately well exserted (panicle base is above the collar of the flag leaf blade)\n9= Well exserted (panicle base appears well above the collar of the flag leaf blade).";;"categorical";;;1;9;"agronomic";"Exs;panicle exsertion of male sterile lines";;;"added by consie"
+"EXS_SES_1_9";"Exs";"panicle exsertion";"The inability of panicles to exsert fully is commonly considered a genetic defect. Environmental and disease factors also contribute to such defect. At growth stage: 7-9.";"integer";"FALSE";"observation";"active";"Panicle Exsertion";;"SES 4th Ed. 1996";;;"1= Well exserted\n3= Moderately well exserted\n5= Just exserted\n7= Partly exserted\n9= Enclosed";;"categorical";;;1;9;"agronomic";;;;"added by consie"
+"PnL_SCOR_1_9";"PnL";"panicle length";"Measurement from panicle base to tip. Expressed in cm. [CO:rs]";"integer";"FALSE";"observation";"active";"Panicle Length";"CO_320:0000242";;;"Length of main axis of panicle measured from base to the tip. Record the average of five representative plants. [RD:7.5.1]";"1 Very short (<11 cm)\n3 Short (~15 cm)\n5 Medium (~25 cm)\n7 Long (~35 cm)\n9 Very long (>40 cm). [RD:7.5.1]";;"categorical";;;1;9;"morphological";;;;"consie"
+"PnL_CONT";"PnL";"panicle length";"Measurement from panicle base to tip. Expressed in cm. [CO:rs]";"float";"FALSE";;"active";"Panicle Length";"CO_320:0000476";;;"Enter actual measurements in centimeters from panicle base to tip. []";;;"continuous";;;;;"morphological";;;;"consie"
+"Thr_SCOR_1_3";"Thr";"panicle threshability";"Percentage of shattered grains, determined by firmly grasping and pulling the hand over the panicle. [CO:rs]";"integer";"FALSE";"observation";"active";"Panicle Threshability";"CO_320:0000078";"Crop Ontology";;"(Cultivated species). Determined by grasping the panicle with the hand, applying a slight rolling pressure with the palm and fingers, and assessing the percentage of grains that are removed by the action. [RD:7.5.2]";"1= Difficult (few or no grains removed)\n2= Intermediate (25-50% of grains removed)\n3= Easy (>50% of grains removed). ";;"categorical";;;1;3;"agronomic";"leaf shattering;PNTHR;SHAT;Thr;threshability";;;"added by consie"
+"Thr_SCOR_1_9";"Thr";"panicle threshability";"At growth stage: 9";"integer";"FALSE";"observation";"active";"Panicle Threshability";;"SES 4th Ed. 1996";;"Firmly grasp and pull the hand over the panicle and estimate the percentage of shattered grains.";"1= Difficult (less than 1%)\n3= Moderately difficult (1-5%)\n5= Intermediate (6-25%)\n7= Loose (26-50%)\n9= Easy (51-100%)";;"categorical";;;1;9;"agronomic";;;;"added by consie"
+"PnT_SCOR_1_3";"PnT";"panicle type";"Panicle types are classified according to their mode of branching, angle of primary branches, and spikelet density. [CO:rs]";"integer";"FALSE";"observation";"active";"Panicle Type";"CO_320:0000018";"Crop Ontology";;;"1 Compact\n2 Intermediate\n3 Open. [SES:110]";;"categorical";;;1;3;"morphological";;;;"consie"
+"PnT_SCOR_1_9";"PnT";"panicle type";"Panicles are classified according to their mode of branching, angle of primary branches, and spikelet density.";"integer";"FALSE";"observation";;"Panicle Type";;"SES 4th Ed. 1996";;"At growth stage: 8";"1= Compact\n5= Intermediate\n9= Open";;"categorical";;;1;9;"morphological";;;;"added by consie"
+;;"panicle weight";"Average weight of the panicle from the plants or tillers in a given study. [CO:rs]";;"FALSE";;"active";"Panicle Weight";"CO_320:0000478";;;;;;"continuous";;;;;;;;;
+"PESTICIDE";"Pesticide";"Pesticide";"Pesticide used";"character varying";"FALSE";"metadata";;"Pesticide";;;;"Record the pesticide used";;;"continuous";;;;;"field management";;;;"added by consie"
+"Date_Pest_CONT";"Date_Pesticide";"Pesticide application date";"Date of pesticide application";"character varying";"FALSE";"metadata";;"Pesticide application date";;;;"Record the date of pesticide application";;;"continuous";;;;;"field management";;;;"added by consie"
+"PAcp_SCOR_1_7";"PAcp";"phenotypic acceptability";"Breeding objectives for each variety and trait varies. The evaluation should reflect the overall acceptability of the variety. At growth stage: 9. [CO:rs]";"integer";"FALSE";"observation";"active";"Phenotypic Acceptability";"CO_320:0000075";"Crop Ontology";;;"1= Excellent\n3= Good\n5= Fair\n7= Poor\n9= Unacceptable.";;"categorical";;;1;9;"agronomic";"PAcp;phenotyphic acceptability";;;"added by consie"
+"PDef_SCOR_1_9";"PDef";"phosphorus deficiency";"Sensitivity to the phosphorous content in the growth environment. [CO:rs]";"integer";"FALSE";"observation";;"Phosphorus deficiency";"CO_320:0000065";"Crop Ontology";;;"SCALE (Relative tillers)\n1= 80-100%\n3= 60-79%\n5= 40-59%\n7= 20-39%\n9= 0-19%. [SES:73]";;"categorical";;;1;9;"stress";"phosphorus sensitivity";;;"added by consie"
+"PDef_GRNH_1_9";"PDef";"phosphorus deficiency";;"integer";"FALSE";"observation";;"Phosphorus deficiency";;"SES 4th Ed. 1996";;"At growth stage: 2-5\n\nGreenhouse: [No. of tillers in 0.5 ppm P culture solution/No. of tillers in 10 ppm P culture solution]  X  100\n\nField: [No. of tillers with no P/No. of tillers with 25 kg P per ha]  X  100";"SCALE (Relative tillers)\n1= 80-100%\n3= 60-79%\n5= 40-59%\n7= 20-39%\n9= 0-19%";;"categorical";;;1;9;"stress";;;;"added by consie"
+"P1_FLD_1_9";"P1";"phosphorus deficiency";"Observation done in the field";"integer";"FALSE";"observation";;"Phosphorus deficiency";;;;;"SCALE (Relative tillers)\n1= 80-100%\n3= 60-79%\n5= 40-59%\n7= 20-39%\n9= 0-19%";;"categorical";;;1;9;"stress";;;;"added by consie"
+;"Phosphorus";"Phosphorus Fertilizer";"Amount of phosphorus fertilizer applied";"integer";"FALSE";"metadata";"active";"Phosphorus Fertilizer applied";;"IRIS";;;"measured in Kg or in grams";;"continuous";;;;;"field management";;;;"added by weusebio"
+"HT_SCOR_1_9";"HT";"plant height";"Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9. [CO:rs]";"integer";"FALSE";"observation";"active";"Plant Height";"CO_320:0000480";"Crop Ontology";;"Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []";"1= Semidwarf (lowland: less than 110 cm); upland: less than 90 cm)\n5= intermediate (lowland: 110-130 cm; upland: 90-125 cm)\n9= Tall (lowland: more than 130 cm; upland: more than 125 cm)";;"categorical";;;1;9;"agronomic";"Ht,PLHT";;;"checked by consie"
+"HT_CONT";"HT";"plant height";"Plant height measured from the soil surface to the tip of the tallest panicle (awn excluded). At growth stage: 7-9.";"integer";"FALSE";"observation";;"Plant Height";;;;"Use actual measurement (cm) from soil surface to tip of the tallest panicle (awns excluded) or flag leaf. For height measurements at other growth stages, specify the stage. Record in whole numbers (do not use decimals). []";;;"categorical";;;1;9;"agronomic";"Ht,PLHT";;;
+"HT1_CONT";"HT1";"plant height";"Plant height from plant sample 1";"character varying";"FALSE";"observation";;"Plant height";;;;"At maturity (Stages 7-9) - Plant sample 1";"Measured in cm";;"continuous";;;;;"agronomic";;;;"added by consie"
+"HT2_CONT";"HT2";"plant height";"Plant height from plant sample 2";"character varying";"FALSE";"observation";;"Plant height";;;;"At maturity (Stages 7-9) - Plant sample 2";"measured in cm";;"continuous";;;;;"agronomic";;;;"added by consie"
+"HT3_CONT";"HT3";"plant height";"Plant height from plant sample 3";"character varying";"FALSE";"observation";;"plant height";;;;"At maturity (Stages 7-9) - Plant sample 3";"measured in cm";;"continuous";;;;;"agronomic";;;;"added by consie"
+"HT4_CONT";"HT4";"plant height";"Plant height from plant sample 4";"character varying";"FALSE";"observation";;"plant height";;;;"At maturity (Stages 7-9) - Plant sample 4";"measured in cm";;"continuous";;;;;"agronomic";;;;"added by consie"
+"PLOTNO";"PLOTNO";"Plot number";"Plot number in the field layout";"character varying";"TRUE";"identification";"active";"Plot Number";;;;;;;"continuous";;;;;"plot identifier";;;;"added by weusebio"
+;;"pollen sterility";"Determination of sterile pollen. Expressed in percentage. [CO:rs]";"character varying";"FALSE";"observation";"active";"Pollen Sterility";"CO_320:0000327";"Crop Ontology";;"Observed under a microscope at magnification 10x10 after staining with 1% iodine potassium iodide (IKI) solution";;;"categorical";;;;;"hybrid";;;;"added by consie"
+;;"pollen sterility";;"integer";"FALSE";"observation";"active";"Pollen Sterility";;"SES 4th Ed. 1996";;"It is observed in the microscope under magnification of 10x10 after staining pollen grains with 1% Iodine Potassium Iodine (IKI) solution. Saples for pollen are collected from at least ten florets from individual plants at growth stages 6 and fixed in 70% alcohol. Two to three anthers are extracted from five of the florets on a glass slide and pollen are squeezed out with a spear-shaped needle in a drop of IKI solution. At least three microscopic fields are used to cout sterile pollen grains (viz., unstrained withered, unstained spherical and partially-stained round) and fertile pollen grains (stained round); percentage sterility is calculated as: [number of (unstained withered + unstained spherical + partially stained round) pollen/total number of pollen grains (including fertile)] x 100";"1= Completely sterile (100)\n3= Highly sterile (99.0-99.9)\n5= Sterile (95.098.9)\n7= Partially sterile (70.0-94.9)\n9= Partially fertile to fertile (<70)";;"categorical";;;1;9;"hybrid";;;;"added by consie"
+;"Potassium";"Potassium Fertiliizer";"Amount of potassium fertilizer applied";"integer";"FALSE";"metadata";"active";"Potassium Fertilizer applied";;"IRIS";;;"measured in Kg or in grams";;"continuous";;;;;"field management";;;;"added by weusebio"
+"PRODUCT_ID";"PRODUCT_ID";"Product ID";"ID of the product in the entry";"integer";"TRUE";"identification";;"Product ID";;;;;;;"continuous";;;;;"entry identifier";;;;"weusebio"
+"PRODUCT_GID";"PRODUCT_GID";"Product GID";"GID of the product entry";"integer";"FALSE";"metadata";;"Product GID";;;;;;;"continuous";;;;;"entry metadata";;;;
+;;"ragged stunt";;;"FALSE";"observation";;"Ragged stunt";"CO_320:0000183";"Crop Ontology";;;;;;;;;;"stress";;;;"added by consie"
+;;"rat damage";"The trait is scored for the plant damage caused by rat. [CO:rs]";;"FALSE";"observation";;"rat damage";"CO_320:0000214";"crop Ontology";;;;;;;;;;"stress";;;;"added by consie"
+;"RD";"rat damage";"Since there is no genetic resistance to rats, the damage can be quantified as it does not represent resistance.";"integer";"FALSE";"observation";;"rat damage";;"SES 4th Ed. 1996";;;"Scale (Damaged plants)\n0= No damage observed\n1= Less than 5%\n5= 6-25%\n9= 26-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"rhizome formation";;"integer";"FALSE";;"active";"Rhizome Formation";"CO_320:0000285";;;"Observe when plants are ready for harvest. [RD:7.3.36]";"1 Vegetative crown\n2 Vegetative crown and stolon\n3 Vegetative crown and weak rhizomes\n4 Vegetative crown, stolon and weak rhizomes\n5 Strong rhizomes and no tubers\n6 Strong rhizomes with tubers. [RD:7.3.36]";;"categorical";;;1;6;"morphological";;;;
+;"RB";"rice bug";"Causal agent: Leptocorisa oratorius";"integer";"FALSE";"observation";;"rice bug damage";;"SES 4th Ed. 1996";;"At growth stage: 7-9";"0= No damage\n1= Less than 3\n3= 4-7\n5= 8-15\n7= 12-25\n9= 26-100";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"rice bug damage";"The trait is scored for the plant damage caused by rice bug (Leptocorisa oratorisa). [CO:rs]";"integer";"FALSE";"observation";;"rice bug damage";"CO_320:0000203";"Crop Ontology";;;"Scale Injured grains per panicle (%)\n0 No injury\n1 Less than 3\n3 4-7\n5 8-15\n7 12-25\n9 26-100. [SES:68]";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"rice delphacid";"The trait is scored for the plant damage caused by rice delphacid [Sogatodes oryzicola (Tagosodes orizicolus)]. [CO:rs]";"integer";"FALSE";"observation";;"rice delphacid";"CO_320:0000216";"Crop Ontology";;"Symptoms: Similar to whitebacked planthopper (WBHP).At growth stage: 2 (green house); 2-6 (field).";"0= No injury\n1= 1-10%\n3= 11-20%\n5= 21-30%\n7= 31-60%\n9= 61% and above. [SES:62]";;"categorical";;;0;9;"stress";"RDel";"Note: The scale is based on symptoms. Incidence of dead plants could be considered for final evaluation.";;"added by consie"
+;"RDel";"rice delphacid";"Causal agent: Tagosodes orizicolus.\nSymptoms: Similar to WBPH.";"integer";"FALSE";"observation";;"rice delphacid";;"SES 4th Ed. 1996";;"At growth stage: 2 (greenhouse)\n2-6 (field).\n\nNote: The scale if based on symptoms. Incidence of dead plants could be considered for final evaluation.";"0= No damage\n1= Very slight damage/leaf discoloration\n3= Yellowing of 1st and 2nd leaves\n5= Pronounced yellowing of leaves and some stunting, less than 50% of plants dead\n7= Strong yellowing of leaves and pronounced stunting, greated than 50% of plants dead\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"MLO";"rice disease caused by  viruses and mycoplasma-like organisms";"The reaction of a certain genotype to rice virus infection can be assessed by a skilled worker based on visible symptoms after inoculation under natural conditions (in a field), or under controlled conditions (in a greenhouse). The factors needed for a successful test are the presence of virus souces and insect vectors, inoculation at the susceptible growth stage of the test plants and favorable environmental conditions. ";"integer";"FALSE";"observation";;"MOL";;"SES 4th Ed. 1996";;"Field test: Screening of test materials, notably breeding lines, can be done in the field and their reaction to virus infection can  be assessed on a scale 0-9 based on the percentage of infection observed.\n\nGreenhouse test: However, field tests generallyselect vector resistance and are not appropriate for selecting virus resistance. Resistance to the virus can be assessed in the greenhouse where factors needed for infection can be manipulated. Inoculation using a high number of vectors is desired and the susceptible check should have at least 90% infection. A healthy check would be also useful as a reference to measure plant height. Since some fertilizers might affect symptoms, it is recommended not to use any during the experiment. A disease index (DI) for the genotype, which would represent both disease incidence and symptom severity, can be used as an indicator for virus resistance in a greenhouse test. DI can be calculated as: DI= n(3)+n(5)+n(7)+n(9)/tn\n\n\nWhere: n(3), n(5), n(7) and n(9) = number of plant showing a reaction in scale 3,5,7, or 9, respectively.\ntn= total number of plants scores";"Scale (% infection)\n\n0= No symptom observed\n1= 1-10%\n3= 11-30%\n5= 31-50%\n7= 51-70%\n9= 71-100%";;"categorical";;;0;9;"stress";;"The resulting DI can be classified as:\n\nDI   Reaction\n\n0-3   Resistance/Tolerant\n4-6   Moderate\n7-9   Susceptible";;"added by consie"
+;"RHBV";"rice hoja blanca";"Causal agent: Rice hoja blanca virus.\n\nSymptoms: Cream colored to yellow spots, elongating and coalescing fo form longitudinal yellowish green to pale green striations. Streaks may coalesce to cover the whole leaf. Brown and sterile glumes with typical ""parrot beak"" shape of deformation.\n\n\nAt growth stage: 2-4 (leaf)\n7-8 (panicle).\n\n\nNote: To determine the degree of resistance in fixed lines under field conditions, susceptible check should have at least more than 50% infection.";"integer";"FALSE";"observation";"active";"Rice Hoja Blanca";;"SES 4th Ed. 1996";;;"Scale (percent of affected plants)\n\n0= No symptoms\n1= Less than 1%\n3= 1-10%\n5= 11-30%\n7= 31-60%\n9= 61-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"rice leaf blast";;"character varying";"FALSE";"observation";"active";"Blast";"CO_320:0000341";"Crop Ontology";;;"SCALE (for blast nursery)\n0= No lesions observed\n1= Small brown specks of pin-point size or larger brown specks without sporulating center\n2= Small roundish to slightly elongated, necrotic gray spots, about 1-2 mm in diameter, with a distinct brown margin\n3= Lesion type is the same as in scale 2, but a significant number of lesions are on the upper leaves\n4= Typical susceptible blast lesions2 3 mm or longer, infecting less than 4% of the leaf area\n5= Typical blast lesions infecting 4-10% of the leaf area\n6= Typical blast lesions infection 11-25% of the leaf area\n7= Typical blast lesions infection 26-50% of the leaf area\n8= Typical blast lesions infection 51-75% of the leaf area and many leaves are dead\n9= More than 75% leaf area affected.\n\n\nCODE (Predominant lesion type)\n0= No lesions observed\n1 Small brown specks of pinpoint size or larger brown specks without sporulating center\n3= Small, roundish to slightly elongated necrotic sporulating spots, about 1-2 mm in diameter with a distinct brown margin or yellow halo\n5= Narrow or slightly elliptical lesions, 1-2 mm in breadth, more than 3 mm long with a brown margin\n7= Broad spindle-shaped lesion with yellow, brown, or purple margin\n9= Rapidly coalescing small, whitish, grayish, or bluish lesions without distinct margins. [SES:30]";;"categorical";"ordinal";;"0 No lesions observed";"9 More than 75% leaf area affected.";"stress";"Blast;leaf blast;rice blast";;"0 No lesions observed;1 Small brown specks of pin-point size or larger brown specks without sporulating center;2 Small roundish to slightly elongated, necrotic gray spots, about 1-2 mm in diameter, with a distinct brown margin;3 Lesion type is the same as in scale 2, but a significant number of lesions are on the upper leaves;4 Typical susceptible blast lesions2 3 mm or longer, infecting less than 4% of the leaf area;5 Typical blast lesions infecting 4-10% of the leaf area;6 Typical blast lesions infection 11-25% of the leaf area;7 Typical blast lesions infection 26-50% of the leaf area;8 Typical blast lesions infection 51-75% of the leaf area and many leaves are dead;9 More than 75% leaf area affected.";"checked by consie"
+;"RRSV";"rice ragged stunt disease";"Causal agent: Rice ragged stunt virus (RRSV).\n\nSymptoms: Plants are stunted but remain dark green. Leaves are ragged and twisted. Vein swelling on leaf collar, leaf blades and leaf sheaths.\n\nAt growth stages:\n2-3 (for the greenhouse)\n4-6 (for the field)";"integer";"FALSE";"observation";"active";"Rice ragged stunt disease";;"SES 4th Ed. 1996";;"Score and calculate DI at 5 weeks after inoculation in the greenhouse.";"1= No symptom observed\n3= 0-10% height reduction, no ragged/twisted leaf, small and very few vein swelling usually on leaf collar.\n5= 0-10% height reduction, 1-2 leaves have ragged/twisted symptoms, few vein swelling on leaf collar.\n7= 11-30% height reduction, 3-4 leaves have ragged/twisted symptoms, more vein swelling on leaf collar, and some on leafblades and leafsheaths.\n9= More than 30% height reduction, most leaves have ragged/twisted symptoms, vein swelling common on leafsheaths and leafblades.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"RTD1_FLD_1_9";"RTD1";"rice tungro disease";"Causal agent: Rice tungro virus bacilliform virus (RTBV) and rice tungro spherical virus (RTSV).\n\nSymptoms: Yellow to yellow orange leaves, stunting and slightly reduced tillering.\nAt growth stages: 2 (for the greenhouse)\n3-5 (for the field).";"integer";"FALSE";"observation";"active";"Rice tungro disease";;"SES 4th Ed. 1996";;"Score and calculate DI at 4 weeks after inoculation in the greenhouse.";"1= No symptom observed\n3= 1-10% height reduction, no distinct yellow to yellow orange leaf discoloration\n5= 11-30% height reduction, no distinct yellow to yellow orange leaf discoloration\n7= 31-50% height reduction, with distinct yellow to yellow orange leaf discoloration\n9= More than 50% height reduction, with distinct yellow to yellow orange discoloration";;"categorical";;;1;9;"stress";;;;"added by consie"
+"RTD_GRNH_PERC";"RTD";"rice tungro disease";"Causal agent: Rice tungro virus bacilliform virus (RTBV) and rice tungro spherical virus (RTSV).\n\nSymptoms: Yellow to yellow orange leaves, stunting and slightly reduced tillering.\nAt growth stages: 2 (for the greenhouse)\n3-5 (for the field).";"float";"FALSE";"observation";"active";"Rice tungro disease";;;;;"Percent";;"continuous";;;;;"stress";;;;"added by consie"
+;;"rice tungro virus";"The trait is scored for the plant response to the agent rice tungro bacilliform virus (RTBV) and rice tungro spherical virus (RTSV). [CO:rs]";"integer";"FALSE";"observation";"active";"Rice Tungro Virus";"CO_320:0000351";"Crop Ontology";;;"1= No symptom observed\n3= 1-10% height reduction, no distinct yellow to yellow orange leaf discoloration\n5= 11-30% height reduction, no distinct yellow to yellow orange leaf discoloration\n7= 31-50% height reduction, with distinct yellow to yellow orange leaf discoloration More than 50% height reduction, with distinct yellow to yellow orange discoloration.";;"categorical";;;1;7;"stress";;;;"added by consie"
+;;"rice whorl maggot";"The trait is scored for the plant damage caused by rice whorl maggot (Hydrellia philippina). [CO:rs]";"integer";"FALSE";"observation";;"rice whorl maggot";"CO_320:0000206";"Crop Ontology";;;"SCALE (for field test)\n0 No injury\n1 Less than 2 leaves/hill injured\n3 2 or more leaves/hill but less than 1/3 of leaves injured\n5 1/3 to 1/2 of leaves injured\n7 More than 1/2 of the leaves injured with no broken leaves\n9 More than 1/2 of the leaves injured with some broken leaves. [SES:67]";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"RWM";"rice whorl maggot";"Causal agent: Hydrellia philippina.\nSymptoms: Leaf margin feeding causes conspicuous damage and sometimes stunting of plants.";"integer";"FALSE";"observation";;"rice whorl maggot";;"SES 4th Ed. 1996";;"At growth stage: 3";"0= No damage\n1= Less than 2 leaves/hill damaged\n3= 2 or more leaves/hill but less than 1/3 of leaves damage\n5= 1/3 to 1/2 of leaves damage\n7= More than 1/2 of the leaves damage with no broken leaves\n9= More than 1/2 of the leaves damage with some broken leaves.";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"RYMV";"rice yellow mottle ";"Causal agent: Rice yellow mottle virus.\n\nSymptoms: Stunting, reduced tillering, mottling and yellowing streaking of the leaves, delayed flowering or incomplete emergence of the panicles; in extreme cases, death of plants.\n\nAt growth stage: 4-6 (field).";"integer";"FALSE";"observation";"active";"Rice yellow mottle";;"SES 4th Ed. 1996";;;"SCALE (for field test)\n1= No symptom observed\n3= Leaves green but with sparse dots or streaks and less than 5% of height reduction\n5= Leaves green or pale green with mottling and 6% to 25% of height reduction, flowering slightly delayed\n7= Leaves pale yellow or yellow and 26-75% of height reduction, flowering delayed\n9= Leaves turn yellow or orange, more than 75% of height reduction, no flowering or some plants dead.";;"categorical";;;1;9;"stress";;;;"added by consie"
+;"ROW";"Row in layout";"Specific row position of plot in the Latin Square randomized layout in the field";"integer";"FALSE";"metadata";;"Row in layout";;;;;;;"continuous";;;;;"design factor";;;;"please add details, marko - added by weusebio"
+"ROW_LENGTH";;"row length";"Row length";"float";"FALSE";"metadata";;"row length";;;;"Measure row length";;;"continuous";;;;;"field management";;;;"added by consie"
+"SAL1_FLD_1_9";"Sal1";"salinity injury";"Observation done in the field";"integer";"FALSE";"observation";;"salinity injury";;"SES 4th Ed. 1996";;;"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;;"added by consie"
+"SAL_GRNH_1_9";"SAL";"Salt injury";"Observe general growth conditions in relation to standard resistance and susceptible checks. Since some soil problems are very heterogenous in the field, several replications may be needed to obtain precise reading.";"integer";"FALSE";"observation";;"Salt injury";;"SES 4th Ed. 1996";;"At growth stage: 3-4";"Scale (Alkali & salt injury)\n\n1- Growth and tillering nearly normal\n3= Growth nearly normal but there is some reduction in tillering and some leaves discolored (alkali)/whitish and tolled (salt)\n5= Growth and tillering reduced; most leaves discolored (alkali)/rolled (salt); only a few elongating\n7= Growth completely ceases; most leaves dry; some plant dying\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;"Leaf is counted as discolored or dead if more than half of its area if discolored or dead.";;"added by consie"
+;"SALTOL";"salt tolerance";"Tolerance to the high salt content in the growth medium. [CO:rs]";;"FALSE";"observation";;"Salt tolerance";"CO_320:0000066";"Crop Ontology";;;;;;;;;;"stress";"Sal;salinity tolerance;salt injury;salt sensitivity";;;"added by consie"
+"SCT_SCOR_0_2";"Sct";"scent";;"integer";"FALSE";"observation";;"scent";;"SES 4th Ed. 1996";;"at growth stage: 6-9";"Code (At flowering or at maturity - by cooking test)\n\n0= Nonscented\n1= Lightly scented\n2= Scented";;"categorical";;;0;2;"grain quality";;;;"added by consie"
+;"PnBr";"secondary branching of panicles";"The extent of secondary branching usually determines the shape and compactness of the panicle. [CO:rs]";"integer";"FALSE";;"active";"Secondary Branching Of Panicles";"CO_320:0000421";;;;"0 Absent\n1 Light\n2 Heavy\n3 Clustered. [SES:111]";;"categorical";;;0;3;"morphological";"secondary branching of inflorescence";;;
+"SG_PERC";;"seed germination";"The physiological and developmental changes that occur in a seed commencing with water uptake (imbibition) and terminating with the elongation of the embryonic axis. [CO:rs]";"float";"FALSE";"observation";;"Seed germination";"CO_320:0000086";"Crop Ontology";;;"% germinated seeds";;"continuous";;;;;"agronomic";;;;"added by consie"
+;"SOURCE";"Seed Source";"a human-readable description of the seeds used by a study entry";"character varying";"FALSE";"metadata";"active";"Seed Source";;"IRIS";;;;;"continuous";;;;;"design factor";;;;"added by weusebio"
+"SEEDING_DATE_CONT";"SEEDING_DATE";"Seeding Date";"Date of seeding";"integer";"FALSE";"metadata";"active";"Seeding date";;"IRIS";;;"ICIS date format";;"continuous";;;;;"design factor";;;;"added by weusebio"
+;;"seedling height";"Actual measurements of 10 seedlings in centimeters, from the base of the shoot to the tip of the tallest leaf blade. [CO:rs]";"integer";"FALSE";;"active";"Seedling Height";"CO_320:0000228";;;"Measured from the base of the shoot to the tip of the tallest leaf blade, to nearest cm. Average of 10 seedlings. Stage: 5-leaf stage. [RD:7.3.2]";"3 Short (<30 cm)\n5 Intermediate (~45 cm)\n7 Tall (>60 cm). [RD:7.3.2]";;"categorical";;;3;7;"morphological";"SH";;;
+;;"seedling height";"Actual measurements of 10 seedlings in centimeters, from the base of the shoot to the tip of the tallest leaf blade. [CO:rs]";"float";"FALSE";;"active";"Seedling Height";"CO_320:0000233";"SES 4th editon 1996";;"Measured from the base of the shoot to the tip of the tallest leaf blade, to nearest cm. Average of 10 seedlings. Stage: 5-leaf stage. [RD:7.3.2]";"Measured in cm. [RD:7.3.2]";;"continuous";;;;;"morphological";"SH";;;"weusebio"
+;;"seedling height";"Actual measurements of 10 seedlings in centimeters, from the base of the shoot to the tip of the tallest leaf blade. [CO:rs]";"integer";"FALSE";;"active";"Seedling Height";"CO_320:0000228";"Crop Ontology";;"Measured from the base of the shoot to the tip of the tallest leaf blade, to nearest cm. Average of 10 seedlings. Stage: 5-leaf stage. [RD:7.3.2]";"3= Short (<30 cm)\n5= Intermediate (~45 cm)\n7=Tall (>60 cm)";;"categorical";;;;;"morphological";"SH";;;"added by weusebio"
+"VG_SCOR_1_9";"VG";"Seedling vigor";;"integer";"FALSE";"observation";"active";"Seedling Vigor";"CO_320:0000077";"Crop Ontology";;;"1= Extra vigorous (very fast growing; plants at 5-6 leaf stage have 2 or more tillers in majority of population)\n3= Vigorous (fast growing; plants at 4-5 stage have 1-2 tillers in majority of population)\n5= Normal (plant at 4-leaf stage)\n7= Weak (plants somewhat stunted; 3-4 leaves; thin population; no tiller formation)\n9= Very weak (stunted growth; yellowing of leaves).";;"categorical";;;1;9;"agronomic";"germination vigor;GRVG;plant vigor;PLVG;SDVG;seedling vigor;Vg";;;"added by consie"
+;"VG";"Seedling/vegetative vigor";"Several factors may interact, influencing seedling vigor (e.g. tillering ability, plant heighjt, etc.). Use this scale for evaluating genetic material and varieties under stress and non-stress conditions. At growth stage, seedling vigor: 2, vegetative vigor: 3.";"integer";"FALSE";"observation";"active";"Seelding/Vegetative vigor";;"SES 4th Ed. 1996";;;"1= Extra vigorous (very fast growing; plants at 5 leaf stage have 2 or more tillers in majority of population)\n3= Vigorous (fast growing; plants at 4-5 leaf stage have 1-2 tillers in majority of population)\n5= Normal (plant at 4-leaf stage)\n7= Weak (plants somewhat stunted; 3-4 leaves; thin population; no tiller formation)\n9= Very weak (stunted growth; yellowing of leaves).";;"categorical";;;1;9;"agronomic";"seedling/vegetative vigor";;;"added by consie"
+;"VG";"Seedling/vegetative vigor";"Several factors may interact, influencing seedling vigor (e.g. tillering ability, plant height, leaf number, leaf area, leaf greenness, etc.). Use this scale for evaluating genetic material and varieties under stress and non-stress conditions. At growth stage, seedling vigor: 2, vegetative vigor: 3.";"integer";"FALSE";"observation";"active";"Seedling/Vegetative Vigor";;"SES 5th Ed. 2013";;;"1= Extra vigorous (very fast growing; plants at 5-6 leaf stage have 2 or more tillers in majority of population)\n3= Vigorous (fast growing; plants at 4-5 stage have 1-2 tillers in majority of population)\n5= Normal (plant at 4-leaf stage)\n7= Weak (plants somewhat stunted; 3-4 leaves; thin population; no tiller formation)\n9= Very weak (stunted growth; yellowing of leaves).";;"categorical";;;1;9;"agronomic";"seedling/vegetative vigor";;;"added by consie"
+"SHB_SCOR_0_9";"ShB";"sheath blight";"The trait is scored for the plant response to the agent Thanethoporus cucumeris (Rhizoctonia solani) causing narrow sheath blight. [CO:rs]\n\nSymptoms: Grayish-green lesions may enlarge and coalesce with other lesions, mostly on lower leaf sheaths, but occasionally on the leaves.";"integer";"FALSE";"observation";;"Sheath Blight";"CO_320:0000189";"Crop Ontology";;;"SCALE (relative lesion height: disease progress relative to plant height; Ahn and Mew, 1986)\n0= No infection observed\n1= Lesions limited to lower 20% of the plant height\n3= 20-30%\n5= 31-45%\n7= 46-65%\n9= More than 65%. [SES:37]";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"sheath rot";"The trait is scored for the plant response to the agent Soracladium oryzae causing sheath rot. [CO:rs]\n\nSymptoms: Oblong or irregular brown to grey lesions on the leaf sheath near panicle; sometimes coalescing to prevent emergence of panicle.";"integer";"FALSE";"observation";;"Sheath rot";"CO_320:0000185";"Crop Ontology";;"At growth stage: 7-9";"SCALE (Incidence: % diseased tillers)\n0= No disease observed\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%. [SES:38]";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"ShR";"sheath rot";"Causal agent: Sarocladium oryzae.\n\nSymptoms: Obling or irregular brown to grey lesions on the lead sheath near panicle; somtimes coalescing to prevent emergence of panicle.";"integer";"FALSE";"observation";;"Sheath rot";;"SES 4th Ed. 1996";;"At growth stage: 7-9";"Scale (Incidence of severely affected tillers)\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5= 6-25%\7= 26-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"SpFert";"spikelet fertility";"The abundance of well-developed spikelets as a percentage of the total number of spikelets on five representative panicles. At growth stage: 9 [RD:7.5.14.]";"integer";"FALSE";"observation";"active";"Spikelet Fertility";"CO_320:0000303";"Crop Ontology";;"Determined by pressing the spikelets with the fingers and counting those that have no grains or the percent seed setting."" [CO:rs]";"1= Completely sterile (0%)\n2= Highly sterile (1-49%)\n3= Partly sterile (50-74%)\n4= Fertile (75-90%)\n5= Highly fertile (>90%).";;"categorical";;;1;5;"agronomic";"fertile spikelets;SpFert";;;"added by consie"
+;"SpFert";"spikelet fertility";"At growth stage: 9";"integer";"FALSE";"observation";"active";"Spikelet Fertility";;"SES 4th Ed. 1996";;"Identify the fertile spikelets by pressing the spikelets with the fingers and noting those that have no grains.";"1= Highly fertile (>90%)\n3= Fertile (75-89%)\n5= Partly sterile (50-74%)\n7= Highly sterile (<50% to trace)\n9= (0%)";;"categorical";;;1;9;"agronomic";;;;"added by consie"
+;;"spikelet sterility";;"integer";"FALSE";"observation";"active";"Spikelet Sterility";"CO_320:000032";"Crop Ontology";;;"1= Completely sterile 100\n3= Highly sterile 99.0-99.9\n5= Sterile 95.0-98.9\n7= Partially sterile 70.0-94.9\n9= Partially fertile to fertile <70. [SES:21B]";;"categorical";;;1;9;"hybrid";;;;"added by consie"
+;;"spikelet sterility";"This trait of male sterile line is monitored at growth stages 8 and 9. ";"integer";"FALSE";"observation";"active";"Spikelet Sterility";;"SES 4th Ed. 1996";;"Two primary panicles of at least 50 plants of a male sterile line are bagged with glassine bags at growth stage 5-6 before their anthesis begins. Filled and unfilled spikelets of the bagged panicles are counted. A male sterile line is considered stable if its pollen and/or spikelets sterility ranges from scale 1 to 3. Otherwise, it is considered unstable.";"1= Completely sterile 100\n3= Highly sterile 99.0-99.9\n5= Sterile 95.0-98.9\n7= Partially sterile 70.0-94.9\n9= Partially fertile to fertile <70";;"categorical";;;1;9;"hybrid";;;;"added by consie"
+;;"stem borer damage";"The trait is scored for the plant damage caused by stem borers, Chilo suppressalis (striped), C. polychrysus (dark headed), Rupela albinella (South American white), Scirpophaga incertulas (yellow), S innotata (white), Sesamia inferens (pink), Maliarpha separatella (african whiteheads), Diopsis macrophthalma (stalked-eyed fly), and several other species. [CO:rs]";"integer";"FALSE";"observation";;"Stem borer damage";"CO_320:0000208";"Crop Ontology";;"At growth stage: 3-5 (deadhearts); 8-9 (white heads)";"SCALE (Deadhearts)\n0= No injury\n1= 1-10%\n3= 11-20%\n5= 21-30%\n7= 31-60%\n61% and above. [SES:63]";;"categorical";;;0;7;"stress";"stem borer deadheart;striped stem borer;yellow stem borer";;;"added by consie"
+"SB_DEAD_0_9";"SB";"stem borers";"Causal agent: Chilo suppressalis (striped); C. polychrysus (dark headed); Rupela albinella (South American white); Scirpophaga incertulas (yellow); S. Innotata (white); Sesamia inferens (pink); Maliarpha separatella (African whiteheads); Diopsis macrophthalma (Stalked-eyed fly); and several other species.";"integer";"FALSE";"observation";;"stem borers";;"SES 4th Ed. 1996";;"Stem dissections from 10 hills of susceptible checks are necessary at maximum tillering, panicle initiation and late ripening, in order to identify SB species and to assess more accurately the actual incidence of stem damage.\n\n\nAt growth stage: 3-5 (deadhearts)\n8-9 (whiteheads)";"Scale (Deadhearts)\n0= No damage\n1= 1-10%\n3= 11-20%\n5= 21-30%\n7= 31-60%\n9= 61% and above";;"categorical";;;0;9;"stress";;"Deadhearts and whiteheads in the susceptible check should average more than 20 and 10%, respectively, of infested tillers for the test to be considered valid. Percentage of susceptible check should be recorded. Percentage of deadhearts and whiteheads is based on tiller count and productive tillers (panicles), respectively. For Diopsis spp., it is not necessary to estimate whiteheads since infestation occurs usually at growth stages 2-4. For Maliarpha separatella, however, stem dissection is the only way to accurately estimate both the damage  and incidence. Ten to 50 hills are dissected and percentage infested tiller are rated in accordance with the scale for deadhearts. Unlike whiteheads, infested tillers do produce some panicles and so the relationships between whiteheads/infested tillers and yield are not quite the same. For deepwater rice, make dissections of 20 or more tillers per plot or row at growth stages 6-8 and count the numbers of infested (or damaged) tillers. Apply the above index using the numbers of deadhearts. Scoring for whiteheads is of little value in deepwater rice.";;"added by consie"
+"SB_WHITE_0_9";"SB";"stem borers";"Causal agent: Chilo suppressalis (striped); C. polychrysus (dark headed); Rupela albinella (South American white); Scirpophaga incertulas (yellow); S. Innotata (white); Sesamia inferens (pink); Maliarpha separatella (African whiteheads); Diopsis macrophthalma (Stalked-eyed fly); and several other species.";"integer";"FALSE";"observation";;"stem borers";;"SES 4th Ed. 1996";;"Stem dissections from 10 hills of susceptible checks are necessary at maximum tillering, panicle initiation and late ripening, in order to identify SB species and to assess more accurately the actual incidence of stem damage.\n\n\nAt growth stage: 3-5 (deadhearts)\n8-9 (whiteheads)";"Scale (Whiteheads)\n0= No damage\n1= 1-5%\n3= 6-10%\n5= 11-15%\n7= 16-25%\n9= 26% and above";;"categorical";;;0;9;"stress";;"Deadhearts and whiteheads in the susceptible check should average more than 20 and 10%, respectively, of infested tillers for the test to be considered valid. Percentage of susceptible check should be recorded. Percentage of deadhearts and whiteheads is based on tiller count and productive tillers (panicles), respectively. For Diopsis spp., it is not necessary to estimate whiteheads since infestation occurs usually at growth stages 2-4. For Maliarpha separatella, however, stem dissection is the only way to accurately estimate both the damage  and incidence. Ten to 50 hills are dissected and percentage infested tiller are rated in accordance with the scale for deadhearts. Unlike whiteheads, infested tillers do produce some panicles and so the relationships between whiteheads/infested tillers and yield are not quite the same. For deepwater rice, make dissections of 20 or more tillers per plot or row at growth stages 6-8 and count the numbers of infested (or damaged) tillers. Apply the above index using the numbers of deadhearts. Scoring for whiteheads is of little value in deepwater rice.";;"added by consie"
+;;"stem rot";;"integer";"FALSE";"observation";;"stem rot";"CO_320:0000186";"Crop Ontology";;;"SCALE (Incidence: percentage of infected tillers)\n0= No disease observed\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%. [SES:42]";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"SR";"stem rot";"Causal agent: Magnaporthe salvinii (Nakataea sigmoidea, Sclerotium oryzae), and Helminthosporium sigmoideum var. irregulare.\n\nSymptoms: Dar lesions develop on the stems near the water line. Small, dark bodies (sclerotia) develop, weaken the stem, and cause lodging.";"integer";"FALSE";"observation";;"stem rot";;"SES 4th Ed. 1996";;"At growth stage: 7-9";"Scale (Stems with lesions and sclerotia)\n\n0= No incidence\n1= Less than 1%\n3= 1-5%\n5= 6-25%\n7= 26-50%\n9= 51-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"SLmC";"sterile lemma color";"Color of the sterile lemma. [CO:rs]";"integer";"FALSE";;"active";"Sterile Lemma Color";"CO_320:0000301";;;"Observe five representative plants. [RD:7.5.13]";"1 020 Straw\n2 040 Gold\n3 070 Red\n4 080 Purple. [RD:7.5.13]";;"categorical";;;1;4;"morphological";;;;
+;"SLmL";"sterile lemma length";"Length of sterile lemma. [CO:rs]";"float";"FALSE";;"active";"Sterile Lemma Length";"CO_320:0000223";;;"Record the average length of five spikelets. For spikelets with symmetrical sterile lemmas (i.e. sterile length the same on both sides), record the length here. For spikelets with asymmetrical sterile lemmas (i.e. sterile lemma on one side longer than that on the other), record here only the length of the shorter sterile lemma. [RD:7.5.10]";"Measured in mm. [RD:7.5.10]";;"continuous";;;;;"morphological";;;;
+;"SLmL";"sterile lemma length";"Length of sterile lemma. [CO:rs]";"integer";"FALSE";;"active";"Sterile Lemma Length";"CO_320:0000224";;;"Record the average length of five spikelets. For spikelets with symmetrical sterile lemmas (i.e. sterile length the same on both sides), record the length here. For spikelets with asymmetrical sterile lemmas (i.e. sterile lemma on one side longer than that on the other), record here only the length of the shorter sterile lemma. [RD:7.5.10]";"3 Short\n5 Medium\n7 Long\n9 Extra long. [RD:7.5.10]";;"categorical";;;3;9;"morphological";;;;
+;;"sterile lemma shape";"Shape of sterile lemma. [CO:rs]";"integer";"FALSE";;"active";"Sterile Lemma Shape";"CO_320:0000299";;;"For wild species. [RD:7.5.12]";"0 Absent\n1 Linear (long and slender)\n2 Subulate or setaceous (linear and tapering to a fine point, set with\nor consisting of bristles)\n3 Triangular (and very small). [RD:7.5.12]";;"categorical";;;0;3;"morphological";;;;
+;"SgC";"stigma color";"Color of stigma. [CO:rs]";"integer";"FALSE";;"active";"Stigma Color";"CO_320:0000226";;;"Observed at anthesis (between 0900 and 1400) using a hand lens. [RD:7.4.2]";"1 010 White\n2 061 Light green\n3 030 Yellow\n4 081 Light purple\n5 080 Purple. [RD:7.4.2]";;"categorical";;;1;5;"morphological";;;;
+;;"stigma exsertion";"This trait is monitored at growth stage 6-7.";"integer";"FALSE";"observation";"active";"stigma exsertion";;"SES 4th Ed. 1996";;"Counting the number of florets which have completed anthesis on a given day and the number of florets showing exserted stigma on one or both sides of the florets and expressed as percent stigma exsertion.";"1= above 70\n3= 41-70\n5= 21-40\n7= 11-20\n9= 0-10";;"categorical";;;1;9;"hybrid";;;;"added by consie"
+"SUB_GRNH_1_9";;"submergence tolerance";;"integer";"FALSE";"observation";;"Submergence Tolerance";"CO_320:0000067";"Crop Ontology";;"Greenhouse screening: For greenhouse screening count or % survival (S) of test entries and resistant control entry such as FR13A. Compute for % comparative survival value as follows: % S of entry / % S of control x 100. At growth stage: 2.\n\n\nField evaluation: The period of submergence varies and often is not under full experimental control. Record actual % of plants that survived.";"SCALE (% comparative survival)\n1= 100\n3= 95-99\n5= 75-94\n7= 50-74\n9= 0-49. [SES:86]";;"categorical";;;1;9;"stress";"submergence sensitivity";;;"added by consie"
+"SUB1_FLD_1_9";"SUB1";"submergence tolerance";"Field evaluation";"integer";"FALSE";"observation";;"Submergence Tolerance";;;;"Field evaluation: The period of submergence varies and often is not under full experimental control. Record actual % of plants that survived.";"SCALE (% comparative survival)\n1= 100\n3= 95-99\n5= 75-94\n7= 50-74\n9= 0-49.";;"categorical";;;1;9;"stress";;;;"added by consie"
+"T1_CONT";"T1";"T1 fertilizer";"T1 fertilizer used";"character varying";"FALSE";"metadata";;"T1 fertilizer";;;;"Record topdress 1 fertilizer used";;;"continuous";;;;;"field management";"Topdress 1";;;"added by consie"
+"Amt_T1_CONT";"Amount_T1";"T1 fertilizer amount";"Amount of T1 fertilizer used";"character varying";"FALSE";"metadata";;"T1 fertilizer amount";;;;"Record the amount of topdress 1 fertilizer";"Measured in grams.";;"continuous";;;;;"field management";;;;"added by consie"
+"Date_T1_CONT";"Date_T1";"T1 fertilizer application date";"Date of T1 fertilizer application";"character varying";"FALSE";"metadata";;"T1 fertilizer application date";;;;"Record the date of topdress 1 application";;;"continuous";;;;;"field management";;;;"added by consie"
+"T2_CONT";"T2";"T2 fertilizer";"T2 fertilizer used";"character varying";"FALSE";"metadata";;"T2 fertilizer";;;;"Record topdress 2 fertilizer used";;;"continuous";;;;;"field management";"Topdress 2";;;"added by consie"
+"Amt_T2_CONT";"Amount_T2";"T2 fertilizer amount";"Amount of T2 fertilizer used";"character varying";"FALSE";"metadata";;"T2 fertilizer amount";;;;"Record the amount of topdress 2 fertilizer";"Measured in grams";;"continuous";;;;;"field management";;;;"added by consie"
+"Date_T2_CONT";"Date_T2";"T2 fertilizer application date";"Date of T2 fertilizer application";"character varying";"FALSE";"metadata";;"T2 fertilizer application date";;;;"Record the date of topdress 2 application";;;"continuous";;;;;"field management";;;;"added by consie"
+;;"thrips";"Causal agent: Stenchaetothrips biformis";"integer";"FALSE";"observation";;"thrips";;"SES 4th Ed. 1996";;;"1= Rolling of terminal 1/3 area of 1st leaf\n3= Rolling of terminal 1/3-1/2 area of 1st and 2nd leaves\n5= Rolling of terminal 1/2 area of 1st, 2nd, and 3rd leaves; yellowing of leaf tips\n7= Rolling of entire length of all leaves; pronounced yellowing\n9= Complete plant wilting, followed by severe yellowing and scorching.";;"categorical";;;1;9;"stress";;;;"added by consie"
+;;"thrips damage";"The trait is scored for the plant damage caused by thrips (Stenchaetothrips biformis). [CO:rs]";"integer";"FALSE";"observation";;"thrips damage";"CO_320:0000210";"Crop Ontology";;;"1 Rolling of terminal 1/3 area of 1st leaf\n3 Rolling of terminal 1/3-1/2 area of 1st and 2nd leaves\n5 Rolling of terminal 1/2 area of 1st, 2nd, and 3rd leaves; yellowing of leaf tips\n7 Rolling of entire length of all leaves; pronounced yellowing\n9 Complete plant wilting, followed by severe yellowing and scorching. [SES:69]";;"categorical";;;1;9;"stress";;;;"added by consie"
+"TIL_AVE_CONT";"TIL";"tiller";"Number of tillers";"float";"FALSE";"observation";;"Tiller";;;;"At growth stage 5 - Average of Plant Samples";"Average number of tillers from plant samples";;"categorical";;;;;"stress";;;;"added by consie"
+"TIL_SCOR_1_9";;"tillering";"Degree of tillering is affected by variety, spacing of plants in the field, season of planting, and environmental conditions e.g. nitrogen levels. [CO:rs] At growth stage 5.";"character varying";"FALSE";"observation";"active";"Tillering";"CO_320:0000079";"Crop Ontology";;;"1= Very high (more than 25 tillers/plant)\n3= Good (20/25 tillers/plant)\n5= Medium (10-19 tillers/plant)\n7= Low (5-9 tillers/plant)\n9= Very low (less than 5 tillers/plant). [SES:2]";;"categorical";"ordinal";;"9 Very low (less than 5 tillers/plant)";"1 Very high (more than 25 tillers/plant)";"agronomic";"Ti;tiller number;TN";;"1 Very high (more than 25 tillers/plant);3 Good (20/25 tillers/plant);5 Medium (10-19 tillers/plant);7 Low (5-9 tillers/plant);9 Very low (less than 5 tillers/plant)";"checked by consie"
+"TILL1_CONT";"TILL1";"tillering";"Number of tillers from sample 1";"float";"FALSE";"observation";;"Tillering";;"IRIS";;"At growth stage 5 - Plant sample 1";"Number of tillers/plant";;"continuous";;;;;"agronomic";;;;"added by consie"
+"TILL2_CONT";"TILL2";"tillering";"Number of tillers from sample 2";"float";"FALSE";"observation";;"Tillering";;;;"At growth stage 5 - Plant sample 2";"Number of tillers/plant";;"continuous";;;;;"agronomic";;;;"added by consie"
+"TILL3_CONT";"TILL3";"tillering";"Number of tillers from sample 3";"float";"FALSE";"observation";;"Tillering";;"IRIS";;"At growth stage 5 - Plant sample 3";"Number of tillers/plant";;"continuous";;;;;"agronomic";;;;"added by consie"
+"TILL4_CONT";"TILL4";"tillering";"Number of tillers from sample 4";"float";"FALSE";"observation";;"Tillering";;"IRIS";;"At growth stage 5 - Plant sample 4";"Number of tillers/plant";;"continuous";;;;;"agronomic";;;;
+"TILL5_CONT";"TILL5";"tillering";"Number of tillers from sample 5";"float";"FALSE";"observation";;"Tillering";;"IRIS";;"At growth stage 5 - Plant sample 5";"Number of tillers/plant";;"continuous";;;;;"agronomic";;;;
+"TILL6_CONT";"TILL6";"tillering";"Number of tillers from sample 6";"float";"FALSE";"observation";;"Tillering";;"IRIS";;"At growth stage 5 - Plant sample 6";"Number of tillers/plant";;"continuous";;;;;"agronomic";;;;
+"TOTAL_Hill";;"total hill";"Total number of hills in a plot";"float";"FALSE";"observation";;"Total Hill";;"IRIS";;"Count the number of hills per plot";;;"continuous";;;;;;;;;"added by consie"
+"TRANS_DATE_CONT";"TRANS_DATE";"Transplanting Date";"Date of transplanting";"integer";"FALSE";"metadata";"active";"Date of transplanting";;"IRIS";;;"ICIS date format";;"continuous";;;;;"design factor";;;;"added by weusebio"
+;;"udbatta disease";"The trait is scored for the plant response to the agent Balansia oryzae-sativae (Ephelis oryzae) causing udbatta disease. [CO:rs]";"integer";"FALSE";"observation";;"udbatta disease";"CO_320:0000194";"Crop Ontology";;;"SCALE (Incidence: percent infected tillers)\n0= No disease observed\n1= Less than1%\n5= 1-25%\n9= 26-100%. [SES:41]";;"categorical";;;0;9;"stress";;"Symptoms: A white mycelial mat ties panicle branches together so that they emerge as single, small, cylindrical rods.";;"added by consie"
+;"UDb";"udbatta disease";"Causal agent: Balansia oryzae-sativae (Ephelis oryzae).\nSymptoms: A white mycelial mat ties the panicle branches together so that they emerge as single, small, cylindrical rods.";"integer";"FALSE";"observation";;"udbatta disease";;"SES 4th Ed. 1996";;;"Scale (infected panicles or tillers)\n\n0= No incidence\n1= Less than 1%\n5= 1-25%\n9= 26-100%";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"ufra";"The trait is scored for the plant response to the agent Nymphula depunctalis causing ufra. [CO:rs]";"character varying";"FALSE";"observation";;"ufra";"CO_320:0000187";"Crop Ontology";;;"Scale (Incidence percentage of infected tillers)\n0= 0% (may or may not be visible)\n1= 1-2% (visible symptoms)\n3= 21-40% (visible symptoms)\n5= 41-60% (visible symptoms)\n7= 61-80% (visible symptoms)\n81-100% (visible symptoms). [SES:43]";;"categorical";;;0;"81-100%";"stress";;;;"added by consie"
+;"U";"ufra";"Causal agent: the stem nematode Ditylenchus angustus.\nSymptoms: A leaf mottling or chlorotic discoloration in a splash pattern at base of young leaves in stem elongation or mid-tillering stage; brown stains may develop on leaves and sheaths which later intensify to a dark brown color. A characteristic distortion consisting of twisting and withering of young leaves. A distortion of panicles which either remain enclosed within a swollen sheath, partially emerge but are twisted and with unfilled grains, or emerge completely but with unfilled grains and resembling a whitehead.";"integer";"FALSE";"observation";;"ufra";;"SES 4th Ed. 1996";;"At growth stage: 6-7";"Scale (Infected tillers)\n\n0= 0%\n1= 1-20% (may or may not be visible)\n3= 21-40% (visible symptoms)\n5= 41-60% (visible symptoms)\n7= 61-80% (visible symptoms)\n9= 81-100% (visible symptoms)";;"categorical";;;0;9;"stress";;;;"added by consie"
+;;"varietal group";;"integer";"FALSE";;"active";"Varietal Group";"CO_320:0000486";;;;"1= Indica\n2= Japonica (Sinica)\n3= Javanica\n4= Intermediate (hybrids). []";;"categorical";;;1;4;"morphological";"variety group";;;"WEusebio"
+;;"varietal group";;"integer";"FALSE";;"active";"Varietal Group";;"SES 5th editon 2013";;;"1= Indica\n2= Temperate japonica (equivalent to old japonica)\n3= Tropical japonica (equivalent to old javanica\n4= Aus\n5 =Aromatic (basmati-type)\n6= Deepwater\7= Indica-Aus intermediates\n8= Japonica intermediates\9Japonica-aromatic intermediates\n10= Other intermediates. []";;"categorical";;;1;10;"morphological";"variety group";;;"added by Weusebio"
+;"VG";"Vegetative vigor";"Used to evaluate genetic material under stress and non-stress conditions, several factors may interact, influencing the seedling vigor (e.g. tillering ability, plant height, etc). Vegetative Vigor: at growth stage 3.";"integer";"FALSE";"observation";"active";"Vegetative Vigor";"CO_320:0000167";"Crop Ontology";;;;;"categorical";;;;;"agronomic";"vegetative vigor";;;"added by consie"
+"WATER_MGT";"WATER MANAGEMENT";"WATER MANAGEMENT";"Type of water management, whether irrigated or rainfed";"character varying";"FALSE";"metadata";"active";"Water management";;"IRIS";;;"irrigated\n rainfed";;"categorical";;;;;"field management";;;;"added by weusebio"
+"WBPH_GRNH_0_9";"WBPH";"whitebacked planthopper";;"integer";"FALSE";"observation";"active";"Whitebacked planthopper";"CO_320:0000211";"Crop Ontology";;"Greenhouse evaluation";"0= No injury\n1= Very slight injury\n3= First and 2nd leaves with orange tips; slight stunting\n5= More than half the leaves with yellow-orange tips; pronounced stunting\n7= More than half of plants dead; remaining plants severely stunted and wilted\n9= All plants dead. [SES:62]";;"categorical";;;0;9;"stress";;;;"consie"
+"WBPH_FLD_0_9";"WBPH";"whitebacked planthopper";"Causal agent: Sogatella furcifera.\n\nSymptoms: Partial to pronounced yellowing and increasing severity of stunting. Extreme signs are wilting and death of plants. Infested areas in the field may be patchy.";"integer";"FALSE";"observation";;"Whitebacked planthopper";;"SES 4th Ed. 1996";;"At growth stage: 2 (greenhouse)\n3-9 (field)";"0= No damage\n1= Very slight damage\n3= First and 2nd leaves with orange tips: slight stunting\n5= More than half the leaves with yellow-orange tips; pronounced stunting\n7= More than half the plants dead; remaining plants severely stunted and wilter\n9= All plants dead";;"categorical";;;0;9;"stress";;;;"added by consie"
+;"YD";"yellow dwarf";"Causal agent: Mycoplasma.\n\nSymptoms: Pale yellow, droopy leaves, excessive tillering and stunting.\nAt growth stages: 4-6 (greenhouse, on secondary growth after cutting at the base).\nOn ratoon (fields).";;"FALSE";"observation";"active";"Yellow dwarf";;"SES 4th Ed. 1996";;;;;;;;;;"stress";;;;"added by consie"
+;"YD";"yellow dwarf";"Causal agent: Mycoplasma.\n\nSymptoms: Pale yellow, droopy leaves, excessive tillering and stunting.\nAt growth stages: 4-6 (greenhouse, on secondary growth after cutting at the base).\nOn ratoon (fields).";"integer";"FALSE";"observation";"active";"Yellow dwarf";;"SES 5th Ed. 2013";;;"Scale (Severity)\n1= None to few leaves slightly yellow; tillering, height and flowering not affected\n3= Leaves slightly yellow; plants slightly stunted; flowering slightly delayed\n5= Leaves yellow; plants moderately stunted; flowering delayed\n7= Leaves yellow or orange yellow; plants moderately stunted; flowering very much delayed\n9= Leaves orange yellow or orange; plants severely stunted, sometimes dead; flowering very much delayed";;"categorical";;;1;9;"stress";;;;"added by consie"
+;;"yellow mottle";"The trait is scored for the plant response to the agent rice yellow mottle virus (RYMV). [CO:rs]";"integer";"FALSE";"observation";"active";"Yellow mottle";"CO_320:0000357";"Crop Ontology";;;"SCALE (for field test)\n1= No symptom observed\n3= Leaves green but with sparse dots or streaks and less than 5% of height reduction\n5= Leaves green or pale green with mottling and 6% to 25% of height reduction, flowering slightly delayed\n7= Leaves pale yellow or yellow and 26-75% of height reduction, flowering delayed\n9= Leaves turn yellow or orange, more than 75% of height reduction, no flowering or some plants dead.";;"categorical";;;1;9;"stress";"RYMV";;;"added by consie"
+;"ZDef";"zinc deficiency";;;"FALSE";"observation";;"Zinc deficiency";"CO_320:0000069";"Crop Ontology";;;;;"categorical";;;;;"stress";"zinc sensitivity";;;"added by consie"
+"ZDEF_GRNH_1_9";"ZDef";"zinc deficiency";;"integer";"FALSE";"observation";;"Zinc deficiency";;"SES 4th Ed. 1996";;"At growth stage: 2-4";"1= Growth and tillering nearly normal, healthy\n3= Growth and tillering nearly normal, basal leaves slightly discolored\n5= Growth and tillering severely retarded, about half of all leaves brown or yellow\n7= Growth and tillering ceases, most leaves brown or yellow\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;;"added by consie"
+"ZDEF_FLD_1_9";"Zn1";"zinc deficiency";"Observation done in the field";"integer";"FALSE";"observation";;"zinc deficiency";;;;;"1= Growth and tillering nearly normal, healthy\n3= Growth and tillering nearly normal, basal leaves slightly discolored\n5= Growth and tillering severely retarded, about half of all leaves brown or yellow\n7= Growth and tillering ceases, most leaves brown or yellow\n9= Almost all plants dead or dying";;"categorical";;;1;9;"stress";;;;"added by consie"
+"PROGRAM";;"Program";"Program name";"character varying";"TRUE";"identification";;"Program";;;;;;;"discrete";;;;;"study identifier";;;;"added by aflores"
+"PHASE";;"Phase";"Breeding phase name";"character varying";"TRUE";"identification";;"Phase";;;;;;;"discrete";;;;;"study identifier";;;;"added by aflores"
+"PLACE";;"Place";"Place name";"character varying";"TRUE";"identification";;"Place";;;;;;;"discrete";;;;;"study identifier";;;;"added by aflores"
+"YEAR_CONT";"YEAR";"YEAR";"Year when the trial/nursery was conducted";;"TRUE";"identification";;;;;;;;;"continuous";;;;;"study identifier";;;;"added by aflores"
+"SEASON";;"season";"Season";"character varying";"TRUE";"identification";;"Season";;;;;;;"discrete";;;;;"study identifier";;;;"added by aflores"
+"STUDY_NAME";;"study name";"human readable version of the study key";;"TRUE";"identification";;;;;;;;;;;;;;"study identifier";;;;"added by aflores"
+"PROGRAM_ID";;"program id";"Program ID";"integer";"TRUE";"system";;"Program ID";;;;;;;"continuous";;;;;"study system identifier";;;;"added by aflores"
+"PLACE_ID";;"place id";"Place ID";"integer";"TRUE";"system";;"Place ID";;;;;;;"continuous";;;;;"study system identifier";;;;"added by aflores"
+"PHASE_ID";;"phase id";"Phase ID";"integer";"TRUE";"system";;"Phase ID";;;;;;;"continuous";;;;;"study system identifier";;;;"added by aflores"
+"SEASON_ID";;"season id";"Season ID";"integer";"TRUE";"system";;"Season ID";;;;;;;"continuous";;;;;"study system identifier";;;;"added by aflores"
+"STUDY_KEY";;"study key";"derived from master data references";"integer";"TRUE";"system";;"Study key";;;;;;;"continuous";;;;;"study system identifier";;;;"added by aflores"
+"STUDY_TITLE";;"study title";"user defined description of a study";"character varying";"FALSE";"metadata";;"Study_Title";;;;;;;"discrete";;;;;"study metadata";;;;"added by aflores"
+"STUDY_FILE";"STUDY_FILE";"study_file";"study_file";"character varying";"TRUE";"metadata";"active";"Study File";;;;;;;"discrete";;;;;"data import";;;;"added by lgallardo/aflores"
+"ENTRY_FILE";"ENTRY_FILE";"entry_file";"entry_file";"character varying";"TRUE";"metadata";"active";"Entry File";;;;;;;"discrete";;;;;"data import";;;;"added by lgallardo/aflores"
+"PLOT_FILE";"PLOT_FILE";"plot_file";"plot_file";"character varying";"TRUE";"metadata";"active";"Plot File";;;;;;;"discrete";;;;;"data import";;;;"added by lgallardo/aflores"
+"PRODUCTION_PLAN_NAME";"PRODUCTION_PLAN_NAME";"production_plan_name";"production_plan_name";"character varying";"FALSE";"metadata";"active";"Production Plan Name";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BSD_START_DATE";"PLANNED_BSD_START_DATE";"planned bsd start date";"planned bsd start date";"date";"FALSE";"metadata";"active";"Planned BSD Start Date";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BSD_END_DATE";"PLANNED_BSD_END_DATE";"planned bsd end date";"planned bsd end date";"date";"FALSE";"metadata";"active";"Planned BSD End date";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_TEMPERATURE";"PLANNED_TEMPERATURE";"planned temperature";"planned temperature";"float";"FALSE";"metadata";"active";"Planned Temperature";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BSD_PERSON_IN_CHARGE";"PLANNED_BSD_PERSON_IN_CHARGE";"planned bsd person in charge";"planned bsd person in charge";"character varying";"FALSE";"metadata";"active";"Planned BSD Person In Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BSD_REMARKS";"PLANNED_BSD_REMARKS";"planned bsd remarks";"planned bsd remarks";"character varying";"FALSE";"metadata";"active";"Planned BSD Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_CONTAINER_TYPE";"PLANNED_CONTAINER_TYPE";"planned container type";"planned container type";"character varying";"FALSE";"metadata";"active";"Planned Container Type";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_NO_OF_CONTAINERS";"PLANNED_NO_OF_CONTAINERS";"planned no. of containers";"planned no. of containers";"integer";"FALSE";"metadata";"active";"Planned No. of Containers";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_CONTAINER_PERSON_IN_CHARGE";"PLANNED_CONTAINER_PERSON_IN_CHARGE";"planned container person in charge";"planned container person in charge";"character varying";"FALSE";"metadata";"active";"Planned Container Person in Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_CONTAINER_REMARKS";"PLANNED_CONTAINER_REMARKS";"planned container remarks";"planned container remarks";"character varying";"FALSE";"metadata";"active";"Planned Container Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BASAL_DATE";"PLANNED_BASAL_DATE";"planned basal date";"planned basal date";"date";"FALSE";"metadata";"active";"Planned Basal Date";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BASAL_FERTILIZER_TYPE";"PLANNED_BASAL_FERTILIZER_TYPE";"planned basal fertilizer type";"planned basal fertilizer type";"character varying";"FALSE";"metadata";"active";"Planned Basal Fertilizer";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BASAL_AMOUNT";"PLANNED_BASAL_AMOUNT";"planned basal amount";"planned basal amount";"float";"FALSE";"metadata";"active";"Planned Basal Amount";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BASAL_PERSON_IN_CHARGE";"PLANNED_BASAL_PERSON_IN_CHARGE";"planned basal person in charge";"planned basal person in charge";"character varying";"FALSE";"metadata";"active";"Planned Basal Person in Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_BASAL_REMARKS";"PLANNED_BASAL_REMARKS";"planned basal remarks";"planned basal remarks";"character varying";"FALSE";"metadata";"active";"Planned Basal Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_SEEDING_DATE";"PLANNED_SEEDING_DATE";"planned seeding date";"planned seeding date";"date";"FALSE";"metadata";"active";"Planned Seeding Date";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_SEEDING_VOLUME";"PLANNED_SEEDING_VOLUME";"planned seeding volume";"planned seeding volume";"float";"FALSE";"metadata";"active";"Planned Seeding Volume";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_SEEDING_PERSON_IN_CHARGE";"PLANNED_SEEDING_PERSON_IN_CHARGE";"planned seeding person in charge";"planned seeding person in charge";"character varying";"FALSE";"metadata";"active";"Planned Seeding Person in Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_SEEDING_REMARKS";"PLANNED_SEEDING_REMARKS";"planned seeding remarks";"planned seeding remarks";"character varying";"FALSE";"metadata";"active";"Planned Seeding Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T1_DATE";"PLANNED_T1_DATE";"planned t1 date";"planned t1 date";"date";"FALSE";"metadata";"active";"Planned T1 Date";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T1_FERTILIZER_TYPE";"PLANNED_T1_FERTILIZER_TYPE";"planned t1 fertilizer type";"planned t1 fertilizer type";"character varying";"FALSE";"metadata";"active";"Planned T1 Fertilizer Type";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T1_AMOUNT";"PLANNED_T1_AMOUNT";"planned t1 amount";"planned t1 amount";"float";"FALSE";"metadata";"active";"Planned T1 Amount";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T1_PERSON_IN_CHARGE";"PLANNED_T1_PERSON_IN_CHARGE";"planned t1 person in charge";"planned t1 person in charge";"character varying";"FALSE";"metadata";"active";"Planned T1 Person in Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T1_REMARKS";"PLANNED_T1_REMARKS";"planned t1 remarks";"planned t1 remarks";"character varying";"FALSE";"metadata";"active";"Planned T1 Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T2_DATE";"PLANNED_T2_DATE";"planned t2 date";"planned t2 date";"date";"FALSE";"metadata";"active";"Planned T2 Date";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T2_AMOUNT";"PLANNED_T2_AMOUNT";"planned t2 amount";"planned t2 amount";"float";"FALSE";"metadata";"active";"Planned T2 Amount";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T2_PERSON_IN_CHARGE";"PLANNED_T2_PERSON_IN_CHARGE";"planned t2 person in charge";"planned t2 person in charge";"character varying";"FALSE";"metadata";"active";"Planned T2 Person in Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_T2_REMARKS";"PLANNED_T2_REMARKS";"planned t2 remarks";"planned t2 remarks";"character varying";"FALSE";"metadata";"active";"Planned T2 Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_HARVEST_DATE";"PLANNED_HARVEST_DATE";"planned harvest date";"planned harvest date";"date";"FALSE";"metadata";"active";"Planned Harvest Date";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_HARVEST_VOLUME";"PLANNED_HARVEST_VOLUME";"planned harvest volume";"planned harvest volume";"float";"FALSE";"metadata";"active";"Planned Harvest Volume";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_HARVEST_PERSON_IN_CHARGE";"PLANNED_HARVEST_PERSON_IN_CHARGE";"planned harvest person in charge";"planned harvest person in charge";"character varying";"FALSE";"metadata";"active";"Planned Harvest Person in Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_HARVEST_REMARKS";"PLANNED_HARVEST_REMARKS";"planned harvest remarks";"planned harvest remarks";"character varying";"FALSE";"metadata";"active";"Planned Harvest Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_PESTICIDE_DATE";"PLANNED_PESTICIDE_DATE";"planned pesticide date";"planned pesticide date";"date";"FALSE";"metadata";"active";"Planned Pesticide Date";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_TRIMMING_PERSON_IN_CHARGE";"PLANNED_TRIMMING_PERSON_IN_CHARGE";"planned trimming person in charge";"planned trimming person in charge";"character varying";"FALSE";"metadata";"active";"Planned Trimming Person in Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_TRIMMING_REMARKS";"PLANNED_TRIMMING_REMARKS";"planned trimming remarks";"planned trimming remarks";"character varying";"FALSE";"metadata";"active";"Planned Trimming Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_IS_MOVEMENT_OF_TRAYS";"PLANNED_IS_MOVEMENT_OF_TRAYS";"planned is movement of trays";"planned is movement of trays";"boolean";"FALSE";"metadata";"active";"Planned Is Movement of Trays";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_TRAYS_PERSON_IN_CHARGE";"PLANNED_TRAYS_PERSON_IN_CHARGE";"planned trays person in charge";"planned trays person in charge";"character varying";"FALSE";"metadata";"active";"Planned Trays Person in Charge";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_TRAYS_REMARKS";"PLANNED_TRAYS_REMARKS";"planned trays remarks";"planned trays remarks";"character varying";"FALSE";"metadata";"active";"Planned Trays Remarks";;;;;;;"discrete";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_NO_OF_DAYS_BREAKING";"PLANNED_NO_OF_DAYS_BREAKING";"planned no of days breaking";"planned no of days breaking";"integer";"FALSE";"metadata";"active";"Planned No of Days Breaking";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_NO_OF_DAYS_BASAL";"PLANNED_NO_OF_DAYS_BASAL";"plsnned no of days basal";"plsnned no of days basal";"integer";"FALSE";"metadata";"active";"Planned No of Days Basal";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_NO_OF_DAYS_T1";"PLANNED_NO_OF_DAYS_T1";"planned no of days t1";"planned no of days t1";"integer";"FALSE";"metadata";"active";"Planned No of Days T1";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_NO_OF_DAYS_T2";"PLANNED_NO_OF_DAYS_T2";"planned no of days t2";"planned no of days t2";"integer";"FALSE";"metadata";"active";"Planned No of Days T2";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"PLANNED_NO_OF_DAYS_HARVEST";"PLANNED_NO_OF_DAYS_HARVEST";"planned no of days harvest";"planned no of days harvest";"integer";"FALSE";"metadata";"active";"Planned No of Days Harvest";;;;;;;"continuous";;;;;"planned values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BSD_START_DATE";"ACTUAL_BSD_START_DATE";"actual bsd start date";"actual bsd start date";"date";"FALSE";"metadata";"active";"Actual BSD Start Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BSD_END_DATE";"ACTUAL_BSD_END_DATE";"actual bsd end date";"actual bsd end date";"date";"FALSE";"metadata";"active";"Actual BSD End Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_TEMPERATURE";"ACTUAL_TEMPERATURE";"actual temperature";"actual temperature";"float";"FALSE";"metadata";"active";"Actual Temperature";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BSD_PERSON_IN_CHARGE";"ACTUAL_BSD_PERSON_IN_CHARGE";"actual bsd person in charge";"actual bsd person in charge";"character varying";"FALSE";"metadata";"active";"Actual BSD PErson in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BSD_REMARKS";"ACTUAL_BSD_REMARKS";"actual bsd remarks";"actual bsd remarks";"character varying";"FALSE";"metadata";"active";"Actual BSD Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_SEEDING_DATE";"ACTUAL_SEEDING_DATE";"actual seeding date";"actual seeding date";"date";"FALSE";"metadata";"active";"Actual Seeding Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_SEEDING_VOLUME";"ACTUAL_SEEDING_VOLUME";"actual seeding volume";"actual seeding volume";"float";"FALSE";"metadata";"active";"Actual Seeding Volume";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_SEEDING_PERSON_IN_CHARGE";"ACTUAL_SEEDING_PERSON_IN_CHARGE";"actual seeding person in charge";"actual seeding person in charge";"character varying";"FALSE";"metadata";"active";"Actual Seeding Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_SEEDING_REMARKS";"ACTUAL_SEEDING_REMARKS";"actual seeding remarks";"actual seeding remarks";"character varying";"FALSE";"metadata";"active";"Actual Seeding Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T1_DATE";"ACTUAL_T1_DATE";"actual t1 date";"actual t1 date";"date";"FALSE";"metadata";"active";"Actual T1 Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T1_FERTILIZER_TYPE";"ACTUAL_T1_FERTILIZER_TYPE";"actual fertlizer type";"actual fertlizer type";"character varying";"FALSE";"metadata";"active";"Actual T1 Fertlizer Type";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"HILLS_PER_ROW";;"hills per row";"number of hills in a row";"integer";"FALSE";"metadata";;;;;;;;;"continuous";;;;;"plot_size";;;;
+"DIST_BET_HILLS";;"distance between hills";"distance betweed hills in centimeters";"float";"FALSE";"metadata";;;;;;;;;"continuous";;;;;"plot_size";;;;
+"PLOT_AREA_SQM";;"plot size";"plot size in square meters";"float";"FALSE";"metadata";;;;;;;;;"continuous";;;;;"plot_size";;;;
+"PLOT_AREA_HA";;"plot size";"plot size in hectares";"float";"FALSE";"metadata";;;;;;;;;"continuous";;;;;"plot_size";;;;
+;;"analytical software used";"Analytical software used";"character varying";"FALSE";"metadata";;;;;;;;;"discrete";;;;;"study_analysis";;;;
+;;"methods for data analysis";"Methods for data analysis";"character varying";"FALSE";"metadata";;;;;;;;;"discrete";;;;;"study_analysis";;;;
+;;"additional information on data analysis";"Additional information on data analysis.";"character varying";"FALSE";"metadata";;;;;;;;;"discrete";;;;;"study_analysis";;;;
+;;"site mean yield";"Site mean yield";"float";"FALSE";"metadata";;;;;;;;;"continuous";;;;;"study_analysis";;;;
+;;"heritability";"Heritability (broad sense)";"character varying";"FALSE";"metadata";;;;;;;;;"discrete";;;;;"study_analysis";;;;
+;;"lsd";"LSD";"character varying";"FALSE";"metadata";;;;;;;;;"discrete";;;;;"study_analysis";;;;
+"FLD_LOC_ID";;"field location id";"field location ID";"integer";"FALSE";"metadata";;;;;;;;;"continuous";;;;;"study_field";;;;
+"field_area_total";;"field area total";"Total field area (ha)";"float";"FALSE";"metadata";;;;;;;;;"continuous";;;;;"study_field";;;;
+"T3_CONT";"T3";"T3 fertilizer";"T3 fertilizer used";"character varying";"FALSE";"metadata";;"T3 fertilizer";;;;"Record topdress 3 fertilizer used";;;"continuous";;;;;"field management";"Topdress 3";;;
+"Amt_T3_CONT";"Amount_T3";"T3 fertilizer amount";"Amount of T3 fertilizer used";"character varying";"FALSE";"metadata";;"T2 fertilizer amount";;;;"Record the amount of topdress 3 fertilizer";"Measured in grams";;"continuous";;;;;"field management";;;;
+"T4_CONT";"T4";"T4 fertilizer";"T4 fertilizer used";"character varying";"FALSE";"metadata";;"T4 fertilizer";;;;"Record topdress 4 fertilizer used";;;"continuous";;;;;"field management";"Topdress 4";;;
+"Date_T3_CONT";"Date_T3";"T3 fertilizer application date";"Date of T3 fertilizer application";"character varying";"FALSE";"metadata";;"T3 fertilizer application date";;;;"Record the date of topdress 3 application";;;"continuous";;;;;"field management";;;;
+"Date_T4_CONT";"Date_T4";"T4 fertilizer application date";"Date of T3 fertilizer application";"character varying";"FALSE";"metadata";;"T4 fertilizer application date";;;;"Record the date of topdress 4 application";;;"continuous";;;;;"field management";;;;
+"AYLD_CONT";"AYLD";"Plot yield";"Actual yield in a plot";"character varying";"FALSE";"observation";;"Plot yield";;;;"Record the actual yield per plot";"Measured in gm.";;"continuous";;;;;"agronomic";;;;
+"Fix_Lines";;"fix line";"Fix line name assigned";"character varying";"FALSE";"observation";;"Fix line";;;;"include fix line names if available";;;"continuous";;;;;"agronomic";;;;"added by consie"
+"Parentage";;"parentage";"Cross";"character varying";"FALSE";"observation";;"parentage";;;;"Inlcude parents used for crossing";;;"continuous";;;;;"agronomic";;;;"added by consie"
+"FLW_DATE_CONT";"FL Date";"flowering date";"Actual date of flowering";"character varying";"FALSE";"observation";;"flowering date";;;;"Record the date of flowering";;;"continuous";;;;;"agronomic";;;;"added by consie"
+"LR1_SCOR_1_9";"LR1";"leaf roll 1";"Leaf rolling after severe stress 1st reading";"integer";"FALSE";"observation";;"Leaf rolling 1";;;;"At vegetative stage, record leaf roll reading 1";"1 = open\n3 = cup shaped\n5 = almost o shaped\n7 = closed shaped\n9 = completely rolled";;"continuous";;;;;"agronomic";;;;"added by consie"
+"LR2_SCOR_1_9";"LR2";"leaf roll 2";"Leaf rolling after severe stress 2nd reading";"integer";"FALSE";"observation";;"Leaf rolling 2";;;;"At vegetative stage, record leaf roll reading 2";"1 = open\n3 = cup shaped\n5 = almost o shaped\n7 = closed shaped\n9 = completely rolled";;"continuous";;;;;"agronomic";;;;"added by consie"
+"DTH_CONT";"DTH";"days to harvest";"Number of days to harvest";"integer";"FALSE";"observation";;"Days to harvest";;;;"Record the number of days to harvest";;;"continuous";;;;;"agronomic";;;;"added by consie"
+"GRNWT_CONT";"GRNWT";"grain weight";"weight of grain from biomass sample";"integer";"FALSE";"observation";;"Grain weight";;;;"Record grain weith from biomass sample";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"STRWWT_CONT";"STRWWT";"straw weight";"weight of straw from biomass sample";"integer";"FALSE";"observation";;"Straw Weight";;;;"Record straw weight from biomass sample";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"TOTBM_CONT";"TOTALBM";"total biomass";"total biomass sample";"integer";"FALSE";"observation";;"Total Biomass";;;;"Computed as TOTBM = GRNWT + STRWWT";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"HI_CONT";"HI";"harvest index";"harvest index";"integer";"FALSE";"observation";;"Harvest Index";;;;"At harvest computed as HI = GRNWT / TOTBM";;;"continuous";;;;;"agronomic";;;;"added by consie"
+"ADJMC_CONT";"Adj MC";"adjusted moisture content";"moisture content measured after 2 days in the oven";"character varying";"FALSE";"observation";;"Adjusted MC";;;;"Measure MC after 2 days in the oven at 50 degrees";"Measured in %";;"continuous";;;;;"agronomic";;;;"added by consie"
+"ADJYLD1_CONT";"Adj Plotyield 1";"adjusted plotyield 1";"actual plotyield with grain weight";"integer";"FALSE";"observation";;"Adjusted Plotyield 1";;;;"Computed as ADJYLD1 = AYLD + GRNWT";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"ADJYLD2_CONT";"Adj Plotyield 2";"adjusted plotyield 2";"actual plotyield with yield from plants samples";"integer";"FALSE";"observation";;"Adjusted Plotyield 2";;;;"Computed as ADJTLD2 = AYLD + n, where n is the yield from plant samples";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"ADJYLD3_CONT";"Adj Plotyield 3";"adjusted plotyield 3";"actual plotyield with grain weight and panicle or plants samples";"integer";"FALSE";"observation";;"Adjusted Plotyield 3";;;;"Computed as ADJYLD3 = AYLD + GRANWT + n, where n is the yield from plant or panicle samples";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"ADJHVArea_CONT";"Adj Harvest Area";"adjusted harvest area";"using total hills and harvested hills to accurately compute for the harvest area, does not include biomass area in some cases";"integer";"FALSE";"observation";;"Adjusted Harvest Area";;;;"Computed as ADJHVArea = (harvest area * harvested hill) / total hills";"Measured in sqm";;"continuous";;;;;"agronomic";;;"Harvest Area    # of hills\n\n6    150 hills\n4    100 hills\n2    50 hills";"added by consie"
+"YLD_CONT";"Yld";"grain yield";"The grain yield, measured in kilograms per hectare at 14 percent moisture. Growth stage: 9 on rough (paddy) rice. [CO:rs]";"character varying";"FALSE";"observation";"active";"Grain Yield";"CO_320:0000073";"Crop Ontology";;"Area harvested should not be less than 5 m2/plot (at least three border rows should be discarded). Report yield in kilogram per hectare on rough (paddy) rice at 14% moisture. [SES:12]";"kg/ha";;"continuous";;;;;"agronomic";"yield (grain)";;;"checked by consie"
+"YLD_0_CONT";"GYKGPHA";"grain yield per kg/ha";"grain yield without moisture but not equal to 0";"character varying";"FALSE";"observation";;"grain yield per kg/ha";;;;"Computed as YLD = AYLD * (10/ADJHVArea)";"kg/ha";;"continuous";;;;;"agronomic";;;;"added by consie"
+"YLD_1_CONT";"GYKGPHA1";"grain yield per kg/ha1";"grain yield with moisture, Grain Weight not included";"character varying";"FALSE";"observation";;"grain yield per kg/ha1";;;;"Computed as YLD = AYLD * MF * (10/ADJHVArea)";"kg/ha";;"continuous";;;;;"agronomic";;;;"added by consie"
+"YLD_2_CONT";"GYKGPHA2";"grain yield per kg/ha2";"grain yield with any amount of seeds from samples in the study but not including Grain Weight from biomass samples";"character varying";"FALSE";"observation";;"grain yield per kg/ha2";;;;"Computed as YLD = ADJYLD2 * (10/ADJHVArea)";"kg/ha";;"continuous";;;;;"agronomic";;;;"added by consie"
+"YLD_3_CONT";"GYKGPHA3";"grain yield per kg/ha3";"grain yield derived from ADJYLD2 with MC";"character varying";"FALSE";"observation";;"grain yield per kg/ha3";;;;"Computed as YLD = ADJYLD2 * MF * (10/ADJHVArea)";"kg/ha";;"continuous";;;;;"agronomic";;;;"added by consie"
+"YLD_4_CONT";"GYKGPHA4";"grain yield per kg/ha4";"grain yield derived from ADJYLD1 w/o MC";"character varying";"FALSE";"observation";;"grain yield per kg/ha4";;;;"Computed as YLD = ADJYLD1 * (10/ADJHVArea)";"kg/ha";;"continuous";;;;;"agronomic";;;;"added by consie"
+"YLD_5_CONT";"GYKGPHA5";"grain yield per kg/ha5";"grain yield derived from AYLD with moisture and Grain Weight";"character varying";"FALSE";"observation";;"grain yield per kg/ha5";;;;"Computed as YLD = ((AYLD * MF) + GRNWT) * (10/ADJHVArea)";"kg/ha";;"continuous";;;;;"agronomic";;;;"added by consie"
+"YLD_6_CONT";"GYKGPHA6";"grain yield per kg/ha6";"grain yield derived from ADJYLD3 w/o MC";"character varying";"FALSE";"observation";;"grain yield per kg/ha6";;;;"Computed as YLD = ADJYLD3 * (10/ADJHVArea)";"kg/ha";;"continuous";;;;;"agronomic";;;;"added by consie"
+"Field_Row_CONT";"ROW";"Field Row";"horizontal postion of the plot in the field layout";"character varying";"FALSE";"metadata";"active";"Field Row";;;;;;;"continuous";;;;;"field management";;;;"added by koni"
+"Field_Column_CONT";"COLUMN";"Field Column";"vertical position of the plot in the field layout";"character varying";"FALSE";"metadata";"active";"Field Column";;;;;;;"continuous";;;;;"field management";;;;"added by koni"
+"PS10_CONT";"PS10";"plant sample 10";"yield of 10 selected plant samples upon harvest";"character varying";"FALSE";"observation";;"Plant Sample 10";;;;"Weigh yield of 10 plant samples";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"PS15_CONT";"PS15";"plant sample 15";"yield of 15 selected plant samples upon harvest";"character varying";"FALSE";"observation";;"plant sample 15";;;;"Weigh yield of 15 plant samples";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"PS20_CONT";"PS20";"plant sample 20";"yield of 20 selected plant samples upon harvest";"character varying";"FALSE";"observation";;"plant sample 20";;;;"Weigh yield of 20 plant samples";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"PS25_CONT";"PS25";"plant sample 25";"yield of 25 selected plant samples upon harvest";"character varying";"FALSE";"observation";;"plant sample 25";;;;"Weigh yield of 25 plant samples";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"PS50_CONT";"PS50";"plant sample 50";"yield of 50 selected plant samples upon harvest";"character varying";"FALSE";"observation";;"plant sample 50";;;;"Weigh yield of 50 plant samples";"Measured in gms";;"continuous";;;;;"agronomic";;;;"added by consie"
+"VYR_SCOR_1_9";"VYR";"visual yield rating";"visual yield rating";"integer";"FALSE";"observation";;"visual yield rating";;;;;"1 = excellent gr yield\n3 = v.good yield\n5 = good yield (average)\n7 = poor yield\n9 = no yield";;"categorical";;;;;"agronomic";;;;"added by consie"
+"PANNO_CONT";"PANNO";"panicle number";"Panicle number per hill";"integer";"FALSE";"observation";;"panicle number";;;;"Count the number of panicles per hill";;;"continuous";;;;;"agronomic";;;;"added by consie"
+"PRODTILL_CONT";"PRODTILL";"productive tiller";"number of productive tillers";"integer";"FALSE";"observation";;"productive tiller";;;;"Count the number of productive tillers";;;"continuous";;;;;"agronomic";;;;"added by consie"
+"TOTILL_CONT";"TOTTiller";"total tiller";"total number of tillers";"integer";"FALSE";"observation";;"total tiller";;;;"Record the total number of tiller";;;"continuous";;;;;"agronomic";;;;"added by consie"
+"ACTUAL_T1_AMOUNT";"ACTUAL_T1_AMOUNT";"actual t1 amount";"actual t1 amount";"float";"FALSE";"metadata";"active";"Actual T1 Amount";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T1_PERSON_IN_CHARGE";"ACTUAL_T1_PERSON_IN_CHARGE";"actual t1 person in charge";"actual t1 person in charge";"character varying";"FALSE";"metadata";"active";"Actual T1 Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T1_REMARKS";"ACTUAL_T1_REMARKS";"actual t1 remarks";"actual t1 remarks";"character varying";"FALSE";"metadata";"active";"Actual T1 Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T2_DATE";"ACTUAL_T2_DATE";"actual t2 date";"actual t2 date";"date";"FALSE";"metadata";"active";"Actual T2 Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T2_FERTILIZER_TYPE";"ACTUAL_T2_FERTILIZER_TYPE";"actual t2 fertilizer type";"actual t2 fertilizer type";"character varying";"FALSE";"metadata";"active";"Actual T2 Fertilizer Type";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T2_AMOUNT";"ACTUAL_T2_AMOUNT";"actual t2 amount";"actual t2 amount";"float";"FALSE";"metadata";"active";"Actual T2 Amount";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T2_PERSON_IN_CHARGE";"ACTUAL_T2_PERSON_IN_CHARGE";"actual t2 person in charge";"actual t2 person in charge";"character varying";"FALSE";"metadata";"active";"Actual T2 Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_T2_REMARKS";"ACTUAL_T2_REMARKS";"actual t2 remarks";"actual t2 remarks";"character varying";"FALSE";"metadata";"active";"Actual T2 Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_HARVEST_DATE";"ACTUAL_HARVEST_DATE";"actual harvest date";"actual harvest date";"date";"FALSE";"metadata";"active";"Actual T2 Harvest Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_HARVEST_VOLUME";"ACTUAL_HARVEST_VOLUME";"actual harvest volume";"actual harvest volume";"float";"FALSE";"metadata";"active";"Actual Harvest Volume";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_HARVEST_PERSON_IN_CHARGE";"ACTUAL_HARVEST_PERSON_IN_CHARGE";"actual harvest person in charge";"actual harvest person in charge";"character varying";"FALSE";"metadata";"active";"Actual Harvest Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_HARVEST_REMARKS";"ACTUAL_HARVEST_REMARKS";"actual harvest remarks";"actual harvest remarks";"character varying";"FALSE";"metadata";"active";"Actual Harvest Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_PESTICIDE_DATE";"ACTUAL_PESTICIDE_DATE";"actual pesticide date";"actual pesticide date";"date";"FALSE";"metadata";"active";"Actual Pesticide Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_PESTICIDE";"ACTUAL_PESTICIDE";"actual pesticide";"actual pesticide";"character varying";"FALSE";"metadata";"active";"Actual Pesticide";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_PESTICIDE_PERSON_IN_CHARGE";"ACTUAL_PESTICIDE_PERSON_IN_CHARGE";"actual pesticide person in charge";"actual pesticide person in charge";"character varying";"FALSE";"metadata";"active";"Actual Pesticide Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_PESTICIDE_REMARKS";"ACTUAL_PESTICIDE_REMARKS";"actual pesticide remarks";"actual pesticide remarks";"chracter varying";"FALSE";"metadata";"active";"Actual Pesticide Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"HAS_PRODUCTION_PLAN";"HAS_PRODUCTION_PLAN";"has production plan";"has production plan";"boolean";"FALSE";"metadata";"active";"Has Production Plan";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"LAST_TASK_DONE";"LAST_TASK_DONE";"last task done";"last task done";"character varying";"FALSE";"metadata";"active";"Last Task Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"BREAK_SEED_DORMANCY_DONE";"BREAK_SEED_DORMANCY_DONE";"break seed dormancy done";"break seed dormancy done";"character varying";"FALSE";"metadata";"active";"Break Seed Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"SEEDING_DONE";"SEEDING_DONE";"seeding done";"seeding done";"character varying";"FALSE";"metadata";"active";"Seeding Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"HARVEST_DONE";"HARVEST_DONE";"harvest done";"harvest done";"character varying";"FALSE";"metadata";"active";"Harvest Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"T1_TASK_DONE";"T1_TASK_DONE";"t1 task done";"t1 task done";"character varying";"FALSE";"metadata";"active";"T1 Task Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"BASAL_TASK_DONE";"BASAL_TASK_DONE";"basal task done";"basal task done";"character varying";"FALSE";"metadata";"active";"Basal Task Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"T2_TASK_DONE";"T2_TASK_DONE";"t2 task done";"t2 task done";"character varying";"FALSE";"metadata";"active";"T2 Task Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"PESTICIDE_TASK_DONE";"PESTICIDE_TASK_DONE";"pesticide task done";"pesticide task done";"character varying";"FALSE";"metadata";"active";"Pesticide Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"DRYING_DONE";"DRYING_DONE";"drying done";"drying done";"character varying";"FALSE";"metadata";"active";"Drying Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"SEND_SEEDS_DONE";"SEND_SEEDS_DONE";"send seeds done";"send seeds done";"character varying";"FALSE";"metadata";"active";"Send Seeds Done";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"RGA_F1_ENTRY_ID";"RGA_F1_ENTRY_ID";"rga f1 entry id";"rga f1 entry id";"integer";"FALSE";"metadata";"active";"Rga F1 Entry Id";;;;;;;"continuous";;;;;"rga status";;;;"added by etenorio/aflores"
+"RGA_PREV_GEN_ENTRY_ID";"RGA_PREV_GEN_ENTRY_ID";"rga prev gen entry id";"rga prev gen entry id";"integer";"FALSE";"metadata";"active";"Rga Prev Gen Entry Id";;;;;;;"continuous";;;;;"rga status";;;;"added by etenorio/aflores"
+"TARGET_GENERATION";"TARGET_GENERATION";"target generation";"target generation";"integer";"FALSE";"metadata";"active";"Target Generation";;;;;;;"continuous";;;;;"rga status";;;;"added by etenorio/aflores"
+"NEXT_ENTRY_ID";"NEXT_ENTRY_ID";"next entry id";"next entry id";"integer";"FALSE";"metadata";"active";"Next Entry Id";;;;;;;"continuous";;;;;"rga status";;;;"added by etenorio/aflores"
+"HAS_REACHED_GENERATION";"HAS_REACHED_GENERATION";"has reached generation";"has reached generation";"boolean";"FALSE";"metadata";"active";"Has Reached Generation";;;;;;;"discrete";;;;;"rga status";;;;"added by etenorio/aflores"
+"SOURCE_STUDY_ID";"SOURCE_STUDY_ID";"source study id";"source study id";"integer";"FALSE";"metadata";"active";"Source Study Id";;;;;;;"continuous";;;;;"rga status";;;;"added by etenorio/aflores"
+"TARGET_NO_OF_PLANTS";"TARGET_NO_OF_PLANTS";"target no of plants";"target no of plants";"integer";"FALSE";"metadata";"active";"Target No of Plants";;;;;;;"continuous";;;;;"rga status";;;;"added by etenorio/aflores"
+"SEND_SEEDS_DATE";"SEND_SEEDS_DATE";"send seeds date";"send seeds date";"date";"FALSE";"metadata";"active";"Send Seeds Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"SEND_SEEDS_REMARK";"SEND_SEEDS_REMARK";"send seeds remark";"send seeds remark";"character varying";"FALSE";"metadata";"active";"Send Seeds Remark";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"SEND_SEEDS_PERSON_IN_CHARGE";"SEND_SEEDS_PERSON_IN_CHARGE";"send seeds person in charge";"send seeds person in charge";"character varying";"FALSE";"metadata";"active";"Send Seeds Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"SEED_PREPARATION_STATUS";"SEED_PREPARATION_STATUS";"seed preparation status";"seed preparation status";"character varying";FALSE;"metadata";"active";"Seed Preparation Status";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"IS_PROGENY_LIST_ACCEPTED";"IS_PROGENY_LIST_ACCEPTED";"is progeny list accepted";"is progeny list accepted";"boolean";FALSE;"metadata";"active";"Is Progeny List Accepted";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"IS_TASK_STARTED";"IS_TASK_STARTED";"is task started";"is task started";"boolean";FALSE;"metadata";"active";"Is Task Started";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"IS_PROGENY_SELECTED";"IS_PROGENY_SELECTED";"is progeny selected";"is progeny selected";"boolean";FALSE;"metadata";"active";"Is Progeny Selected";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_DRYING_DATE";"ACTUAL_DRYING_DATE";"actual drying date";"actual drying date";"date";FALSE;"metadata";"active";"Actual Drying Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_DRYING_HOURS";"ACTUAL_DRYING_HOURS";"actual drying hours";"actual drying hours";"float";FALSE;"metadata";"active";"Actual Drying Hours";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_DRYING_PERSON_IN_CHARGE";"ACTUAL_DRYING_PERSON_IN_CHARGE";"actual drying person in charge";"actual drying person in charge";"character varying";FALSE;"metadata";"active";"Actual Drying Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_CONTAINER_TYPE";"ACTUAL_CONTAINER_TYPE";"actual container type";"actual container type";"character varying";FALSE;"metadata";"active";"Actual Container Type";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_CONTAINER_COUNT";"ACTUAL_CONTAINER_COUNT";"actual container count";"actual container count";"integer";FALSE;"metadata";"active";"Actual Container Count";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_DATE";"ACTUAL_BASAL_DATE";"actual basal date";"actual basal date";"date";FALSE;"metadata";"active";"Actual Basal Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_FERTILIZER_TYPE";"ACTUAL_BASAL_FERTILIZER_TYPE";"actual basal fertilizer type";"actual basal fertilizer type";"character varying";FALSE;"metadata";"active";"Actual Basal Fertlizer Type";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_AMOUNT";"ACTUAL_BASAL_AMOUNT";"actual basal amount";"actual basal amount";"float";FALSE;"metadata";"active";"Actual Basal Amount";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_PERSON_IN_CHARGE";"ACTUAL_BASAL_PERSON_IN_CHARGE";"actual basal person in charge";"actual basal person in charge";"character varying";FALSE;"metadata";"active";"Actual Basal Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_REMARKS";"ACTUAL_BASAL_REMARKS";"actual basal remarks";"actual basal remarks";"character varying";FALSE;"metadata";"active";"Actual Basal Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"STUDY_NUMBER";;"study number";"Number of study to distinguish it from studies within the same program, place, phase, year, and season";"integer";"TRUE";"system";;"Study number";;;;;;;"continuous";;;;;"study system identifier";;;;"added by aflores"
+"STUDY";;"study";"short name of a study, historically compatible, no manual editing";;"TRUE";"identification";;;;;;;;;;;;;;"study identifier";;;;"added by aflores"
+"STUDY_START_DATE";"STUDY_START_DATE";"study start date";"Study start date";"date";FALSE;"metadata";"active";"Start date";;;;;;;"discrete";;;;;"study metadata";;;;"added by aflores"
+"STUDY_END_DATE";"STUDY_END_DATE";"study end date";"Study end date";"date";FALSE;"metadata";"active";"End date";;;;;;;"discrete";;;;;"study metadata";;;;"added by aflores"
+"REMARKS";;"remarks";"Remarks";"text";"FALSE";"metadata";;"Remarks";;;;;;;"discrete";;;;;"metadata";;;;"added by aflores"
+"REP_COUNT";;"replication count";"number of replications in a study";"integer";"FALSE";"metadata";;"No. of replications";;;;;;;"continuous";;;;;"study metadata";;;;"added by aflores"
+"ENTRY_KEY";;"entry key";"unique indentifier of a study entry?";"numeric";"TRUE";"system";;;;;;;;;"continuous";;;;;"entry system identifier";;;;"added by aflores"
+"PLOT_KEY";;"plot key";"Plot key";"numeric";"TRUE";"system";;;;;;;;;"continuous";;;;;"plot system identifier";;;;"added by aflores"
+"REP";;"rep";"Replication number of study entry";"integer";"TRUE";"identification";;"Replication no.";;;;;;;"continuous";;;;;"plot identifier";;;;"added by aflores"
+"Amt_T4_CONT";"Amount_T4";"T4 fertilizer amount";"Amount of T3 fertilizer used";"character varying";"FALSE";"metadata";;"T2 fertilizer amount";;;;"Record the amount of topdress 4 fertilizer";"Measured in grams";;"continuous";;;;;"field management";;;;
+"ENTCODE";"ENTCODE";"entry code";"Code of an entry in a study";"character varying";FALSE;"metadata";;"Entry code";;;;;;;"discrete";;;;;"entry metadata";;;;"added by aflores"
 \.
 
 -- ----------------
@@ -17113,10 +17642,10 @@ comment on column "master"."scale"."unit"
   is 'Unit to use to measure a property';
 
 comment on column "master"."scale"."type"
-  is 'categorical; continuous; discrete';
+  is 'Scale type: categorical; continuous; discrete';
 
 comment on column "master"."scale"."level"
-  is 'nominal; ordinal; interval; ratio';
+  is 'Scale level: nominal; ordinal; interval; ratio';
 
 comment on column "master"."scale"."description"
   is 'Description';
@@ -17274,6 +17803,9 @@ comment on column "master"."variable"."variable_set"
 
 comment on column "master"."variable"."synonym"
   is 'Additional entries about the synonyms of the variable';
+
+comment on column "master"."variable"."description"
+  is 'Description';
 
 comment on column "master"."variable"."remarks"
   is 'Additional details';
@@ -17545,8 +18077,8 @@ comment on column "master"."program"."abbrev"
 comment on column "master"."program"."name"
   is 'Name identifier';
 
-comment on column "master"."program"."type"
-  is 'Type of program: pipeline, crosscutting';
+comment on column "master"."program"."pipeline_id"
+  is 'Pipeline';
 
 comment on column "master"."program"."description"
   is 'Description';
@@ -17706,6 +18238,72 @@ comment on index "master"."phase_abbrev_idx"
 comment on index "master"."phase_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."scheme"
+  is 'Breeding schemes';
+
+comment on column "master"."scheme"."id"
+  is 'Primary key of the record in the table';
+
+comment on column "master"."scheme"."abbrev"
+  is 'Short name identifier or abbreviation of the record';
+
+comment on column "master"."scheme"."name"
+  is 'Name identifier';
+
+comment on column "master"."scheme"."pipeline_id"
+  is 'Pipeline';
+
+comment on column "master"."scheme"."program_id"
+  is 'Target variety program';
+
+comment on column "master"."scheme"."phase_id"
+  is 'Breeding stage';
+
+comment on column "master"."scheme"."order_number"
+  is 'Order of phase in the program';
+
+comment on column "master"."scheme"."type"
+  is 'Type of breeding scheme: ID, SELECTION';
+
+comment on column "master"."scheme"."description"
+  is 'Description';
+
+comment on column "master"."scheme"."display_name"
+  is 'Name to show to users';
+
+comment on column "master"."scheme"."remarks"
+  is 'Additional details';
+
+comment on column "master"."scheme"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."scheme"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."scheme"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."scheme"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."scheme"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."scheme"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."scheme_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "scheme_creator_id_fkey" on "master"."scheme"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "scheme_modifier_id_fkey" on "master"."scheme"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."scheme_is_void_idx"
+  is 'Index for the is_void column';
+
 comment on table "master"."product"
   is 'Product catalog is a publicly accessible list of the products used and produced in product development programs.
 Every record has a unique key and unique product name. It contains the identity of a material.';
@@ -17715,6 +18313,9 @@ comment on column "master"."product"."id"
 
 comment on column "master"."product"."program_id"
   is 'Program where the product was created; foreign key referring to master.program table';
+
+comment on column "master"."product"."designation"
+  is 'Designation or name of the product';
 
 comment on column "master"."product"."name_type"
   is 'Name type of the designation: breeding_line, fixed_line, derivative, common, cultivar';
@@ -17778,9 +18379,6 @@ comment on constraint "product_creator_id_fkey" on "master"."product"
 
 comment on constraint "product_modifier_id_fkey" on "master"."product"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
-
-comment on index "master"."product_abbrev_idx"
-  is 'Unique index for the abbrev column';
 
 comment on index "master"."product_is_void_idx"
   is 'Index for the is_void column';
@@ -17893,11 +18491,71 @@ comment on index "master"."product_gid_product_id_idx"
 comment on index "master"."product_gid_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "master"."product_study"
+  is 'Products produced in a study';
+
+comment on column "master"."product_study"."id"
+  is 'Primary key of the record in the table';
+
+comment on column "master"."product_study"."product_id"
+  is 'Produced material';
+
+comment on column "master"."product_study"."study_id"
+  is 'Study where the produced material belongs to';
+
+comment on column "master"."product_study"."entry_id"
+  is 'Entry where the product was harvested from';
+
+comment on column "master"."product_study"."cross_id"
+  is 'Cross where the product is harvested from if applicable';
+
+comment on column "master"."product_study"."remarks"
+  is 'Additional details';
+
+comment on column "master"."product_study"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "master"."product_study"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "master"."product_study"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "master"."product_study"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "master"."product_study"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "master"."product_study"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on constraint "product_study_product_id_fkey" on "master"."product_study"
+  is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
+
+comment on index "master"."product_study_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "product_study_creator_id_fkey" on "master"."product_study"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "product_study_modifier_id_fkey" on "master"."product_study"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "master"."product_study_is_void_idx"
+  is 'Index for the is_void column';
+
 comment on table "master"."product_metadata"
   is 'Additional information about a product';
 
 comment on column "master"."product_metadata"."id"
   is 'Primary key of the record in the table';
+
+comment on column "master"."product_metadata"."variable_id"
+  is 'Metadata variable of the product';
+
+comment on column "master"."product_metadata"."value"
+  is 'Metadata value of the product';
 
 comment on column "master"."product_metadata"."remarks"
   is 'Additional details';
@@ -17998,6 +18656,9 @@ comment on column "master"."place_season"."place_id"
 comment on column "master"."place_season"."season_id"
   is 'Season in a given place';
 
+comment on column "master"."place_season"."order_number"
+  is 'Ordering number';
+
 comment on column "master"."place_season"."remarks"
   is 'Additional details';
 
@@ -18084,6 +18745,15 @@ comment on index "master"."cross_method_is_void_idx"
 
 comment on column "master"."family"."id"
   is 'Primary key of the record in the table';
+
+comment on column "master"."family"."program_id"
+  is 'Product development program';
+
+comment on column "master"."family"."place_id"
+  is 'Place';
+
+comment on column "master"."family"."phase_id"
+  is 'Breeding stage (HB, F1, F2, etc.) or special experiment (RGA, SI, etc.)';
 
 comment on column "master"."family"."female_product_id"
   is 'Product used as female parent in the family';
@@ -18410,7 +19080,7 @@ comment on column "master"."user_item"."id"
   is 'Primary key of the record in the table';
 
 comment on column "master"."user_item"."user_id"
-  is 'User assigned with a role';
+  is 'User assigned with role';
 
 comment on column "master"."user_item"."item_id"
   is 'Item assigned to user';
@@ -18643,6 +19313,15 @@ comment on column "master"."item_role"."notes"
 comment on column "master"."item_role"."is_void"
   is 'Indicator whether the record is deleted or not';
 
+comment on index "master"."item_role_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "item_role_creator_id_fkey" on "master"."item_role"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "item_role_modifier_id_fkey" on "master"."item_role"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
 comment on index "master"."item_role_is_void_idx"
   is 'Index for the is_void column';
 
@@ -18654,6 +19333,9 @@ comment on column "master"."tooltip"."name"
 
 comment on column "master"."tooltip"."value"
   is 'Value of the tooltip';
+
+comment on column "master"."tooltip"."description"
+  is 'Description';
 
 comment on column "master"."tooltip"."remarks"
   is 'Additional details';
@@ -18675,6 +19357,15 @@ comment on column "master"."tooltip"."notes"
 
 comment on column "master"."tooltip"."is_void"
   is 'Indicator whether the record is deleted or not';
+
+comment on index "master"."tooltip_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "tooltip_creator_id_fkey" on "master"."tooltip"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "tooltip_modifier_id_fkey" on "master"."tooltip"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
 comment on index "master"."tooltip_is_void_idx"
   is 'Index for the is_void column';
@@ -18715,6 +19406,15 @@ comment on column "master"."instruction"."notes"
 comment on column "master"."instruction"."is_void"
   is 'Indicator whether the record is deleted or not';
 
+comment on index "master"."instruction_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "instruction_creator_id_fkey" on "master"."instruction"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "instruction_modifier_id_fkey" on "master"."instruction"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
 comment on index "master"."instruction_is_void_idx"
   is 'Index for the is_void column';
 
@@ -18747,9 +19447,6 @@ comment on column "master"."audit"."actor_id"
 
 comment on column "master"."audit"."action_timestamp"
   is 'Timestamp when the action was performed';
-
-comment on column "master"."audit"."remarks"
-  is 'Additional details about the audit record';
 
 comment on column "master"."audit"."status"
   is 'Needs clarification (forgotten why it''s here)';
@@ -18835,7 +19532,7 @@ comment on constraint "changelog_modifier_id_fkey" on "master"."changelog"
 comment on index "master"."changelog_is_void_idx"
   is 'Index for the is_void column';
 
-comment on view "master".""master"."variable_list""
+comment on view "master"."variable_list"
   is 'Master list of variables, with their property, method, and scale values';
 
 comment on table "dictionary"."database"
@@ -19057,6 +19754,9 @@ comment on column "dictionary"."column"."default_value"
 comment on column "dictionary"."column"."comment"
   is 'Additional details';
 
+comment on column "dictionary"."column"."order_number"
+  is 'Ordering number';
+
 comment on column "dictionary"."column"."remarks"
   is 'Additional details';
 
@@ -19126,17 +19826,8 @@ comment on column "dictionary"."constraint"."name"
 comment on column "dictionary"."constraint"."type"
   is 'Primary key (primary_key), foreign key (foreign_key), or check (check) constraint';
 
-comment on column "dictionary"."constraint"."column_id"
-  is 'Subject column of the constraint';
-
 comment on column "dictionary"."constraint"."command"
   is 'SQL body command of the constraint';
-
-comment on column "dictionary"."constraint"."foreign_table_id"
-  is 'Reference table for foreign key constraint only';
-
-comment on column "dictionary"."constraint"."foreign_column_id"
-  is 'Column of the reference table for foreign key constraint only';
 
 comment on column "dictionary"."constraint"."comment"
   is 'Additional details';
@@ -19171,9 +19862,6 @@ comment on constraint "constraint-schema_id_fkey" on "dictionary"."constraint"
 comment on constraint "constraint_table_id_fkey" on "dictionary"."constraint"
   is 'Foreign key constraint for the table_id column, which refers to the id column of the dictionary.table table';
 
-comment on constraint "constraint-column_id_fkey" on "dictionary"."constraint"
-  is 'Foreign key constraint for the column_id column, which refers to the id column of the dictionary.column table';
-
 comment on index "dictionary"."constraint_id_pkey"
   is 'Primary key constraint for the id column';
 
@@ -19187,6 +19875,99 @@ comment on index "dictionary"."constraint_abbrev_idx"
   is 'Unique index for the abbrev column';
 
 comment on index "dictionary"."constraint_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."constraint_column"
+  is 'Column/s subject of constraint';
+
+comment on column "dictionary"."constraint_column"."id"
+  is 'Primary key of the record in the table';
+
+comment on column "dictionary"."constraint_column"."column_id"
+  is 'Subject column of the constraint';
+
+comment on column "dictionary"."constraint_column"."order_number"
+  is 'Ordering number';
+
+comment on column "dictionary"."constraint_column"."remarks"
+  is 'Additional details';
+
+comment on column "dictionary"."constraint_column"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."constraint_column"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."constraint_column"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."constraint_column"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."constraint_column"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."constraint_column"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "dictionary"."constraint_column_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "constraint_column_creator_id_fkey" on "dictionary"."constraint_column"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "constraint_column_modifier_id_fkey" on "dictionary"."constraint_column"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."constraint_column_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."constraint_foreign"
+  is 'Reference tables and columns of constraint';
+
+comment on column "dictionary"."constraint_foreign"."id"
+  is 'Primary key of the record in the table';
+
+comment on column "dictionary"."constraint_foreign"."table_id"
+  is 'Reference talbe of the constraint';
+
+comment on column "dictionary"."constraint_foreign"."column_id"
+  is 'Reference column of the constraint';
+
+comment on column "dictionary"."constraint_foreign"."order_number"
+  is 'Ordering number';
+
+comment on column "dictionary"."constraint_foreign"."remarks"
+  is 'Additional details';
+
+comment on column "dictionary"."constraint_foreign"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."constraint_foreign"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."constraint_foreign"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."constraint_foreign"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."constraint_foreign"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."constraint_foreign"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "dictionary"."constraint_foreign_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "constraint_foreign_creator_id_fkey" on "dictionary"."constraint_foreign"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "constraint_foreign_modifier_id_fkey" on "dictionary"."constraint_foreign"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."constraint_foreign_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "dictionary"."index"
@@ -19209,9 +19990,6 @@ comment on column "dictionary"."index"."abbrev"
 
 comment on column "dictionary"."index"."name"
   is 'Name identifier';
-
-comment on column "dictionary"."index"."column_id"
-  is 'Subject column of the index';
 
 comment on column "dictionary"."index"."using"
   is 'Algorithm to use in indexing';
@@ -19255,9 +20033,6 @@ comment on constraint "index-schema_id_fkey" on "dictionary"."index"
 comment on constraint "index_table_id_fkey" on "dictionary"."index"
   is 'Foreign key constraint for the table_id column, which refers to the id column of the dictionary.table table';
 
-comment on constraint "index-column_id_fkey" on "dictionary"."index"
-  is 'Foreign key constraint for the column_id column, which refers to the id column of the dictionary.column table';
-
 comment on index "dictionary"."index_id_pkey"
   is 'Primary key constraint for the id column';
 
@@ -19271,6 +20046,51 @@ comment on index "dictionary"."index_abbrev_idx"
   is 'Unique index for the abbrev column';
 
 comment on index "dictionary"."index_is_void_idx"
+  is 'Index for the is_void column';
+
+comment on table "dictionary"."index_column"
+  is 'Column/s subject of index';
+
+comment on column "dictionary"."index_column"."id"
+  is 'Primary key of the record in the table';
+
+comment on column "dictionary"."index_column"."column_id"
+  is 'Subject column of the index';
+
+comment on column "dictionary"."index_column"."order_number"
+  is 'Ordering number';
+
+comment on column "dictionary"."index_column"."remarks"
+  is 'Additional details';
+
+comment on column "dictionary"."index_column"."creation_timestamp"
+  is 'Timestamp when the record was added to the table';
+
+comment on column "dictionary"."index_column"."creator_id"
+  is 'ID of the user who added the record to the table';
+
+comment on column "dictionary"."index_column"."modification_timestamp"
+  is 'Timestamp when the record was last modified';
+
+comment on column "dictionary"."index_column"."modifier_id"
+  is 'ID of the user who last modified the record';
+
+comment on column "dictionary"."index_column"."notes"
+  is 'Additional details added by an admin; can be technical or advanced details';
+
+comment on column "dictionary"."index_column"."is_void"
+  is 'Indicator whether the record is deleted or not';
+
+comment on index "dictionary"."index_column_id_pkey"
+  is 'Primary key constraint for the id column';
+
+comment on constraint "index_column_creator_id_fkey" on "dictionary"."index_column"
+  is 'Foreign key constraint for the creator_id column, which refers to the id column of master.user table';
+
+comment on constraint "index_column_modifier_id_fkey" on "dictionary"."index_column"
+  is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
+
+comment on index "dictionary"."index_column_is_void_idx"
   is 'Index for the is_void column';
 
 comment on table "dictionary"."rule"
@@ -19500,6 +20320,9 @@ comment on column "dictionary"."sequence"."database_id"
 
 comment on column "dictionary"."sequence"."schema_id"
   is 'ID of the schema to use as reference key';
+
+comment on column "dictionary"."sequence"."table_id"
+  is 'ID of the table to use as reference key';
 
 comment on column "dictionary"."sequence"."abbrev"
   is 'Short name identifier or abbreviation of the record';
@@ -19757,8 +20580,8 @@ comment on table "operational"."study"
 comment on column "operational"."study"."id"
   is 'Primary key of the record in the table';
 
-comment on column "operational"."study"."key"
-  is 'Logical key of the study';
+comment on column "operational"."study"."study_key"
+  is 'Logical key of the study based on master data: program, place, phase, year, season, and study number (e.g., 1011000110120141111)';
 
 comment on column "operational"."study"."program_id"
   is 'Product development program';
@@ -19775,14 +20598,20 @@ comment on column "operational"."study"."year"
 comment on column "operational"."study"."season_id"
   is 'Season of the place when the study is conducted';
 
-comment on column "operational"."study"."number"
-  is 'Sequence number of the study; used to uniquely distinguish studies within the same program, place, phase, year, and season';
+comment on column "operational"."study"."study_number"
+  is 'Sequence number of the study; used to uniquely distinguish studies with the same program, place, phase, year, and season';
 
 comment on column "operational"."study"."name"
-  is 'Logical name of the study, which consists of the abbrev of the program, place, phase, year, season, and study number';
+  is 'Logical name of the study, which consists of the abbrev of the program, place, phase, year, season, and study number (e.g., IRSEA-IRRIHQ-HB-2013-DS-1)';
 
 comment on column "operational"."study"."title"
   is 'Title of the study';
+
+comment on column "operational"."study"."is_draft"
+  is 'Whether the study is a draft or not';
+
+comment on column "operational"."study"."is_active"
+  is 'Whether the study is active or not';
 
 comment on column "operational"."study"."remarks"
   is 'Additional details';
@@ -19814,9 +20643,6 @@ comment on constraint "study_creator_id_fkey" on "operational"."study"
 comment on constraint "study_modifier_id_fkey" on "operational"."study"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "operational"."study_key_idx"
-  is 'Index for the key column';
-
 comment on index "operational"."study_is_void_idx"
   is 'Index for the is_void column';
 
@@ -19828,6 +20654,9 @@ comment on column "operational"."study_metadata"."id"
 
 comment on column "operational"."study_metadata"."study_id"
   is 'Study';
+
+comment on column "operational"."study_metadata"."variable_id"
+  is 'Variable';
 
 comment on column "operational"."study_metadata"."value"
   is 'Value of a variable';
@@ -19883,16 +20712,16 @@ comment on table "operational"."entry"
 comment on column "operational"."entry"."id"
   is 'Primary key of the record in the table';
 
-comment on column "operational"."entry"."key"
+comment on column "operational"."entry"."entry_key"
   is 'Logical key of the entry';
 
 comment on column "operational"."entry"."study_id"
   is 'Study where the entry belongs to';
 
-comment on column "operational"."entry"."number"
+comment on column "operational"."entry"."entno"
   is 'Number of the entry within the study';
 
-comment on column "operational"."entry"."code"
+comment on column "operational"."entry"."entcode"
   is 'Code of the entry within the study';
 
 comment on column "operational"."entry"."product_id"
@@ -19903,6 +20732,9 @@ comment on column "operational"."entry"."product_gid"
 
 comment on column "operational"."entry"."product_name"
   is 'Name or designation used for the product as a study entry';
+
+comment on column "operational"."entry"."is_active"
+  is 'Whether the entry is active or not';
 
 comment on column "operational"."entry"."description"
   is 'Description';
@@ -19937,6 +20769,9 @@ comment on constraint "entry_study_id_fkey" on "operational"."entry"
 comment on constraint "entry_product_id_fkey" on "operational"."entry"
   is 'Foreign key constraint for the product_id column, which refers to the id column of the master.product table';
 
+comment on constraint "entry_product_id_fkey" on "operational"."entry"
+  is 'Not applicable to HB; an entry/product may be planted more than once';
+
 comment on index "operational"."entry_id_pkey"
   is 'Primary key constraint for the id column';
 
@@ -19966,6 +20801,9 @@ comment on column "operational"."entry_metadata"."study_id"
 
 comment on column "operational"."entry_metadata"."entry_id"
   is 'Entry of the study';
+
+comment on column "operational"."entry_metadata"."variable_id"
+  is 'Variable';
 
 comment on column "operational"."entry_metadata"."value"
   is 'Value of a variable';
@@ -20033,6 +20871,9 @@ comment on column "operational"."entry_data"."study_id"
 comment on column "operational"."entry_data"."entry_id"
   is 'Entry of the study';
 
+comment on column "operational"."entry_data"."variable_id"
+  is 'Variable';
+
 comment on column "operational"."entry_data"."value"
   is 'Value of a variable';
 
@@ -20093,7 +20934,7 @@ comment on table "operational"."plot"
 comment on column "operational"."plot"."id"
   is 'Primary key of the record in the table';
 
-comment on column "operational"."plot"."key"
+comment on column "operational"."plot"."plot_key"
   is 'Logical key of the plot';
 
 comment on column "operational"."plot"."study_id"
@@ -20107,6 +20948,9 @@ comment on column "operational"."plot"."rep"
 
 comment on column "operational"."plot"."code"
   is 'Code of the plot within the study';
+
+comment on column "operational"."plot"."plotno"
+  is 'Number of the plot within the study';
 
 comment on column "operational"."plot"."description"
   is 'Description';
@@ -20173,6 +21017,9 @@ comment on column "operational"."plot_metadata"."entry_id"
 
 comment on column "operational"."plot_metadata"."plot_id"
   is 'Plot';
+
+comment on column "operational"."plot_metadata"."variable_id"
+  is 'Variable';
 
 comment on column "operational"."plot_metadata"."value"
   is 'Value of a variable';
@@ -20249,6 +21096,9 @@ comment on column "operational"."plot_data"."entry_id"
 comment on column "operational"."plot_data"."plot_id"
   is 'Plot';
 
+comment on column "operational"."plot_data"."variable_id"
+  is 'Variable';
+
 comment on column "operational"."plot_data"."value"
   is 'Value of a variable';
 
@@ -20315,7 +21165,7 @@ comment on table "operational"."subplot"
 comment on column "operational"."subplot"."id"
   is 'Primary key of the record in the table';
 
-comment on column "operational"."subplot"."key"
+comment on column "operational"."subplot"."subplot_key"
   is 'Logical key of the subplot';
 
 comment on column "operational"."subplot"."study_id"
@@ -20327,7 +21177,7 @@ comment on column "operational"."subplot"."entry_id"
 comment on column "operational"."subplot"."plot_id"
   is 'Plot';
 
-comment on column "operational"."subplot"."number"
+comment on column "operational"."subplot"."subplotno"
   is 'Number of the subplot within the plot';
 
 comment on column "operational"."subplot"."description"
@@ -20403,7 +21253,10 @@ comment on column "operational"."subplot_metadata"."plot_id"
   is 'Plot';
 
 comment on column "operational"."subplot_metadata"."subplot_id"
-  is 'ID referring to subplot';
+  is 'Subplot';
+
+comment on column "operational"."subplot_metadata"."variable_id"
+  is 'Variable';
 
 comment on column "operational"."subplot_metadata"."value"
   is 'Value of a variable';
@@ -20487,7 +21340,10 @@ comment on column "operational"."subplot_data"."plot_id"
   is 'Plot';
 
 comment on column "operational"."subplot_data"."subplot_id"
-  is 'ID referring to subplot';
+  is 'Subplot';
+
+comment on column "operational"."subplot_data"."variable_id"
+  is 'Variable';
 
 comment on column "operational"."subplot_data"."value"
   is 'Value of a variable';
@@ -20672,6 +21528,12 @@ comment on column "operational"."cross_metadata"."id"
 comment on column "operational"."cross_metadata"."study_id"
   is 'Study';
 
+comment on column "operational"."cross_metadata"."cross_id"
+  is 'Cross';
+
+comment on column "operational"."cross_metadata"."variable_id"
+  is 'Variable';
+
 comment on column "operational"."cross_metadata"."value"
   is 'Value of a variable';
 
@@ -20728,6 +21590,12 @@ comment on column "operational"."cross_data"."id"
 
 comment on column "operational"."cross_data"."study_id"
   is 'Study';
+
+comment on column "operational"."cross_data"."cross_id"
+  is 'Cross';
+
+comment on column "operational"."cross_data"."variable_id"
+  is 'Variable';
 
 comment on column "operational"."cross_data"."value"
   is 'Value of a variable';
@@ -20944,6 +21812,15 @@ comment on column "warehouse_terminal"."transaction"."successful_file_count"
 comment on column "warehouse_terminal"."transaction"."is_successful"
   is 'Whether upload or commit action is successfully done or not; successful meaning total_file_count is equal to successful_file_count';
 
+comment on column "warehouse_terminal"."transaction"."transfer_timestamp"
+  is 'When was the transfer from operational to warehouse terminal or warehouse terminal to warehouse initiated';
+
+comment on column "warehouse_terminal"."transaction"."transferer_id"
+  is 'User who initiated the upload or commit transaction';
+
+comment on column "warehouse_terminal"."transaction"."data_source"
+  is 'Source data files';
+
 comment on column "warehouse_terminal"."transaction"."remarks"
   is 'Additional details';
 
@@ -21116,6 +21993,9 @@ comment on column "warehouse_terminal"."study_metadata"."transaction_id"
 comment on column "warehouse_terminal"."study_metadata"."study_id"
   is 'Study';
 
+comment on column "warehouse_terminal"."study_metadata"."variable_id"
+  is 'Variable';
+
 comment on column "warehouse_terminal"."study_metadata"."value"
   is 'Value of a variable';
 
@@ -21185,6 +22065,9 @@ comment on column "warehouse_terminal"."study_variable"."study_id"
 comment on column "warehouse_terminal"."study_variable"."data_level"
   is 'Data level where the variable is found; can be study, entry, plot';
 
+comment on column "warehouse_terminal"."study_variable"."variable_id"
+  is 'Variable';
+
 comment on column "warehouse_terminal"."study_variable"."order_number"
   is 'Ordering number';
 
@@ -21251,8 +22134,14 @@ comment on column "warehouse_terminal"."entry"."transaction_id"
 comment on column "warehouse_terminal"."entry"."study_id"
   is 'Study';
 
+comment on column "warehouse_terminal"."entry"."study_name"
+  is 'Name of the study';
+
+comment on column "warehouse_terminal"."entry"."entno"
+  is 'Numeric sequence of product as an entry in the study';
+
 comment on column "warehouse_terminal"."entry"."product_gid"
-  is 'ID of germplasm from the IRIS GMS database; related to the germplasm''s seed stocks';
+  is 'GID of the product in the study';
 
 comment on column "warehouse_terminal"."entry"."product_name"
   is 'Name of the product in the study';
@@ -21316,6 +22205,9 @@ comment on column "warehouse_terminal"."entry_metadata"."study_id"
 
 comment on column "warehouse_terminal"."entry_metadata"."entry_id"
   is 'Entry of the study';
+
+comment on column "warehouse_terminal"."entry_metadata"."variable_id"
+  is 'Variable';
 
 comment on column "warehouse_terminal"."entry_metadata"."value"
   is 'Value of a variable';
@@ -21389,6 +22281,9 @@ comment on column "warehouse_terminal"."entry_data"."study_id"
 comment on column "warehouse_terminal"."entry_data"."entry_id"
   is 'Entry of the study';
 
+comment on column "warehouse_terminal"."entry_data"."variable_id"
+  is 'Variable';
+
 comment on column "warehouse_terminal"."entry_data"."value"
   is 'Value of a variable';
 
@@ -21455,6 +22350,18 @@ comment on column "warehouse_terminal"."entry_summary"."id"
 comment on column "warehouse_terminal"."entry_summary"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
+comment on column "warehouse_terminal"."entry_summary"."min"
+  is 'Minimum value for the trait';
+
+comment on column "warehouse_terminal"."entry_summary"."max"
+  is 'Maximum value for the trait';
+
+comment on column "warehouse_terminal"."entry_summary"."average"
+  is 'Average result of the trait observations';
+
+comment on column "warehouse_terminal"."entry_summary"."study_name"
+  is 'Name of study';
+
 comment on column "warehouse_terminal"."entry_summary"."remarks"
   is 'Additional details';
 
@@ -21506,8 +22413,14 @@ comment on column "warehouse_terminal"."plot"."transaction_id"
 comment on column "warehouse_terminal"."plot"."study_id"
   is 'Study';
 
+comment on column "warehouse_terminal"."plot"."study_name"
+  is 'Name of study';
+
+comment on column "warehouse_terminal"."plot"."entno"
+  is 'Number of entry in the study';
+
 comment on column "warehouse_terminal"."plot"."product_gid"
-  is 'ID of germplasm from the IRIS GMS database; related to the germplasm''s seed stocks';
+  is 'GID of the product in the study';
 
 comment on column "warehouse_terminal"."plot"."product_name"
   is 'Name of the product in the study';
@@ -21515,7 +22428,7 @@ comment on column "warehouse_terminal"."plot"."product_name"
 comment on column "warehouse_terminal"."plot"."seed_source_name"
   is 'Source of seeds';
 
-comment on column "warehouse_terminal"."plot"."replication_number"
+comment on column "warehouse_terminal"."plot"."rep"
   is 'Replication number of an entry in the plot';
 
 comment on column "warehouse_terminal"."plot"."remarks"
@@ -21577,6 +22490,9 @@ comment on column "warehouse_terminal"."plot_metadata"."entry_id"
 
 comment on column "warehouse_terminal"."plot_metadata"."plot_id"
   is 'Plot';
+
+comment on column "warehouse_terminal"."plot_metadata"."variable_id"
+  is 'Variable';
 
 comment on column "warehouse_terminal"."plot_metadata"."value"
   is 'Value of a variable';
@@ -21659,6 +22575,9 @@ comment on column "warehouse_terminal"."plot_data"."entry_id"
 comment on column "warehouse_terminal"."plot_data"."plot_id"
   is 'Plot';
 
+comment on column "warehouse_terminal"."plot_data"."variable_id"
+  is 'Variable';
+
 comment on column "warehouse_terminal"."plot_data"."value"
   is 'Value of a variable';
 
@@ -21731,6 +22650,18 @@ comment on column "warehouse_terminal"."plot_summary"."id"
 comment on column "warehouse_terminal"."plot_summary"."transaction_id"
   is 'ID of the transaction made in the terminal';
 
+comment on column "warehouse_terminal"."plot_summary"."min"
+  is 'Minimum value for the trait';
+
+comment on column "warehouse_terminal"."plot_summary"."max"
+  is 'Maximum value for the trait';
+
+comment on column "warehouse_terminal"."plot_summary"."average"
+  is 'Average result of the trait observations';
+
+comment on column "warehouse_terminal"."plot_summary"."study_name"
+  is 'Name of study';
+
 comment on column "warehouse_terminal"."plot_summary"."remarks"
   is 'Additional details';
 
@@ -21770,11 +22701,20 @@ comment on index "warehouse_terminal"."plot_summary_transaction_id_idx"
 comment on index "warehouse_terminal"."plot_summary_is_void_idx"
   is 'Index for the is_void column';
 
+comment on table "warehouse_terminal"."temporary_data_upload"
+  is 'Temporary uploaded data';
+
 comment on column "warehouse_terminal"."temporary_data_upload"."id"
   is 'Primary key of the record in the table';
 
 comment on column "warehouse_terminal"."temporary_data_upload"."transaction_id"
   is 'ID of the transaction made in the terminal';
+
+comment on column "warehouse_terminal"."temporary_data_upload"."variable_name"
+  is 'Abbrev of variable';
+
+comment on column "warehouse_terminal"."temporary_data_upload"."variable_value"
+  is 'Value of the variable';
 
 comment on column "warehouse_terminal"."temporary_data_upload"."user_id"
   is 'ID of user';
@@ -21833,16 +22773,34 @@ comment on table "warehouse"."study"
 comment on column "warehouse"."study"."id"
   is 'Primary key of the record in the table';
 
-comment on column "warehouse"."study"."key"
+comment on column "warehouse"."study"."study_key"
   is 'Logical key of the study';
 
-comment on column "warehouse"."study"."number"
+comment on column "warehouse"."study"."program_id"
+  is 'Product development program';
+
+comment on column "warehouse"."study"."place_id"
+  is 'Place';
+
+comment on column "warehouse"."study"."phase_id"
+  is 'Breeding stage (HB, F1, F2, etc.) or special experiment (RGA, SI, etc.)';
+
+comment on column "warehouse"."study"."year"
+  is 'Year';
+
+comment on column "warehouse"."study"."season_id"
+  is 'Season';
+
+comment on column "warehouse"."study"."study_number"
   is 'Sequence number of the study';
 
-comment on column "warehouse"."study"."name"
+comment on column "warehouse"."study"."study"
+  is 'Historical name of the study';
+
+comment on column "warehouse"."study"."study_name"
   is 'Logical name of the study';
 
-comment on column "warehouse"."study"."title"
+comment on column "warehouse"."study"."study_title"
   is 'Title of the study';
 
 comment on column "warehouse"."study"."remarks"
@@ -21875,9 +22833,6 @@ comment on constraint "study_creator_id_fkey" on "warehouse"."study"
 comment on constraint "study_modifier_id_fkey" on "warehouse"."study"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "warehouse"."study_key_idx"
-  is 'Index for the key column';
-
 comment on index "warehouse"."study_is_void_idx"
   is 'Index for the is_void column';
 
@@ -21887,13 +22842,13 @@ comment on table "warehouse"."entry"
 comment on column "warehouse"."entry"."id"
   is 'Primary key of the record in the table';
 
-comment on column "warehouse"."entry"."key"
+comment on column "warehouse"."entry"."entry_key"
   is 'Logical key of the entry';
 
 comment on column "warehouse"."entry"."study_id"
   is 'Study';
 
-comment on column "warehouse"."entry"."number"
+comment on column "warehouse"."entry"."entno"
   is 'Number of the entry within the study';
 
 comment on column "warehouse"."entry"."code"
@@ -21950,9 +22905,6 @@ comment on constraint "entry_creator_id_fkey" on "warehouse"."entry"
 comment on constraint "entry_modifier_id_fkey" on "warehouse"."entry"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "warehouse"."entry_key_idx"
-  is 'Index for the key column';
-
 comment on index "warehouse"."entry_study_id_idx"
   is 'Index for the study_id column';
 
@@ -21968,7 +22920,7 @@ comment on table "warehouse"."plot"
 comment on column "warehouse"."plot"."id"
   is 'Primary key of the record in the table';
 
-comment on column "warehouse"."plot"."key"
+comment on column "warehouse"."plot"."plot_key"
   is 'Logical key of the plot';
 
 comment on column "warehouse"."plot"."study_id"
@@ -21977,11 +22929,14 @@ comment on column "warehouse"."plot"."study_id"
 comment on column "warehouse"."plot"."entry_id"
   is 'Entry of the study';
 
-comment on column "warehouse"."plot"."replication_number"
-  is 'Replication number of a plot';
+comment on column "warehouse"."plot"."rep"
+  is 'Replication number of an entry in the plot';
 
 comment on column "warehouse"."plot"."code"
   is 'Code of the plot within the study';
+
+comment on column "warehouse"."plot"."plotno"
+  is 'Number of plot in the study';
 
 comment on column "warehouse"."plot"."description"
   is 'Description';
@@ -22025,9 +22980,6 @@ comment on constraint "plot_creator_id_fkey" on "warehouse"."plot"
 comment on constraint "plot_modifier_id_fkey" on "warehouse"."plot"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
 
-comment on index "warehouse"."plot_key_idx"
-  is 'Index for the key column';
-
 comment on index "warehouse"."plot_study_id_idx"
   is 'Index for the study_id column';
 
@@ -22043,7 +22995,7 @@ comment on table "warehouse"."subplot"
 comment on column "warehouse"."subplot"."id"
   is 'Primary key of the record in the table';
 
-comment on column "warehouse"."subplot"."key"
+comment on column "warehouse"."subplot"."subplot_key"
   is 'Logical key of the subplot';
 
 comment on column "warehouse"."subplot"."study_id"
@@ -22055,7 +23007,7 @@ comment on column "warehouse"."subplot"."entry_id"
 comment on column "warehouse"."subplot"."plot_id"
   is 'Plot';
 
-comment on column "warehouse"."subplot"."number"
+comment on column "warehouse"."subplot"."subplotno"
   is 'Number of the subplot within the plot';
 
 comment on column "warehouse"."subplot"."description"
@@ -22102,9 +23054,6 @@ comment on constraint "subplot_creator_id_fkey" on "warehouse"."subplot"
 
 comment on constraint "subplot_modifier_id_fkey" on "warehouse"."subplot"
   is 'Foreign key constraint for the modifier_id column, which refers to the id column of the master.user table';
-
-comment on index "warehouse"."subplot_key_idx"
-  is 'Index for the key column';
 
 comment on index "warehouse"."subplot_study_id_idx"
   is 'Index for the study_id column';
@@ -22251,23 +23200,49 @@ begin
         -- add column to warehouse.entry
         execute
             'alter table "warehouse"."entry" ' || add_column;
+        -- execute
+            -- 'comment on column "warehouse"."entry" is ' || description;
 
         -- add column to warehouse.plot
         execute
             'alter table "warehouse"."plot" ' || add_column;
+        -- execute
+            -- 'comment on column "warehouse"."plot" is ' || description;
 
         -- add column to warehouse.subplot
         execute
             'alter table "warehouse"."subplot" ' || add_column;
+        -- execute
+            -- 'comment on column "warehouse"."subplot" is ' || description;
     end if;
 
     return new;
 end;
 $add_var_col$ language plpgsql;
 
+drop trigger if exists "add_variable_column" on "master"."variable";
 create trigger "add_variable_column"
     after insert on "master"."variable"
     for each row execute procedure "master"."add_variable_column"();
+
+-- ---------------------------------------------------
+
+create or replace function "master"."drop_variable_column"() returns trigger as $drop_var_col$
+declare
+    drop_column varchar;
+begin
+    execute 'alter table "warehouse"."entry" drop column if exists "' || lower(old."abbrev") || '";';
+    execute 'alter table "warehouse"."plot" drop column if exists "' || lower(old."abbrev") || '";';
+    execute 'alter table "warehouse"."subplot" drop column if exists "' || lower(old."abbrev") || '";';
+
+    return new;
+end;
+$drop_var_col$ language plpgsql;
+
+drop trigger if exists "drop_variable_column" on "master"."variable";
+create trigger "drop_variable_column"
+    before delete on "master"."variable"
+    for each row execute procedure "master"."drop_variable_column"();
 
 -- ---------------------------------------------------
 
@@ -22414,7 +23389,8 @@ insert into master.variable (
     property_id,
     method_id,
     scale_id,
-    variable_set
+    variable_set,
+    description
 )
 select
     (
@@ -22452,7 +23428,8 @@ select
     var.property_id,
     var.method_id,
     var.scale_id,
-    var.variable_set
+    var.variable_set,
+    var.description
 from (
     select
         var.abbrev,
@@ -22496,7 +23473,9 @@ from (
         var.scale_type,
         var.iv_id,
 
-        var.variable_set
+        var.variable_set,
+
+        var.description
     from (
         select
             iv.iv_id,
@@ -22506,7 +23485,12 @@ from (
             iv.name,
             iv.description,
             iv.data_type,
-            iv.not_null,
+            (case
+                when iv.not_null = '' or iv.not_null is null
+                    then 'false'
+                else
+                    iv.not_null
+            end) not_null,
             iv.type,
             iv.status,
             iv.display_name,
