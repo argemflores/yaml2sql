@@ -3059,43 +3059,43 @@ alter sequence "master"."changelog_id_seq"
 
 create view "master"."variable_list" as
 select
-    mv.id variable_id,
-    mv.abbrev,
-    mv.label,
-    mv.name,
-    mv.data_type,
-    mv.not_null,
-    mv.type,
-    mv.status,
-    mv.display_name,
-    mv.ontology_reference,
-    mv.bibliographical_reference,
-    mv.property_id,
-    mv.method_id,
-    mv.scale_id,
-    mp.abbrev property_abbrev,
-    mp.name property_name,
-    mp.description property_description,
-    mm.abbrev method_abbrev,
-    mm.name method_name,
-    mm.description method_description,
-    ms.abbrev scale_abbrev,
-    ms.name scale_name,
-    ms.description scale_description,
-    ms.unit scale_unit,
-    ms.type scale_type,
-    ms.level scale_level
+  mv.id variable_id,
+  mv.abbrev,
+  mv.label,
+  mv.name,
+  mv.data_type,
+  mv.not_null,
+  mv.type,
+  mv.status,
+  mv.display_name,
+  mv.ontology_reference,
+  mv.bibliographical_reference,
+  mv.property_id,
+  mv.method_id,
+  mv.scale_id,
+  mp.abbrev property_abbrev,
+  mp.name property_name,
+  mp.description property_description,
+  mm.abbrev method_abbrev,
+  mm.name method_name,
+  mm.description method_description,
+  ms.abbrev scale_abbrev,
+  ms.name scale_name,
+  ms.description scale_description,
+  ms.unit scale_unit,
+  ms.type scale_type,
+  ms.level scale_level
 from
-    master.variable mv,
-    master.property mp,
-    master.method mm,
-    master.scale ms
+  master.variable mv,
+  master.property mp,
+  master.method mm,
+  master.scale ms
 where
-    mv.property_id = mp.id
-    and mv.method_id = mm.id
-    and mv.scale_id = ms.id
+  mv.property_id = mp.id
+  and mv.method_id = mm.id
+  and mv.scale_id = ms.id
 order by
-    mv.id
+  mv.id
 ;
 
 -- --------------------------------
@@ -4064,6 +4064,7 @@ create table "operational"."entry" (
     "product_id" integer not null,
     "product_gid" integer not null,
     "product_name" varchar(256) not null,
+    "seed_storage_id" integer,
     "is_active" boolean default true,
     "description" text,
     "display_name" varchar(256),
@@ -4659,8 +4660,7 @@ create table "operational"."cross" (
     "male_product_id" integer not null,
     "male_product_name" varchar(256) not null,
     "cross_method_id" integer not null,
-    "description" text,
-    "display_name" varchar(256),
+    "cross_name" varchar not null,
     "remarks" text,
     "creation_timestamp" timestamp not null default now(),
     "creator_id" integer not null default '1',
@@ -5280,6 +5280,7 @@ create table "warehouse_terminal"."entry" (
     "study_id" integer not null,
     "study_name" varchar not null,
     "entno" varchar not null,
+    "entcode" varchar not null,
     "product_gid" varchar not null,
     "product_name" varchar(256) not null,
     "seed_source_name" varchar(256) not null,
@@ -6681,31 +6682,32 @@ from stdin
 "SEND_SEEDS_DATE";"SEND_SEEDS_DATE";"send seeds date";"send seeds date";"date";"FALSE";"metadata";"active";"Send Seeds Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
 "SEND_SEEDS_REMARK";"SEND_SEEDS_REMARK";"send seeds remark";"send seeds remark";"character varying";"FALSE";"metadata";"active";"Send Seeds Remark";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
 "SEND_SEEDS_PERSON_IN_CHARGE";"SEND_SEEDS_PERSON_IN_CHARGE";"send seeds person in charge";"send seeds person in charge";"character varying";"FALSE";"metadata";"active";"Send Seeds Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"SEED_PREPARATION_STATUS";"SEED_PREPARATION_STATUS";"seed preparation status";"seed preparation status";"character varying";FALSE;"metadata";"active";"Seed Preparation Status";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"IS_PROGENY_LIST_ACCEPTED";"IS_PROGENY_LIST_ACCEPTED";"is progeny list accepted";"is progeny list accepted";"boolean";FALSE;"metadata";"active";"Is Progeny List Accepted";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"IS_TASK_STARTED";"IS_TASK_STARTED";"is task started";"is task started";"boolean";FALSE;"metadata";"active";"Is Task Started";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"IS_PROGENY_SELECTED";"IS_PROGENY_SELECTED";"is progeny selected";"is progeny selected";"boolean";FALSE;"metadata";"active";"Is Progeny Selected";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_DRYING_DATE";"ACTUAL_DRYING_DATE";"actual drying date";"actual drying date";"date";FALSE;"metadata";"active";"Actual Drying Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_DRYING_HOURS";"ACTUAL_DRYING_HOURS";"actual drying hours";"actual drying hours";"float";FALSE;"metadata";"active";"Actual Drying Hours";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_DRYING_PERSON_IN_CHARGE";"ACTUAL_DRYING_PERSON_IN_CHARGE";"actual drying person in charge";"actual drying person in charge";"character varying";FALSE;"metadata";"active";"Actual Drying Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_CONTAINER_TYPE";"ACTUAL_CONTAINER_TYPE";"actual container type";"actual container type";"character varying";FALSE;"metadata";"active";"Actual Container Type";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_CONTAINER_COUNT";"ACTUAL_CONTAINER_COUNT";"actual container count";"actual container count";"integer";FALSE;"metadata";"active";"Actual Container Count";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_BASAL_DATE";"ACTUAL_BASAL_DATE";"actual basal date";"actual basal date";"date";FALSE;"metadata";"active";"Actual Basal Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_BASAL_FERTILIZER_TYPE";"ACTUAL_BASAL_FERTILIZER_TYPE";"actual basal fertilizer type";"actual basal fertilizer type";"character varying";FALSE;"metadata";"active";"Actual Basal Fertlizer Type";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_BASAL_AMOUNT";"ACTUAL_BASAL_AMOUNT";"actual basal amount";"actual basal amount";"float";FALSE;"metadata";"active";"Actual Basal Amount";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_BASAL_PERSON_IN_CHARGE";"ACTUAL_BASAL_PERSON_IN_CHARGE";"actual basal person in charge";"actual basal person in charge";"character varying";FALSE;"metadata";"active";"Actual Basal Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
-"ACTUAL_BASAL_REMARKS";"ACTUAL_BASAL_REMARKS";"actual basal remarks";"actual basal remarks";"character varying";FALSE;"metadata";"active";"Actual Basal Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"SEED_PREPARATION_STATUS";"SEED_PREPARATION_STATUS";"seed preparation status";"seed preparation status";"character varying";"FALSE";"metadata";"active";"Seed Preparation Status";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"IS_PROGENY_LIST_ACCEPTED";"IS_PROGENY_LIST_ACCEPTED";"is progeny list accepted";"is progeny list accepted";"boolean";"FALSE";"metadata";"active";"Is Progeny List Accepted";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"IS_TASK_STARTED";"IS_TASK_STARTED";"is task started";"is task started";"boolean";"FALSE";"metadata";"active";"Is Task Started";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"IS_PROGENY_SELECTED";"IS_PROGENY_SELECTED";"is progeny selected";"is progeny selected";"boolean";"FALSE";"metadata";"active";"Is Progeny Selected";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_DRYING_DATE";"ACTUAL_DRYING_DATE";"actual drying date";"actual drying date";"date";"FALSE";"metadata";"active";"Actual Drying Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_DRYING_HOURS";"ACTUAL_DRYING_HOURS";"actual drying hours";"actual drying hours";"float";"FALSE";"metadata";"active";"Actual Drying Hours";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_DRYING_PERSON_IN_CHARGE";"ACTUAL_DRYING_PERSON_IN_CHARGE";"actual drying person in charge";"actual drying person in charge";"character varying";"FALSE";"metadata";"active";"Actual Drying Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_CONTAINER_TYPE";"ACTUAL_CONTAINER_TYPE";"actual container type";"actual container type";"character varying";"FALSE";"metadata";"active";"Actual Container Type";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_CONTAINER_COUNT";"ACTUAL_CONTAINER_COUNT";"actual container count";"actual container count";"integer";"FALSE";"metadata";"active";"Actual Container Count";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_DATE";"ACTUAL_BASAL_DATE";"actual basal date";"actual basal date";"date";"FALSE";"metadata";"active";"Actual Basal Date";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_FERTILIZER_TYPE";"ACTUAL_BASAL_FERTILIZER_TYPE";"actual basal fertilizer type";"actual basal fertilizer type";"character varying";"FALSE";"metadata";"active";"Actual Basal Fertlizer Type";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_AMOUNT";"ACTUAL_BASAL_AMOUNT";"actual basal amount";"actual basal amount";"float";"FALSE";"metadata";"active";"Actual Basal Amount";;;;;;;"continuous";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_PERSON_IN_CHARGE";"ACTUAL_BASAL_PERSON_IN_CHARGE";"actual basal person in charge";"actual basal person in charge";"character varying";"FALSE";"metadata";"active";"Actual Basal Person in Charge";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
+"ACTUAL_BASAL_REMARKS";"ACTUAL_BASAL_REMARKS";"actual basal remarks";"actual basal remarks";"character varying";"FALSE";"metadata";"active";"Actual Basal Remarks";;;;;;;"discrete";;;;;"actual values set; entry metadata";;;;"added by etenorio/aflores"
 "STUDY_NUMBER";;"study number";"Number of study to distinguish it from studies within the same program, place, phase, year, and season";"integer";"TRUE";"system";;"Study number";;;;;;;"continuous";;;;;"study system identifier";;;;"added by aflores"
 "STUDY";;"study";"short name of a study, historically compatible, no manual editing";;"TRUE";"identification";;;;;;;;;;;;;;"study identifier";;;;"added by aflores"
-"STUDY_START_DATE";"STUDY_START_DATE";"study start date";"Study start date";"date";FALSE;"metadata";"active";"Start date";;;;;;;"discrete";;;;;"study metadata";;;;"added by aflores"
-"STUDY_END_DATE";"STUDY_END_DATE";"study end date";"Study end date";"date";FALSE;"metadata";"active";"End date";;;;;;;"discrete";;;;;"study metadata";;;;"added by aflores"
+"STUDY_START_DATE";"STUDY_START_DATE";"study start date";"Study start date";"date";"FALSE";"metadata";"active";"Start date";;;;;;;"discrete";;;;;"study metadata";;;;"added by aflores"
+"STUDY_END_DATE";"STUDY_END_DATE";"study end date";"Study end date";"date";"FALSE";"metadata";"active";"End date";;;;;;;"discrete";;;;;"study metadata";;;;"added by aflores"
 "REMARKS";;"remarks";"Remarks";"text";"FALSE";"metadata";;"Remarks";;;;;;;"discrete";;;;;"metadata";;;;"added by aflores"
 "REP_COUNT";;"replication count";"number of replications in a study";"integer";"FALSE";"metadata";;"No. of replications";;;;;;;"continuous";;;;;"study metadata";;;;"added by aflores"
 "ENTRY_KEY";;"entry key";"unique indentifier of a study entry?";"numeric";"TRUE";"system";;;;;;;;;"continuous";;;;;"entry system identifier";;;;"added by aflores"
 "PLOT_KEY";;"plot key";"Plot key";"numeric";"TRUE";"system";;;;;;;;;"continuous";;;;;"plot system identifier";;;;"added by aflores"
 "REP";;"rep";"Replication number of study entry";"integer";"TRUE";"identification";;"Replication no.";;;;;;;"continuous";;;;;"plot identifier";;;;"added by aflores"
 "Amt_T4_CONT";"Amount_T4";"T4 fertilizer amount";"Amount of T3 fertilizer used";"character varying";"FALSE";"metadata";;"T2 fertilizer amount";;;;"Record the amount of topdress 4 fertilizer";"Measured in grams";;"continuous";;;;;"field management";;;;
-"ENTCODE";"ENTCODE";"entry code";"Code of an entry in a study";"character varying";FALSE;"metadata";;"Entry code";;;;;;;"discrete";;;;;"entry metadata";;;;"added by aflores"
+"ENTCODE";"ENTCODE";"entry code";"Code of an entry in a study";"character varying";"FALSE";"metadata";;"Entry code";;;;;;;"discrete";;;;;"entry metadata";;;;"added by aflores"
+"ENTDESIG";"ENTDESIG";"Entry designation";"Designation of the product as an entry in the study";"character varying";TRUE;"metadata";;"Designation";;;;;;;"discrete";;;;;"entry metadata";;;;
 \.
 
 -- ----------------
@@ -17768,14 +17770,14 @@ comment on column "master"."variable"."not_null"
 comment on column "master"."variable"."type"
   is 'Type of the variable in the system
 1. system: contains values which are (usually) not displayed to the users of the system.
-  For example study_id which is a surrogate key or a product_id which is a reference key to product catalog.
-  This is automatically generated by the system.
+ For example study_id which is a surrogate key or a product_id which is a reference key to product catalog.
+ This is automatically generated by the system.
 2. identification: has values which are used as keys or part of a key, which will be used to verify the data integrity in study, entry and plot level.
-  For instance entry_code, replication number. This is also automatically generated by the system.
+ For instance entry_code, replication number. This is also automatically generated by the system.
 3. metadata: has a wide range of data types aimed to store values, which will be useful to interpret the observation variable values.
-  For instance entry count of a study, harvest date, remarks and pictures.
+ For instance entry count of a study, harvest date, remarks and pictures.
 4. observation: used to store the values produced (measured, observed, computed, predicted) in various data production events,
-  like for instance single trial analysis or plant height observation';
+ like for instance single trial analysis or plant height observation';
 
 comment on column "master"."variable"."status"
   is 'Whether a variable is being actively used in the system (active) or not (deprecated)';
@@ -17948,13 +17950,13 @@ comment on index "master"."variable_set_member_is_void_idx"
 comment on table "master"."pipeline"
   is 'A product development schema designed to develop breeding products to a certain demand (market segment).
 At IRRI, VDPs are structured based on major regions and production ecologies
-  - Irrigated South East Asia (IRSEA)
-  - Rainfed lowland South East Asia (RFSEA)
-  - Irrigated South Asia (IRSA)
-  - Rainfed lowland South Asia (RFSA)
-  - Hybrid (HYB)
-  - Eastern Southern Africa (ESA) - has Rainfed and Irrigated TVP''s,
-  - Japonica (JAP) - has Temperate and Tropical TVP''s';
+ - Irrigated South East Asia (IRSEA)
+ - Rainfed lowland South East Asia (RFSEA)
+ - Irrigated South Asia (IRSA)
+ - Rainfed lowland South Asia (RFSA)
+ - Hybrid (HYB)
+ - Eastern Southern Africa (ESA) - has Rainfed and Irrigated TVP''s,
+ - Japonica (JAP) - has Temperate and Tropical TVP''s';
 
 comment on column "master"."pipeline"."id"
   is 'Primary key of the record in the table';
@@ -18124,14 +18126,14 @@ comment on index "master"."program_is_void_idx"
 
 comment on table "master"."place"
   is 'Represents the physical places and their segmentations such as geographies, locations, areas, zones, etc.
-  - Breeding hub
-  - Breeding location
-  - Facility
-  - Field
-  - Farm
-  - Glasshouse
-  - Warehouse
-  - Storage';
+ - Breeding hub
+ - Breeding location
+ - Facility
+ - Field
+ - Farm
+ - Glasshouse
+ - Warehouse
+ - Storage';
 
 comment on column "master"."place"."id"
   is 'Primary key of the record in the table';
@@ -19535,6 +19537,9 @@ comment on index "master"."changelog_is_void_idx"
 comment on view "master"."variable_list"
   is 'Master list of variables, with their property, method, and scale values';
 
+comment on schema "dictionary"
+  is 'Definition of data sources and their objects';
+
 comment on table "dictionary"."database"
   is 'Data sources';
 
@@ -20733,6 +20738,9 @@ comment on column "operational"."entry"."product_gid"
 comment on column "operational"."entry"."product_name"
   is 'Name or designation used for the product as a study entry';
 
+comment on column "operational"."entry"."seed_storage_id"
+  is 'Seed storage where the seeds are taken from';
+
 comment on column "operational"."entry"."is_active"
   is 'Whether the entry is active or not';
 
@@ -21444,11 +21452,8 @@ comment on column "operational"."cross"."male_product_name"
 comment on column "operational"."cross"."cross_method_id"
   is 'Method used in the cross';
 
-comment on column "operational"."cross"."description"
-  is 'Description';
-
-comment on column "operational"."cross"."display_name"
-  is 'Name to show to users';
+comment on column "operational"."cross"."cross_name"
+  is 'Name or designation of cross';
 
 comment on column "operational"."cross"."remarks"
   is 'Additional details';
@@ -23158,7 +23163,7 @@ comment on index "test"."lookup_is_void_idx"
 
 -- --------------------------------
 
-create extension tablefunc;
+create extension if not exists tablefunc;
 
 -- ---------------------------------------------------
 
@@ -23167,466 +23172,543 @@ create extension tablefunc;
 
 create or replace function "master"."add_variable_column"() returns trigger as $add_var_col$
 declare
-    column_name varchar;
-    data_type varchar;
-    not_null varchar;
+  column_name varchar;
+  data_type varchar;
+  not_null varchar;
 
-    add_column varchar;
+  add_column varchar;
 begin
-    -- if (upper(new."type") = 'METADATA' or upper(new."type") = 'OBSERVATION') then
-    if (upper(new."type") = 'OBSERVATION') then
-        -- column name
-        if (new."abbrev" is null or trim(new."abbrev") = '') then
-            column_name := '"' || lower(new."label") || '"';
-        else
-            column_name := '"' || lower(new."abbrev") || '"';
-        end if;
-
-        -- data type
-        if (new."data_type" is null or trim(new."data_type") = '') then
-            data_type := 'varchar';
-        else
-            data_type := lower(new."data_type");
-        end if;
-
-        -- not null
-        not_null := '';
-        if (new."not_null" = true) then
-            not_null := 'not null';
-        end if;
-
-        add_column := 'add column ' || column_name || ' ' || data_type || ' ' || not_null;
-
-        -- add column to warehouse.entry
-        execute
-            'alter table "warehouse"."entry" ' || add_column;
-        -- execute
-            -- 'comment on column "warehouse"."entry" is ' || description;
-
-        -- add column to warehouse.plot
-        execute
-            'alter table "warehouse"."plot" ' || add_column;
-        -- execute
-            -- 'comment on column "warehouse"."plot" is ' || description;
-
-        -- add column to warehouse.subplot
-        execute
-            'alter table "warehouse"."subplot" ' || add_column;
-        -- execute
-            -- 'comment on column "warehouse"."subplot" is ' || description;
+  -- if (upper(new."type") = 'METADATA' or upper(new."type") = 'OBSERVATION') then
+  if (upper(new."type") = 'OBSERVATION') then
+    -- column name
+    if (new."abbrev" is null or trim(new."abbrev") = '') then
+      column_name := '"' || lower(new."label") || '"';
+    else
+      column_name := '"' || lower(new."abbrev") || '"';
     end if;
 
-    return new;
+    -- data type
+    if (new."data_type" is null or trim(new."data_type") = '') then
+      data_type := 'varchar';
+    else
+      data_type := lower(new."data_type");
+    end if;
+
+    -- not null
+    not_null := '';
+    if (new."not_null" = true) then
+      not_null := 'not null';
+    end if;
+
+    add_column := 'add column ' || column_name || ' ' || data_type || ' ' || not_null;
+
+    -- add column to warehouse.entry
+    execute 'alter table "warehouse"."entry" ' || add_column;
+
+    -- add column to warehouse.plot
+    execute 'alter table "warehouse"."plot" ' || add_column;
+
+    -- add column to warehouse.subplot
+    execute 'alter table "warehouse"."subplot" ' || add_column;
+  end if;
+
+  return new;
 end;
 $add_var_col$ language plpgsql;
 
 drop trigger if exists "add_variable_column" on "master"."variable";
 create trigger "add_variable_column"
-    after insert on "master"."variable"
-    for each row execute procedure "master"."add_variable_column"();
+  after insert on "master"."variable"
+  for each row execute procedure "master"."add_variable_column"();
 
 -- ---------------------------------------------------
 
 create or replace function "master"."drop_variable_column"() returns trigger as $drop_var_col$
 declare
-    drop_column varchar;
+  column_name varchar;
 begin
-    execute 'alter table "warehouse"."entry" drop column if exists "' || lower(old."abbrev") || '";';
-    execute 'alter table "warehouse"."plot" drop column if exists "' || lower(old."abbrev") || '";';
-    execute 'alter table "warehouse"."subplot" drop column if exists "' || lower(old."abbrev") || '";';
+  column_name := '"' || lower(trim(old."abbrev")) || '"';
 
-    return new;
+  execute 'alter table "warehouse"."entry" drop column if exists ' || column_name;
+  execute 'alter table "warehouse"."plot" drop column if exists ' || column_name;
+  execute 'alter table "warehouse"."subplot" drop column if exists ' || column_name;
+
+  return new;
 end;
 $drop_var_col$ language plpgsql;
 
 drop trigger if exists "drop_variable_column" on "master"."variable";
 create trigger "drop_variable_column"
-    before delete on "master"."variable"
-    for each row execute procedure "master"."drop_variable_column"();
+  before delete on "master"."variable"
+  for each row execute procedure "master"."drop_variable_column"();
+
+-- ---------------------------------------------------
+
+create or replace function "master"."update_variable_column"() returns trigger as $add_var_col$
+declare
+  column_name varchar;
+  data_type varchar;
+  not_null varchar;
+
+  new_column_name varchar;
+  new_data_type varchar;
+  new_not_null varchar;
+
+  table_array varchar[];
+  cur_column_name varchar;
+
+  table_name varchar;
+  alter_table_column varchar;
+begin
+  if (upper(new."type") = 'OBSERVATION') then
+    -- current column name
+    column_name := '"' || lower(trim(old."abbrev"))  || '"';
+    -- current data type
+    data_type := lower(trim(old."data_type"));
+    -- current not null
+    not_null := old."not_null";
+
+    -- new column name
+    if (new."abbrev" is null or trim(new."abbrev") = '') then
+      new_column_name := '"' || lower(trim(new."label")) || '"';
+    else
+      new_column_name := '"' || lower(trim(new."abbrev")) || '"';
+    end if;
+
+    -- new data type
+    if (new."data_type" is null or trim(new."data_type") = '') then
+      new_data_type := 'varchar';
+    else
+      new_data_type := lower(trim(new."data_type"));
+    end if;
+
+    -- new not null
+    if (new."not_null" = true) then
+      new_not_null := 'set';
+    else
+      new_not_null := 'drop';
+    end if;
+
+    table_array := array['"warehouse"."entry"', '"warehouse"."plot"', '"warehouse"."subplot"'];
+    cur_column_name := column_name;
+
+    foreach table_name in array table_array loop
+      -- change column name
+      if (column_name != new_column_name) then
+        execute 'alter table ' || table_name || ' rename column ' || column_name || ' to ' || new_column_name;
+        column_name := new_column_name;
+      end if;
+
+      alter_table_column := 'alter table ' || table_name || ' alter column ' || column_name || ' ';
+
+      -- change data type
+      if (data_type != new_data_type) then
+        -- data type
+        execute alter_table_column || ' set data type ' || new_data_type || ' using ' || column_name || '::' || new_data_type;
+      end if;
+
+      -- change not null
+      if (old.not_null != new.not_null) then
+        execute alter_table_column || ' ' || new_not_null || ' not null';
+      end if;
+
+      column_name := cur_column_name;
+    end loop;
+  end if;
+
+  return new;
+end;
+$add_var_col$ language plpgsql;
+
+drop trigger if exists "update_variable_column" on "master"."variable";
+create trigger "update_variable_column"
+  after update on "master"."variable"
+  for each row execute procedure "master"."update_variable_column"();
+
 
 -- ---------------------------------------------------
 
 -- /*
 insert into
-    master.property (
-        abbrev,
-        name,
-        description
-    )
+  master.property (
+    abbrev,
+    name,
+    description
+  )
 select
+  (
+    select
+      iv1.abbrev
+    from (
+      select
+        (
+          case
+            when iv.abbrev is null
+              then (
+                case
+                  when iv.abbrev is null
+                    then upper(replace(trim(iv.name), ' ', '_'))
+                  else
+                    upper(replace(trim(iv.abbrev), ' ', '_'))
+                end
+              )
+            else
+              upper(replace(trim(iv.abbrev), ' ', '_'))
+          end
+        ) "abbrev"
+      from
+        import.variable iv
+      where
+        id = any(var.id_arr)
+    ) iv1
+    order by
+      char_length(iv1.abbrev) asc
+    limit 1
+  ) "abbrev",
+  lower(trim(var."name")) "name",
+  array_to_string(var.description_arr, '\n') description
+from (
+  select
+    lower(trim(iv."name")) "name",
+    count(iv.id) id_count,
+    array_agg(iv.description order by iv.id) description_arr,
+    array_agg(iv.id) id_arr
+  from
+    import.variable iv
+  group by
+    lower(trim(iv."name"))
+) var
+;
+
+-- ---------------------------------------------------
+
+insert into
+  master.method (
+    abbrev,
+    name,
+    description
+  )
+select
+  upper(replace(trim(var."abbrev"), ' ', '_')) || '_METH_'
+    || row_number() over (partition by upper(trim("abbrev"))) "abbrev",
+  var.name || ' ' || row_number() over (partition by lower(trim("name"))) "name",
+  trim(var.method) description
+from (
+  select
+    -- upper(trim(iv."abbrev")) "abbrev",
     (
-        select
-            iv1.abbrev
-        from (
-            select
-                (
-                    case
-                        when iv.abbrev is null
-                            then (
-                                case
-                                    when iv.abbrev is null
-                                        then upper(replace(trim(iv.name), ' ', '_'))
-                                    else
-                                        upper(replace(trim(iv.abbrev), ' ', '_'))
-                                end
-                            )
-                        else
-                            upper(replace(trim(iv.abbrev), ' ', '_'))
-                    end
-                ) "abbrev"
-            from
-                import.variable iv
-            where
-                id = any(var.id_arr)
-        ) iv1
-        order by
-            char_length(iv1.abbrev) asc
-        limit 1
+      case
+        when iv.abbrev is null
+          then upper(replace(trim(iv.name), ' ', '_'))
+        else
+          upper(replace(trim(iv.abbrev), ' ', '_'))
+      end
     ) "abbrev",
-    lower(trim(var."name")) "name",
-    array_to_string(var.description_arr, '\n') description
-from (
-    select
-        lower(trim(iv."name")) "name",
-        count(iv.id) id_count,
-        array_agg(iv.description order by iv.id) description_arr,
-        array_agg(iv.id) id_arr
-    from
-        import.variable iv
-    group by
-        lower(trim(iv."name"))
+    trim(iv.method) method,
+    lower(trim(iv."name")) "name"
+  from
+    import.variable iv
+  order by
+    iv.id
 ) var
 ;
 
 -- ---------------------------------------------------
 
 insert into
-    master.method (
-        abbrev,
-        name,
-        description
-    )
+  master.scale (
+    abbrev,
+    name,
+    description,
+    unit,
+    type,
+    level
+  )
 select
-    upper(replace(trim(var."abbrev"), ' ', '_')) || '_METH_'
-        || row_number() over (partition by upper(trim("abbrev"))) "abbrev",
-    var.name || ' ' || row_number() over (partition by lower(trim("name"))) "name",
-    trim(var.method) description
+  upper(replace(trim(var."abbrev"), ' ', '_')) || '_SCALE_'
+    || row_number() over (partition by upper(trim("abbrev"))) "abbrev",
+  var.name || ' ' || row_number() over (partition by lower(trim("name"))) "name",
+  var.scale description,
+  var.unit,
+  var.type,
+  var.level
 from (
-    select
-        -- upper(trim(iv."abbrev")) "abbrev",
-        (
-            case
-                when iv.abbrev is null
-                    then upper(replace(trim(iv.name), ' ', '_'))
-                else
-                    upper(replace(trim(iv.abbrev), ' ', '_'))
-            end
-        ) "abbrev",
-        trim(iv.method) method,
-        lower(trim(iv."name")) "name"
-    from
-        import.variable iv
-    order by
-        iv.id
-) var
-;
-
--- ---------------------------------------------------
-
-insert into
-    master.scale (
-        abbrev,
-        name,
-        description,
-        unit,
-        type,
-        level
-    )
-select
-    upper(replace(trim(var."abbrev"), ' ', '_')) || '_SCALE_'
-        || row_number() over (partition by upper(trim("abbrev"))) "abbrev",
-    var.name || ' ' || row_number() over (partition by lower(trim("name"))) "name",
-    var.scale description,
-    var.unit,
-    var.type,
-    var.level
-from (
-    select
-        -- upper(trim(iv."abbrev")) "abbrev",
-        (
-            case
-                when iv.abbrev is null
-                    then upper(replace(trim(iv.name), ' ', '_'))
-                else
-                    upper(replace(trim(iv.abbrev), ' ', '_'))
-            end
-        ) "abbrev",
-        trim(iv.scale) scale,
-        lower(trim(iv.name)) "name",
-        trim(iv.scale_unit) unit,
-        trim(iv.scale_type) "type",
-        trim(iv.scale_level) "level"
-    from
-        import.variable iv
-    order by
-        iv.id
+  select
+    -- upper(trim(iv."abbrev")) "abbrev",
+    (
+      case
+        when iv.abbrev is null
+          then upper(replace(trim(iv.name), ' ', '_'))
+        else
+          upper(replace(trim(iv.abbrev), ' ', '_'))
+      end
+    ) "abbrev",
+    trim(iv.scale) scale,
+    lower(trim(iv.name)) "name",
+    trim(iv.scale_unit) unit,
+    trim(iv.scale_type) "type",
+    trim(iv.scale_level) "level"
+  from
+    import.variable iv
+  order by
+    iv.id
 ) var
 ;
 
 -- ---------------------------------------------------
 
 insert into master.variable (
-    abbrev,
-    label,
-    name,
-    data_type,
-    not_null,
-    type,
-    status,
-    display_name,
-    ontology_reference,
-    bibliographical_reference,
-    property_id,
-    method_id,
-    scale_id,
-    variable_set,
-    description
+  abbrev,
+  label,
+  name,
+  data_type,
+  not_null,
+  type,
+  status,
+  display_name,
+  ontology_reference,
+  bibliographical_reference,
+  property_id,
+  method_id,
+  scale_id,
+  variable_set,
+  description
 )
 select
-    (
-        case
-            when var.abbrev is null
-                then case
-                    when (
-                        select
-                            count(iv.id)
-                        from
-                            import.variable iv
-                        where
-                            upper(trim(iv.name)) = upper(trim(var.name))
-                    ) >= 2 then
-                        var.label || '_' || (
-                            case when var.scale_type is null then ''
-                            else upper(substring(var.scale_type from 1 for 3)) || '_' end
-                        ) || row_number() over (partition by upper(trim(var.name)), upper(trim(substring(var.scale_type from 1 for 3))))
-                    else
-                        var.label
-                end
-            else
-                var.abbrev
+  (
+    case
+      when var.abbrev is null
+        then case
+          when (
+            select
+              count(iv.id)
+            from
+              import.variable iv
+            where
+              upper(trim(iv.name)) = upper(trim(var.name))
+          ) >= 2 then
+            var.label || '_' || (
+              case when var.scale_type is null then ''
+              else upper(substring(var.scale_type from 1 for 3)) || '_' end
+            ) || row_number() over (partition by upper(trim(var.name)), upper(trim(substring(var.scale_type from 1 for 3))))
+          else
+            var.label
         end
-    ) abbrev,
-    var.label,
+      else
+        var.abbrev
+    end
+  ) abbrev,
+  var.label,
+  var.name,
+  var.data_type,
+  var.not_null,
+  var.type,
+  var.status,
+  var.display_name,
+  var.ontology_reference,
+  var.bibliographical_reference,
+  var.property_id,
+  var.method_id,
+  var.scale_id,
+  var.variable_set,
+  var.description
+from (
+  select
+    var.abbrev,
+    upper(replace(
+      (
+        case
+          when var.label is null
+            then var.property_abbrev
+          else
+            var.label
+        end
+      ),
+    ' ', '_')) "label",
     var.name,
-    var.data_type,
-    var.not_null,
+    (
+      case
+        when var.data_type is null or trim(var.data_type) = '' then
+          'varchar'
+        else
+          var.data_type
+      end
+    ) data_type,
+    var.not_null::bool,
     var.type,
     var.status,
-    var.display_name,
+    (
+      case
+        when var.display_name is null then
+          initcap(var.name)
+        else
+          initcap(var.display_name)
+      end
+    ) display_name,
     var.ontology_reference,
     var.bibliographical_reference,
+
     var.property_id,
     var.method_id,
     var.scale_id,
+
+    var.scale_type,
+    var.iv_id,
+
     var.variable_set,
+
     var.description
-from (
+  from (
     select
-        var.abbrev,
-        upper(replace(
-            (
-                case
-                    when var.label is null
-                        then var.property_abbrev
-                    else
-                        var.label
-                end
-            ),
-        ' ', '_')) "label",
-        var.name,
-        (
-            case
-                when var.data_type is null or trim(var.data_type) = '' then
-                    'varchar'
-                else
-                    var.data_type
-            end
-        ) data_type,
-        var.not_null::bool,
-        var.type,
-        var.status,
-        (
-            case
-                when var.display_name is null then
-                    initcap(var.name)
-                else
-                    initcap(var.display_name)
-            end
-        ) display_name,
-        var.ontology_reference,
-        var.bibliographical_reference,
+      iv.iv_id,
 
-        var.property_id,
-        var.method_id,
-        var.scale_id,
+      iv.abbrev,
+      iv.label,
+      iv.name,
+      iv.description,
+      iv.data_type,
+      (case
+        when iv.not_null = '' or iv.not_null is null
+          then 'false'
+        else
+          iv.not_null
+      end) not_null,
+      iv.type,
+      iv.status,
+      iv.display_name,
+      iv.ontology_reference,
+      iv.bibliographical_reference,
 
-        var.scale_type,
-        var.iv_id,
-
-        var.variable_set,
-
-        var.description
-    from (
+      (
         select
-            iv.iv_id,
+          -- mp.name
+          mp.id
+        from
+          master.property mp
+        where
+          mp.name = iv.name
+      ) property_id,
+      (
+        select
+          -- mm.name
+          mm.id
+        from
+          master.method mm
+        where
+          mm.name = iv.name || ' ' || num
+          -- and trim(mm.description) = iv.method
+      ) method_id,
+      (
+        select
+          -- ms.name
+          ms.id
+        from
+          master.scale ms
+        where
+          ms.name = iv.name || ' ' || num
+          -- and ms.description = iv.scale
+      ) scale_id,
+      (
+        select
+          -- ms.name
+          ms.type
+        from
+          master.scale ms
+        where
+          ms.name = iv.name || ' ' || num
+          -- and ms.description = iv.scale
+      ) scale_type,
 
-            iv.abbrev,
-            iv.label,
-            iv.name,
-            iv.description,
-            iv.data_type,
-            (case
-                when iv.not_null = '' or iv.not_null is null
-                    then 'false'
-                else
-                    iv.not_null
-            end) not_null,
-            iv.type,
-            iv.status,
-            iv.display_name,
-            iv.ontology_reference,
-            iv.bibliographical_reference,
+      iv.variable_set,
 
-            (
-                select
-                    -- mp.name
-                    mp.id
-                from
-                    master.property mp
-                where
-                    mp.name = iv.name
-            ) property_id,
-            (
-                select
-                    -- mm.name
-                    mm.id
-                from
-                    master.method mm
-                where
-                    mm.name = iv.name || ' ' || num
-                    -- and trim(mm.description) = iv.method
-            ) method_id,
-            (
-                select
-                    -- ms.name
-                    ms.id
-                from
-                    master.scale ms
-                where
-                    ms.name = iv.name || ' ' || num
-                    -- and ms.description = iv.scale
-            ) scale_id,
-            (
-                select
-                    -- ms.name
-                    ms.type
-                from
-                    master.scale ms
-                where
-                    ms.name = iv.name || ' ' || num
-                    -- and ms.description = iv.scale
-            ) scale_type,
+      (
+        select
+          mp.abbrev
+        from
+          master.property mp
+        where
+          mp.name = iv.name
+      ) property_abbrev
+    from (
+      select
+        iv.id iv_id,
+        row_number() over (partition by lower(trim("name"))) num,
 
-            iv.variable_set,
+        upper(trim(iv.abbrev)) "abbrev",
+        upper(trim(iv.label)) "label",
+        lower(trim(iv.name)) "name",
+        trim(iv.description) description,
+        lower(trim(iv.data_type)) data_type,
+        lower(trim(iv.not_null)) not_null,
+        lower(trim(iv.type)) "type",
+        lower(trim(iv.status)) status,
+        trim(iv.display_name) display_name,
+        trim(iv.ontology_reference) ontology_reference,
+        trim(iv.bibliographical_reference) bibliographical_reference,
 
-            (
-                select
-                    mp.abbrev
-                from
-                    master.property mp
-                where
-                    mp.name = iv.name
-            ) property_abbrev
-        from (
-            select
-                iv.id iv_id,
-                row_number() over (partition by lower(trim("name"))) num,
+        trim(iv.method) "method",
+        trim(iv.scale) "scale",
 
-                upper(trim(iv.abbrev)) "abbrev",
-                upper(trim(iv.label)) "label",
-                lower(trim(iv.name)) "name",
-                trim(iv.description) description,
-                lower(trim(iv.data_type)) data_type,
-                lower(trim(iv.not_null)) not_null,
-                lower(trim(iv.type)) "type",
-                lower(trim(iv.status)) status,
-                trim(iv.display_name) display_name,
-                trim(iv.ontology_reference) ontology_reference,
-                trim(iv.bibliographical_reference) bibliographical_reference,
-
-                trim(iv.method) "method",
-                trim(iv.scale) "scale",
-
-                lower(trim(iv.variable_set)) variable_set
-            from
-                import.variable iv
-        ) iv
-    ) var
-    order by
-        var.iv_id
+        lower(trim(iv.variable_set)) variable_set
+      from
+        import.variable iv
+    ) iv
+  ) var
+  order by
+    var.iv_id
 ) var
 order by
-    var.iv_id
+  var.iv_id
 ;
 
 -- ---------------------------------------------------
 
 insert into master.variable_set (
-    abbrev,
-    name,
-    display_name
+  abbrev,
+  name,
+  display_name
 )
 select
-    distinct on (
-        iv.variable_set
-    )
-    upper(replace(iv.variable_set, ' ', '_')) abbrev,
-    lower(trim(iv.variable_set)) "name",
-    initcap(iv.variable_set) display_name
+  distinct on (
+    iv.variable_set
+  )
+  upper(replace(iv.variable_set, ' ', '_')) abbrev,
+  lower(trim(iv.variable_set)) "name",
+  initcap(iv.variable_set) display_name
 from (
-    select
-        lower(trim(iv.variable_set)) variable_set
-    from
-        import.variable iv
+  select
+    lower(trim(iv.variable_set)) variable_set
+  from
+    import.variable iv
 ) iv
 where
-    iv.variable_set is not null
+  iv.variable_set is not null
 ;
 
 -- ---------------------------------------------------
 
 insert into master.variable_set_member (
-    variable_set_id,
-    variable_id,
-    order_number
+  variable_set_id,
+  variable_id,
+  order_number
 )
 select
-    (
-        select
-            mvs.id
-        from
-            master.variable_set mvs
-        where
-            upper(trim(mvs.name)) = upper(trim(mv.variable_set))
-    ) variable_set_id,
-    id variable_id,
-    row_number() over (partition by upper(trim(mv.variable_set))) order_number
+  (
+    select
+      mvs.id
+    from
+      master.variable_set mvs
+    where
+      upper(trim(mvs.name)) = upper(trim(mv.variable_set))
+  ) variable_set_id,
+  id variable_id,
+  row_number() over (partition by upper(trim(mv.variable_set))) order_number
 from
-    master.variable mv
+  master.variable mv
 where
-    mv.variable_set is not null
+  mv.variable_set is not null
 order by
-    mv.id
+  mv.id
 ;
 -- */
 
