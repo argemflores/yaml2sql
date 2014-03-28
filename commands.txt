@@ -4,4 +4,7 @@ cls && php yaml2sql.php bims_0.10.yaml > bims_0.10.sql && psql -U postgres -h 17
 
 cls && php yaml2sql.php bims_0.10_dev.yaml > bims_0.10_dev.sql
 cls && php yaml2sql.php bims_0.10_dev.yaml > bims_0.10_dev.sql && psql -U postgres -d bims_0.10_dev -E -f bims_0.10_dev.sql
-cls && php yaml2sql.php bims_0.10_dev.yaml > bims_0.10_dev.sql && psql -U postgres -h 172.29.4.82 -d bims_0.10_dev -E -f bims_0.10_dev.sql
+# cls && php yaml2sql.php bims_0.10_dev.yaml > bims_0.10_dev.sql && psql -U postgres -h 172.29.4.82 -d bims_0.10_dev -E -f bims_0.10_dev.sql
+cls && php yaml2sql.php bims_0.10_dev.yaml > bims_0.10_dev.sql && psql -U postgres -h 172.29.4.82 -d bims_0.10_dev_test -E -f bims_0.10_dev.sql
+
+"C:\Program Files (x86)\SQL Maestro Group\PostgreSQL Maestro\pg_dump.exe" --host=172.29.4.82 --port=5432 --username=postgres --ignore-version --verbose --file="D:\Google Drive\Data Import\dumps\bims_0.10_dev_20140328.sql" bims_0.10_dev
