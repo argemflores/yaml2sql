@@ -5,3 +5,5 @@ test/*
 dictionary.*.csv
 import.variable_*.csv
 .~lock.*#
+bims_0.10_20140327.yaml
+struct.yaml
