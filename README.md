@@ -8,5 +8,5 @@ YAML Ain't Markup Language to Structured Query Language
 Author
 ------
 Name: Argem Gerald R. Flores  
-Email: <argemgrflores@gmail.com>
-Repository: <https://bitbucket.org/argemgrflores/yaml2sql>
+Email: <argemflores@gmail.com>
+Repository: <https://bitbucket.org/argemflores/yaml2sql>
