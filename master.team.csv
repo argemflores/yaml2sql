@@ -1,7 +1,0 @@
-"id";"abbrev";"name";"leader_id";"type";"description";"display_name";"is_void"
-2;"RGAC";"RGA Crosscutting";11;"crosscutting";"The RGA Crosscutting Team";"RGA Crosscutting";"False"
-3;"Irri SEA";"Irrigated South East Asia";2;"pipeline";"Irrigated South East Asia pipeline team";"Irrigated South East Asia";"False"
-4;"FB";"foobar2";2;"crosscutting";"this is a test";"foobar2";"True"
-5;"foobat";"foobat";6;"pipeline";;"foobat";"True"
-6;"SG";"System Group";12;"others";"This is the group for all the registered users.
-Being a member of this group allows the user to access all the basic pages in the system such as What's new,wiki,tutorial,view profile.";"System Group";"False"
